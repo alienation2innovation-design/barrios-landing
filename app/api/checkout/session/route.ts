@@ -32,13 +32,12 @@ function getPrisma(): PrismaClient {
 // Updated 2026-01-29 with actual Stripe price IDs
 const PRODUCT_CATALOG = [
   // V2 COMMERCIAL LAB SUBSCRIPTIONS (monthly only)
-  // TEMPORARY: Using TEST mode price ID for E2E testing
   {
-    id: 'prod_TtmzDOMdLbu7Xx',  // TEST mode product
+    id: 'prod_TsifPU8AtmGacQ',
     category: 'COMMERCIAL_LAB',
     metadata: { tier: 'PROTOTYPER', tokens: '16' },
     prices: [
-      { id: 'price_1SvzPrLyFGkLiU4CE45mvOBh', recurring: { interval: 'month' } },  // TEST mode price
+      { id: 'price_1SuxDoLyFGkLiU4CxxLjgoZq', recurring: { interval: 'month' } },
     ],
   },
   {
