@@ -22,7 +22,7 @@
 const NEURAL_CONFIG = {
     // API endpoints - Production URLs (Render backend)
     // NOTE: Neural stream endpoint not implemented on GENESIS - SSE disabled
-    apiBase: 'https://barrios-genesis-flawless.onrender.com/api/neural',
+    apiBase: 'https://api.barriosa2i.com/api/neural',
     sseEndpoint: null, // Disabled - /api/neural/stream doesn't exist on GENESIS
     sseEnabled: false,
     

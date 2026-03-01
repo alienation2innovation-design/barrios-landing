@@ -669,7 +669,7 @@ export const ThinkingStream: React.FC<ThinkingStreamProps> = ({
   // Genesis props
   qualificationScore = 0,
   leadData,
-  genesisApiUrl = 'https://barrios-genesis-flawless.onrender.com',
+  genesisApiUrl = 'https://api.barriosa2i.com',
   onGenesisComplete,
   showGenesisButton = true,
 }) => {

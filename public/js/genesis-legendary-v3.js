@@ -513,7 +513,7 @@ const GenesisSession = {
      */
     async _registerWithBackend(session) {
         try {
-            const response = await fetch('https://barrios-genesis-flawless.onrender.com/api/genesis/session', {
+            const response = await fetch('https://api.barriosa2i.com/api/genesis/session', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -562,7 +562,7 @@ const GenesisSession = {
 // =============================================================================
 
 const GenesisIntake = {
-    API_BASE: window.GENESIS_API_URL || 'https://barrios-genesis-flawless.onrender.com',
+    API_BASE: window.GENESIS_API_URL || 'https://api.barriosa2i.com',
     
     /**
      * Initialize intake UI from session state

@@ -2,7 +2,7 @@ import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import db from '@/lib/db';
 
-const GENESIS_API_URL = 'https://barrios-genesis-flawless.onrender.com';
+const GENESIS_API_URL = 'https://api.barriosa2i.com';
 
 // Force dynamic - this route cannot be statically rendered
 export const dynamic = 'force-dynamic';

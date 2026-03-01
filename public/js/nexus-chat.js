@@ -9,7 +9,7 @@
 
   // API endpoint - Production: GENESIS, Development: localhost
   // Configure via window.NEXUS_API_BASE before loading this script
-  const NEXUS_API_BASE = window.NEXUS_API_BASE || 'https://barrios-genesis-flawless.onrender.com';
+  const NEXUS_API_BASE = window.NEXUS_API_BASE || 'https://api.barriosa2i.com';
 
   const STORAGE_KEYS = {
     SESSION_ID: 'nexus_session_id',
@@ -288,7 +288,7 @@
   }
 
   // Neural RAG Brain v3.0 LEGENDARY processing
-  const NEURAL_API_BASE = 'https://barrios-genesis-flawless.onrender.com';
+  const NEURAL_API_BASE = 'https://api.barriosa2i.com';
 
   async function processWithNeural(message, callbacks = {}) {
     const startTime = performance.now();

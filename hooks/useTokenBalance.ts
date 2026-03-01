@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-const GENESIS_API_URL = 'https://barrios-genesis-flawless.onrender.com';
+const GENESIS_API_URL = 'https://api.barriosa2i.com';
 const REFRESH_INTERVAL = 30000; // 30 seconds
 
 interface TokenBalanceState {

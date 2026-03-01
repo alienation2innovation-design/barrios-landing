@@ -23,7 +23,7 @@
 
     const CONFIG = {
         // Creative Director API (gateway to NEXUS - handles brief compilation & routing)
-        CD_API_URL: 'https://barrios-genesis-flawless.onrender.com',
+        CD_API_URL: 'https://api.barriosa2i.com',
 
         // Timeouts
         CONNECTION_TIMEOUT: 30000,

@@ -12,7 +12,7 @@
 
 const ProductionManager = (() => {
     // Configuration
-    const GENESIS_URL = 'https://barrios-genesis-flawless.onrender.com';
+    const GENESIS_URL = 'https://api.barriosa2i.com';
 
     // State
     let abortController = null;

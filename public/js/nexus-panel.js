@@ -7,7 +7,7 @@
   'use strict';
 
   // API Base URL - Updated to use GENESIS backend
-  const NEXUS_API_BASE = window.NEXUS_API_BASE || 'https://barrios-genesis-flawless.onrender.com/api/nexus';
+  const NEXUS_API_BASE = window.NEXUS_API_BASE || 'https://api.barriosa2i.com/api/nexus';
   let hasRestoredMessages = false;
 
   const PANEL_ID = 'nexus-panel';

@@ -465,7 +465,7 @@
     // SSE CONNECTION TO GENESIS
     // =============================================================================
 
-    const GENESIS_URL = 'https://barrios-genesis-flawless.onrender.com';
+    const GENESIS_URL = 'https://api.barriosa2i.com';
 
     function connectToGenesis(pipelineId) {
         if (NeuralHiveState.eventSource) {

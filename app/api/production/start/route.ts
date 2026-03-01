@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       // This is the production mode when manual fulfillment is disabled.
       // ========================================================================
 
-      const genesisUrl = process.env.GENESIS_API_URL || "https://barrios-genesis-flawless.onrender.com";
+      const genesisUrl = process.env.GENESIS_API_URL || "https://api.barriosa2i.com";
       let pipelineStarted = false;
       let pipelineResponse: Record<string, unknown> | null = null;
 

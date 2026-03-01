@@ -27,7 +27,7 @@
 
     const VORTEX_CONFIG = {
         // VORTEX is integrated into GENESIS (same service)
-        BASE_URL: 'https://barrios-genesis-flawless.onrender.com',
+        BASE_URL: 'https://api.barriosa2i.com',
 
         // Endpoints
         STREAM_URL: '/api/vortex/stream',

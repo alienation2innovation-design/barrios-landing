@@ -53,7 +53,7 @@ This prevents Cloudflare/CAPTCHA blocks on third-party sites.
 Local:       C:\Users\gary\frontend-barrios-landing
 Production:  https://www.barriosa2i.com
 Staging:     https://barrios-landing.vercel.app
-Backend:     https://barrios-genesis-flawless.onrender.com
+Backend:     https://api.barriosa2i.com
 Local Dev:   http://localhost:3000
 ```
 
@@ -676,7 +676,7 @@ style={{ color: 'var(--cyan-primary)' }}
 const response = await fetch('/api/genesis/chat');
 
 // RIGHT - Absolute URL to GENESIS backend
-const GENESIS_URL = "https://barrios-genesis-flawless.onrender.com";
+const GENESIS_URL = "https://api.barriosa2i.com";
 const response = await fetch(`${GENESIS_URL}/api/genesis/chat`, {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' },

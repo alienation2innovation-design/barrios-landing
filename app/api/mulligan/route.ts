@@ -412,7 +412,7 @@ async function triggerRAGNAROKWithFeedback(
 ) {
   const genesisUrl =
     process.env.GENESIS_API_URL ||
-    "https://barrios-genesis-flawless.onrender.com";
+    "https://api.barriosa2i.com";
 
   try {
     const response = await fetch(`${genesisUrl}/api/ragnarok/start`, {

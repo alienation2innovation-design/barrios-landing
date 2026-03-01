@@ -2591,7 +2591,7 @@
 
     <!-- Chat API Integration with 6-Agent Pipeline -->
     <script>
-        const API_URL = 'https://barrios-genesis-flawless.onrender.com';
+        const API_URL = 'https://api.barriosa2i.com';
 
         // Checkout API integration
         const CHECKOUT_API = '/api/checkout/session';
@@ -3472,7 +3472,7 @@
         // FLAWLESS GENESIS ORCHESTRATOR INTEGRATION
         // =============================================================================
 
-        const GENESIS_API_URL = 'https://barrios-genesis-flawless.onrender.com';
+        const GENESIS_API_URL = 'https://api.barriosa2i.com';
         let genesisPipelineId = null;
         let genesisEventSource = null;
         let genesisStatus = 'idle'; // idle, loading, running, complete, error
@@ -8114,7 +8114,7 @@
 
             try {
                 // Call GENESIS API for voice preview
-                const response = await fetch('https://barrios-genesis-flawless.onrender.com/api/voice/preview', {
+                const response = await fetch('https://api.barriosa2i.com/api/voice/preview', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
@@ -8711,7 +8711,7 @@
                 // Get user_id from localStorage if available (set by Clerk auth)
                 const userId = localStorage.getItem('clerk_user_id') || null;
 
-                const response = await fetch('https://barrios-genesis-flawless.onrender.com/api/chat/unified', {
+                const response = await fetch('https://api.barriosa2i.com/api/chat/unified', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
