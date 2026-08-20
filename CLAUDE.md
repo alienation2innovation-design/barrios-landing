@@ -115,3 +115,89 @@ components/            # NEVER MODIFY EXISTING FILES
 ## Final Rule
 
 **When in doubt, ASK. Do not assume. Do not "improve" things that work.**
+
+---
+
+# BARRIOS A2I HOMEPAGE REBUILD GUARDRAILS
+
+## Live Homepage Source of Truth
+
+The live BarriosA2I.com homepage is:
+
+public/index.html
+
+Do not assume app/page.tsx exists. It does not currently exist.
+
+The current homepage is a static HTML homepage served from public/index.html. React landing components may exist in the repo, but they are not automatically the live homepage unless routing is explicitly changed and verified.
+
+## Required Frontend Workflow
+
+Before any frontend edit, use the frontend design skill first.
+
+The frontend design skill must audit:
+- layout
+- visual hierarchy
+- spacing
+- typography
+- responsive behavior
+- CTA clarity
+- brand consistency
+- conversion flow
+
+## Business Positioning
+
+Barrios A2I must be positioned as an AI business automation company.
+
+Core message:
+
+Barrios A2I builds AI workers that automate repetitive computer tasks for businesses.
+
+The homepage must make this clear to a normal business owner immediately.
+
+Avoid making the company sound like only:
+- a chatbot company
+- a website company
+- a video-commercial company
+- a vague sci-fi AI lab
+
+## Brand Rules
+
+Preserve the Barrios A2I visual identity:
+- dark black/navy background
+- cyan/teal primary glow
+- white futuristic typography
+- subtle amber/yellow accents only
+- premium AI command-center feel
+- clean SaaS/product-site structure
+
+Do not introduce purple as a co-equal accent.
+Do not use off-brand green as a primary accent.
+Do not make the site childish, generic, or cartoonish.
+
+## Safety Rules
+
+Do not deploy production unless Gary explicitly says: deploy production.
+
+Do not touch:
+- DNS
+- IONOS
+- Stripe
+- billing
+- auth
+- Prisma schema
+- middleware
+- API routes
+- .env files
+- .vercel secrets/config
+- credentials
+- API keys
+- tokens
+- database URLs
+
+Do not edit master directly. Use a feature branch.
+
+Commit and push safe source changes only after verification.
+
+Vercel preview deployment is allowed after approved safe implementation changes.
+Production deployment requires explicit Gary approval.
+

@@ -63,3 +63,26 @@ description: Create distinctive, production-grade frontend interfaces for Barrio
 - Hover: Subtle scale (1.02 max) + glow intensify
 - Click: Quick scale down (0.98) + instant feedback
 - Loading: Skeleton shimmer or neural pulse pattern
+
+---
+
+# BARRIOS A2I BRAND OVERRIDE
+
+For BarriosA2I.com work, this override is authoritative.
+
+Use:
+- black/navy backgrounds
+- cyan/teal as the primary accent/glow
+- white futuristic typography
+- amber/yellow only as a subtle secondary accent
+
+Do not use purple as a co-equal accent.
+Do not introduce off-brand green as a primary accent.
+Do not drift into generic purple/green AI SaaS styling.
+
+The design goal is:
+premium AI command-center + simple business-owner clarity.
+
+Barrios A2I sells AI workers and automation systems for businesses.
+The homepage must clearly explain that Barrios A2I automates repetitive computer tasks.
+
