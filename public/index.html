@@ -1763,8 +1763,7 @@
           feats:['Everything in Workbench','Unlimited rooms','Five live collaborators','MIDI and audio input','Upload your own samples','Priority render queue'] },
       ];
 
-      /* [quote, name, role, colour family, portrait slot] — the slot maps to
-         assets/portraits/voice-NN.jpg (see that folder's README for the crop spec). */
+      /* [quote, name, role, colour family, monogram slot] */
       const QUOTES = [
         ['I wrote the bones of an entire EP on a train with one earbud in. Nothing else on my machine lets me do that.','Marguerite Oyelaran','Producer · Lisbon','a','01'],
         ['The four-lane limit annoyed me for about a day. Then I finished more music in a month than in the year before it.','Teodor Vance','Sound designer · Oslo','b','02'],
@@ -1928,28 +1927,13 @@
           <p>“${txt}”</p>
           <footer>
             <span class="quote__av">
-              <i aria-hidden="true">${who.split(' ').map(w => w[0]).join('').slice(0, 2)}</i>
-              <img alt="" width="400" height="400" loading="lazy" decoding="async"
-                   data-portrait="assets/portraits/voice-${slot}.jpg">
+               <i aria-hidden="true">${who.split(' ').map(w => w[0]).join('').slice(0, 2)}</i>
             </span>
             <span class="quote__who"><b>${who}</b><span>${role}</span></span>
           </footer>
         </blockquote>`;
       $('#q1').innerHTML = [...QUOTES.slice(0,4), ...QUOTES.slice(0,4)].map(qCard).join('');
       $('#q2').innerHTML = [...QUOTES.slice(4),  ...QUOTES.slice(4)].map(qCard).join('');
-
-      /* Portraits are probed before they are attached, so a slot with no file yet
-         falls back to the monogram disc rather than rendering a broken image.
-         Drop head-and-shoulders JPEGs into assets/portraits/ and they appear with
-         no further code changes — the alt stays empty because the sitter's name is
-         already announced by the adjacent text. */
-      $$('.quote__av img[data-portrait]').forEach(img => {
-        const url = img.dataset.portrait;
-        const probe = new Image();
-        probe.onload  = () => { img.src = url; };
-        probe.onerror = () => { img.remove(); };
-        probe.src = url;
-      });
 
       /* --- faq */
       $('#faqList').innerHTML = FAQS.map(([q, a], i) => `

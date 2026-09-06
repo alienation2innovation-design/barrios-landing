@@ -75,6 +75,7 @@ test('the social signal and footer expose all five approved profiles without Fac
 test('the homepage uses local production assets instead of Aura or Tailwind CDNs', () => {
   assert.doesNotMatch(html, /cdn\.tailwindcss\.com/i);
   assert.doesNotMatch(html, /hoirqrkdgbmvpwutwuwj\.supabase\.co/i);
+  assert.doesNotMatch(html, /assets\/portraits\/voice-/i);
   assert.match(markup, /<link\b[^>]*href="\/aura-landing\.css"/i);
 
   const logos = [...markup.matchAll(/<img\b[^>]*>/gi)]
