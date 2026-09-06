@@ -50,6 +50,18 @@ test('the served root is the approved Barrios A2I Aura experience', () => {
   assert.match(markup, /Tell me what you want to automate\./i);
 });
 
+test('the first viewport has a visible marketing headline without depending on WebGL', () => {
+  const hero = markup.match(/<section\b[^>]*id="hero"[^>]*>[\s\S]*?<\/section>/i)?.[0] ?? '';
+  const heading = hero.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i)?.[0] ?? '';
+
+  assert.match(heading, /class="hero__title"/i);
+  assert.doesNotMatch(heading, /\bsr-only\b/i);
+  assert.match(heading.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Marketing automation built around your business\./i);
+  assert.match(hero, /class="hero__eyebrow"[^>]*>\s*Barrios A2I/i);
+  assert.match(hero, /From lead capture to customer follow-up/i);
+  assert.match(html, /\.hero__title\s*\{[^}]*color:\s*var\(--paper\)/i);
+});
+
 test('the served document keeps the Barrios message readable without JavaScript', () => {
   const fallback = markup.match(/<noscript>[\s\S]*?<\/noscript>/i)?.[0] ?? '';
   assert.match(fallback, /Barrios A2I/i);
