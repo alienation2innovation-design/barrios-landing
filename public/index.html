@@ -1,2715 +1,322 @@
-<!DOCTYPE html>
-<!-- CHROMADON Test Deployment: 2025-12-30T00:35:00Z -->
-<html lang="en" class="dark overflow-x-hidden"><head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Barrios A2I - The Intelligence Architecture</title>
-<meta name="description" content="Barrios A2I installs autonomous intelligence that senses, decides, and acts across your entire operation—continuously. Transform your business with AI-powered automation, RAG agents, and intelligent systems.">
-<meta name="keywords" content="AI automation, RAG agents, autonomous intelligence, business automation, AI consulting, machine learning, intelligent systems">
-<meta name="author" content="Barrios A2I">
-<meta property="og:title" content="Barrios A2I - The Intelligence Architecture">
-<meta property="og:description" content="Transform your business with AI-powered automation. RAG agents, Marketing Overlord, and intelligent systems that run 24/7.">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://barrios-landing.vercel.app">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Barrios A2I - The Intelligence Architecture">
-<meta name="twitter:description" content="Transform your business with AI-powered automation. RAG agents and intelligent systems that run 24/7.">
-<!-- Fonts: Orbitron (display), Exo 2 (sans), Playfair Display (serif), JetBrains Mono -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800;900&amp;family=Exo+2:wght@300;400;500;600;700&amp;family=Playfair+Display:ital,wght@0,400..900;1,400..900&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
-<!-- Tailwind CSS (Local Build) -->
-<link rel="stylesheet" href="/dist/output.css">
-<!-- Iconify -->
-<script src="https://code.iconify.design/3/3.1.0/iconify.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/iconify-icon@2.1.0/dist/iconify-icon.min.js"></script>
-<!-- Clerk JS SDK for auth state -->
-<script
-  async
-  crossorigin="anonymous"
-  data-clerk-publishable-key="pk_live_Y2xlcmsuYmFycmlvc2EyaS5jb20k"
-  src="https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js"
-  type="text/javascript"
-></script>
-<!-- Intersection Observer -->
-<script>
-(function () {
-const once = true;
-if (!window.__inViewIO) {
-window.__inViewIO = new IntersectionObserver((entries) => {
-entries.forEach((entry) => {
-if (entry.isIntersecting) {
-entry.target.classList.add("animate");
-if (once) window.__inViewIO.unobserve(entry.target);
-}
-});
-}, { threshold: 0.1, rootMargin: "0px 0px -5% 0px" });
-}
-window.initInViewAnimations = function (selector = ".animate-on-scroll") {
-document.querySelectorAll(selector).forEach((el) => {
-window.__inViewIO.observe(el);
-});
-};
-document.addEventListener("DOMContentLoaded", () => initInViewAnimations());
-})();
-</script>
-<!-- Removed 21 unused render-blocking font links - saves ~360KB -->
-
-<!-- LEGENDARY Header Animations -->
-<style>
-/* Nuclear mobile overflow prevention */
-html, body {
-  overflow-x: hidden !important;
-  max-width: 100vw !important;
-}
-
-@keyframes breathingGlow {
-  0%, 100% {
-    filter: drop-shadow(0 0 15px rgba(0, 206, 209, 0.4));
-  }
-  50% {
-    filter: drop-shadow(0 0 30px rgba(0, 206, 209, 0.7));
-  }
-}
-
-@keyframes borderGlow {
-  0%, 100% { opacity: 0.3; }
-  50% { opacity: 0.8; }
-}
-
-@keyframes pulseIndicator {
-  0%, 100% { transform: scale(1); opacity: 0.7; }
-  50% { transform: scale(1.3); opacity: 1; }
-}
-
-@keyframes shimmer {
-  0% { background-position: 200% center; }
-  100% { background-position: -200% center; }
-}
-
-.animate-shimmer {
-  animation: shimmer 3s ease-in-out infinite;
-}
-
-.logo-breathing {
-  animation: breathingGlow 3s ease-in-out infinite;
-}
-
-/* Mobile-safe logo - remove complex filters that cause black silhouette */
-@media (max-width: 768px) {
-  .logo-breathing {
-    animation: none !important;
-    filter: none !important;
-  }
-  .volumetric-glow {
-    filter: none !important;
-  }
-}
-
-.header-glow-border {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  width: auto;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(0, 206, 209, 0.5), transparent);
-  animation: borderGlow 4s ease-in-out infinite;
-}
-
-.status-pulse {
-  animation: pulseIndicator 2s ease-in-out infinite;
-}
-
-/* ========== VISUAL REVAMP: Hero Grid Background ========== */
-@keyframes grid-pulse {
-  0%, 100% { opacity: 0.03; }
-  50% { opacity: 0.08; }
-}
-
-.hero-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(0, 206, 209, 0.1) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 206, 209, 0.1) 1px, transparent 1px);
-  background-size: 50px 50px;
-  animation: grid-pulse 4s ease-in-out infinite;
-  pointer-events: none;
-}
-
-.hero-grid::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 30% 20%, rgba(0, 206, 209, 0.15) 0%, transparent 50%);
-  pointer-events: none;
-}
-
-/* ========== Staggered Text Reveal Animations ========== */
-@keyframes stagger-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-    filter: blur(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    filter: blur(0);
-  }
-}
-
-.stagger-1 { animation: stagger-reveal 0.8s ease-out 0.1s both; }
-.stagger-2 { animation: stagger-reveal 0.8s ease-out 0.2s both; }
-.stagger-3 { animation: stagger-reveal 0.8s ease-out 0.3s both; }
-.stagger-4 { animation: stagger-reveal 0.8s ease-out 0.4s both; }
-.stagger-5 { animation: stagger-reveal 0.8s ease-out 0.5s both; }
-
-/* ========== Stats Glow Pulse ========== */
-.stat-glow {
-  position: relative;
-}
-.stat-glow::after {
-  content: '';
-  position: absolute;
-  inset: -8px;
-  background: radial-gradient(circle, rgba(0, 206, 209, 0.25) 0%, transparent 70%);
-  opacity: 0;
-  animation: stat-pulse 2.5s ease-in-out infinite;
-  pointer-events: none;
-  border-radius: inherit;
-}
-@keyframes stat-pulse {
-  0%, 100% { opacity: 0; transform: scale(0.9); }
-  50% { opacity: 1; transform: scale(1); }
-}
-
-/* ========== Enhanced Glassmorphism Cards ========== */
-.glass-card {
-  background: rgba(11, 13, 26, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow:
-    0 4px 30px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.glass-card:hover {
-  border-color: rgba(0, 206, 209, 0.3);
-  box-shadow:
-    0 8px 40px rgba(0, 0, 0, 0.4),
-    0 0 40px rgba(0, 206, 209, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transform: translateY(-4px);
-}
-
-/* ========== Animated Gradient Accents ========== */
-@keyframes gradient-shift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-.animated-gradient {
-  background: linear-gradient(90deg, #00CED1, #0891b2, #00CED1);
-  background-size: 200% 100%;
-  animation: gradient-shift 3s ease infinite;
-}
-
-/* ========== Enhanced Scanline Overlay ========== */
-@keyframes scanline-scroll {
-  from { background-position: 0 0; }
-  to { background-position: 0 100px; }
-}
-
-.scanlines-animated {
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 206, 209, 0.03) 2px,
-    rgba(0, 206, 209, 0.03) 4px
-  );
-  pointer-events: none;
-  animation: scanline-scroll 8s linear infinite;
-}
-
-/* ========== Button Micro-interactions ========== */
-.btn-cyber {
-  position: relative;
-  overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-cyber::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transform: translateX(-100%);
-  transition: transform 0.6s;
-}
-
-.btn-cyber:hover::before {
-  transform: translateX(100%);
-}
-
-.btn-cyber:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 40px rgba(0, 206, 209, 0.5);
-}
-
-.btn-cyber:active {
-  transform: translateY(0) scale(0.98);
-}
-
-/* ========== Card Hover Effects ========== */
-.card-hover {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.card-hover:hover {
-  transform: translateY(-8px);
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.3),
-    0 0 60px rgba(0, 206, 209, 0.1);
-}
-
-/* ========== Section Divider ========== */
-.section-divider {
-  position: relative;
-  height: 1px;
-  width: 100%;
-  max-width: 56rem;
-  margin: 6rem auto;
-}
-
-.section-divider::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to right, transparent, rgba(0, 206, 209, 0.5), transparent);
-}
-
-.section-divider::after {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
-  background: #00CED1;
-  border-radius: 50%;
-  box-shadow: 0 0 12px rgba(0, 206, 209, 0.8);
-}
-
-/* ========== Floating Accent Elements ========== */
-.floating-accent {
-  position: absolute;
-  border: 1px solid rgba(0, 206, 209, 0.2);
-  border-radius: 8px;
-  pointer-events: none;
-  animation: float-drift 6s ease-in-out infinite;
-}
-
-@keyframes float-drift {
-  0%, 100% { transform: rotate(12deg) translateY(0); }
-  50% { transform: rotate(12deg) translateY(-10px); }
-}
-
-/* ========== LIVE_METRICS Command Center Styles ========== */
-
-/* 1. Status Indicator - Breathing Glow */
-@keyframes status-breathe {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(34, 197, 94, 0.5), 0 0 10px rgba(34, 197, 94, 0.3);
-    transform: scale(1);
-  }
-  50% {
-    box-shadow: 0 0 15px rgba(34, 197, 94, 0.8), 0 0 30px rgba(34, 197, 94, 0.5), 0 0 45px rgba(34, 197, 94, 0.3);
-    transform: scale(1.15);
-  }
-}
-
-.status-live {
-  animation: status-breathe 2s ease-in-out infinite;
-}
-
-/* 2. Animated Border Sweep for Cards */
-@keyframes border-sweep {
-  0% { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
-}
-
-.metrics-card-glow {
-  position: relative;
-  z-index: 1;
-}
-
-.metrics-card-glow::before {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: inherit;
-  background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(0, 206, 209, 0.4) 20%,
-    rgba(0, 206, 209, 0.8) 50%,
-    rgba(0, 206, 209, 0.4) 80%,
-    transparent 100%);
-  background-size: 200% 100%;
-  animation: border-sweep 3s linear infinite;
-  opacity: 0;
-  transition: opacity 0.4s ease;
-  z-index: -1;
-}
-
-.metrics-card-glow:hover::before {
-  opacity: 1;
-}
-
-/* 3. Number Flicker Animation */
-@keyframes number-flicker {
-  0%, 89%, 100% { opacity: 1; }
-  90%, 94% { opacity: 0.7; }
-  92%, 96% { opacity: 0.9; }
-  98% { opacity: 0.8; }
-}
-
-.metric-value {
-  animation: number-flicker 5s ease-in-out infinite;
-}
-
-/* 4. Tagline Glow Pulse */
-@keyframes tagline-glow {
-  0%, 100% {
-    text-shadow: 0 0 10px rgba(0, 206, 209, 0.3), 0 0 20px rgba(0, 206, 209, 0.2);
-    opacity: 0.7;
-  }
-  50% {
-    text-shadow: 0 0 20px rgba(0, 206, 209, 0.7), 0 0 40px rgba(0, 206, 209, 0.5), 0 0 60px rgba(0, 206, 209, 0.3);
-    opacity: 1;
-  }
-}
-
-.tagline-pulse {
-  animation: tagline-glow 3s ease-in-out infinite;
-}
-
-/* 5. Data Stream Background */
-@keyframes data-stream {
-  0% { transform: translateY(-100%); }
-  100% { transform: translateY(100%); }
-}
-
-.data-stream-bg {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.data-stream-bg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 20%;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 206, 209, 0.4), transparent);
-  animation: data-stream 3s linear infinite;
-}
-
-.data-stream-bg::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 30%;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent, rgba(0, 206, 209, 0.25), transparent);
-  animation: data-stream 4.5s linear infinite 1.5s;
-}
-
-/* 6. Terminal Ticker Styling */
-.terminal-ticker {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(0, 206, 209, 0.25);
-  border-radius: 4px;
-  padding: 6px 12px;
-  font-family: 'JetBrains Mono', monospace;
-}
-
-.terminal-ticker::before {
-  content: '>';
-  color: rgba(0, 206, 209, 0.7);
-  margin-right: 8px;
-  font-weight: bold;
-}
-
-/* 7. Mini Sparkline Bars */
-@keyframes sparkline-pulse {
-  0%, 100% { transform: scaleY(0.3); opacity: 0.5; }
-  50% { transform: scaleY(1); opacity: 1; }
-}
-
-.sparkline {
-  display: flex;
-  align-items: flex-end;
-  gap: 2px;
-  height: 24px;
-}
-
-.sparkline-bar {
-  width: 3px;
-  background: linear-gradient(to top, rgba(0, 206, 209, 0.3), rgba(0, 206, 209, 0.9));
-  border-radius: 2px;
-  transform-origin: bottom;
-  animation: sparkline-pulse 1.5s ease-in-out infinite;
-}
-
-.sparkline-bar:nth-child(1) { height: 60%; animation-delay: 0s; }
-.sparkline-bar:nth-child(2) { height: 80%; animation-delay: 0.15s; }
-.sparkline-bar:nth-child(3) { height: 45%; animation-delay: 0.3s; }
-.sparkline-bar:nth-child(4) { height: 100%; animation-delay: 0.45s; }
-.sparkline-bar:nth-child(5) { height: 70%; animation-delay: 0.6s; }
-
-/* Gold variant for accuracy card */
-.sparkline-bar-gold {
-  background: linear-gradient(to top, rgba(245, 158, 11, 0.3), rgba(245, 158, 11, 0.9));
-}
-
-/* Green variant for speed card */
-.sparkline-bar-green {
-  background: linear-gradient(to top, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.9));
-}
-
-/* 8. Node Connection Grid Background */
-.ops-grid-bg {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(circle at 15% 25%, rgba(0, 206, 209, 0.12) 0%, transparent 35%),
-    radial-gradient(circle at 85% 75%, rgba(0, 206, 209, 0.08) 0%, transparent 30%),
-    radial-gradient(circle at 50% 50%, rgba(0, 206, 209, 0.05) 0%, transparent 50%),
-    linear-gradient(rgba(0, 206, 209, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 206, 209, 0.04) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 100% 100%, 40px 40px, 40px 40px;
-  opacity: 0.7;
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* 9. Staggered Card Entrance */
-.metrics-card-stagger:nth-child(1) { animation-delay: 0.1s; }
-.metrics-card-stagger:nth-child(2) { animation-delay: 0.2s; }
-.metrics-card-stagger:nth-child(3) { animation-delay: 0.3s; }
-.metrics-card-stagger:nth-child(4) { animation-delay: 0.4s; }
-
-/* 10. Additional data stream lines */
-.data-stream-extra {
-  position: absolute;
-  top: 0;
-  width: 1px;
-  height: 100%;
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 206, 209, 0.2) 30%, rgba(0, 206, 209, 0.2) 70%, transparent 100%);
-  animation: data-stream 6s linear infinite;
-}
-
-/* ========== HONEST TRUTH ANIMATIONS ========== */
-
-/* 1. Defeated Column Effect - Red glitch/fade */
-@keyframes defeated-glitch {
-  0%, 100% { opacity: 0.8; transform: translateX(0); }
-  10% { opacity: 0.75; transform: translateX(-1px); }
-  20% { opacity: 0.85; transform: translateX(1px); }
-  30% { opacity: 0.7; transform: translateX(0); }
-}
-
-.defeated-column {
-  animation: defeated-glitch 5s ease-in-out infinite;
-  filter: grayscale(0.3);
-}
-
-.defeated-column:hover {
-  animation-play-state: paused;
-  opacity: 0.5;
-  filter: grayscale(0.3);
-}
-
-/* 2. Animated Strikethrough */
-@keyframes strikethrough-draw {
-  0% { width: 0; }
-  100% { width: 100%; }
-}
-
-.strike-animate {
-  position: relative;
-  display: inline-block;
-}
-
-.strike-animate::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 50%;
-  height: 2px;
-  width: 0;
-  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.7), rgba(239, 68, 68, 0.7), transparent);
-  animation: strikethrough-draw 1.2s ease-out forwards;
-  animation-delay: var(--strike-delay, 0s);
-}
-
-/* 3. Victory Column Glow */
-@keyframes victory-pulse {
-  0%, 100% {
-    box-shadow: 0 0 30px rgba(0, 206, 209, 0.15), inset 0 0 20px rgba(0, 206, 209, 0.03);
-  }
-  50% {
-    box-shadow: 0 0 50px rgba(0, 206, 209, 0.3), 0 0 80px rgba(0, 206, 209, 0.15), inset 0 0 30px rgba(0, 206, 209, 0.05);
-  }
-}
-
-.victory-column {
-  animation: victory-pulse 3s ease-in-out infinite;
-}
-
-/* 4. Stat Counter Animation */
-@keyframes stat-reveal {
-  0% { opacity: 0; transform: scale(0.8) translateY(10px); }
-  60% { opacity: 1; transform: scale(1.05) translateY(-3px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.stat-animate {
-  animation: stat-reveal 0.7s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  animation-delay: var(--stat-delay, 0s);
-  opacity: 0;
-}
-
-/* 5. SYSTEM ACTIVE Badge Pulse */
-@keyframes system-active-pulse {
-  0%, 100% {
-    box-shadow: 0 0 8px rgba(0, 206, 209, 0.4);
-    border-color: rgba(0, 206, 209, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(0, 206, 209, 0.7), 0 0 35px rgba(0, 206, 209, 0.3);
-    border-color: rgba(0, 206, 209, 0.7);
-  }
-}
-
-.system-active-badge {
-  animation: system-active-pulse 2s ease-in-out infinite;
-}
-
-/* 6. Red Glow for Defeated Values */
-.defeated-value {
-  color: rgba(239, 68, 68, 1) !important;
-  text-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
-  font-weight: 500;
-}
-
-/* ========== MISSION TIMELINE ANIMATIONS ========== */
-
-/* 1. Timeline Node Glow */
-@keyframes node-glow {
-  0%, 100% {
-    box-shadow: 0 0 10px rgba(0, 206, 209, 0.3), inset 0 0 5px rgba(0, 206, 209, 0.15);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(0, 206, 209, 0.6), 0 0 35px rgba(0, 206, 209, 0.25), inset 0 0 8px rgba(0, 206, 209, 0.2);
-  }
-}
-
-.timeline-node {
-  animation: node-glow 3s ease-in-out infinite;
-}
-
-/* 2. Connection Line Data Pulse */
-@keyframes line-pulse {
-  0% { stroke-dashoffset: 100; opacity: 0.3; }
-  50% { opacity: 1; }
-  100% { stroke-dashoffset: 0; opacity: 0.3; }
-}
-
-.timeline-connector {
-  stroke-dasharray: 8 4;
-  animation: line-pulse 2s linear infinite;
-}
-
-/* 3. Staggered Card Entrance */
-@keyframes timeline-card-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(25px) scale(0.96);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.timeline-card {
-  opacity: 0;
-  animation: timeline-card-enter 0.5s ease-out forwards;
-}
-
-.timeline-card:nth-child(1) { animation-delay: 0.15s; }
-.timeline-card:nth-child(2) { animation-delay: 0.3s; }
-.timeline-card:nth-child(3) { animation-delay: 0.45s; }
-.timeline-card:nth-child(4) { animation-delay: 0.6s; }
-.timeline-card:nth-child(5) { animation-delay: 0.75s; }
-
-/* 4. Day Number Pulse */
-@keyframes day-number-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.1); }
-}
-
-.day-number {
-  animation: day-number-pulse 2.5s ease-in-out infinite;
-}
-
-/* 5. Node staggered glow delays */
-.timeline-node-1 { animation-delay: 0s; }
-.timeline-node-2 { animation-delay: 0.3s; }
-.timeline-node-3 { animation-delay: 0.6s; }
-.timeline-node-4 { animation-delay: 0.9s; }
-.timeline-node-5 { animation-delay: 1.2s; }
-</style>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Barrios A2I designs and builds custom marketing, sales, and customer follow-up automations from your business idea.">
+  <meta name="theme-color" content="#050a0f">
+  <title>Barrios A2I | Custom Business Automation</title>
+  <link rel="canonical" href="https://barriosa2i.com/">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="/landing-v3.css">
+  <script src="/landing-v3.js" defer></script>
 </head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
 
-<body class="bg-gradient-to-b from-void to-obsidian text-white font-sans antialiased min-h-screen w-full overflow-x-clip flex flex-col selection:bg-primary/20" id="main-body">
+  <header class="site-header">
+    <div class="shell header-inner">
+      <a class="brand" href="#top" aria-label="Barrios A2I home">
+        <img src="/brand/barrios-a2i-shard-logo.png" width="500" height="500" alt="" fetchpriority="high">
+        <span class="brand-copy">
+          <span>Barrios A2I</span>
+          <small>Automation, built around you</small>
+        </span>
+      </a>
 
-<!-- NEURAL AMBIENT GLOW - CSS-only, no video (per frontend skill: "subtle, purposeful") -->
-<div id="neural-ambient">
-  <div class="neural-orb neural-orb-1"></div>
-  <div class="neural-orb neural-orb-2"></div>
-  <div class="neural-orb neural-orb-3"></div>
-</div>
+      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+        <span class="sr-only">Open navigation</span>
+        <span aria-hidden="true"></span>
+        <span aria-hidden="true"></span>
+      </button>
 
-<!-- Cinematic Noise/Scanlines -->
-<div class="fixed inset-0 pointer-events-none opacity-[0.03] z-[90] bg-[url('https://grainy-gradients.vercel.app/noise.svg')]"></div>
-
-<!-- Background (component) added by Aura -->
-<div class="aura-background-component fixed top-0 w-full h-screen -z-10" data-alpha-mask="60" style="mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent); -webkit-mask-image: linear-gradient(to bottom, transparent, black 0%, black 80%, transparent)"><div class="aura-background-component top-0 w-full -z-10 absolute h-full">
-  <div data-us-project="FixNvEwvWwbu3QX9qC3F" class="absolute w-full h-full left-0 top-0 -z-10 opacity-60 mix-blend-color-dodge"></div>
-  <script type="text/javascript">
-    !function(){if(!window.UnicornStudio){window.UnicornStudio={isInitialized:!1};var i=document.createElement("script");i.src="https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v1.4.29/dist/unicornStudio.umd.js",i.onload=function(){window.UnicornStudio.isInitialized||(UnicornStudio.init(),window.UnicornStudio.isInitialized=!0)},(document.head || document.body).appendChild(i)}}();
-  </script>
-</div></div>
-
-    <!-- Aurora Backgrounds - Hidden on mobile to prevent horizontal overflow -->
-    <div class="hidden md:block fixed top-0 right-0 w-[800px] h-[800px] bg-primary aurora-blob translate-x-1/3 -translate-y-1/3 opacity-10" style="transform: translate(38.25px, 58.35px);"></div>
-    <div class="hidden md:block fixed bottom-0 left-0 w-[600px] h-[600px] bg-accent aurora-blob -translate-x-1/3 translate-y-1/3 opacity-10" style="transform: translate(19.125px, 29.175px);"></div>
-
-    <!-- Grid Lines (Fixed) -->
-    <div class="fixed inset-0 pointer-events-none z-0 grid grid-cols-6 md:grid-cols-12 max-w-7xl mx-auto border-x border-white/[0.03] h-full">
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden">
-             <div class="absolute -top-40 -right-[1 h-40 bg-gradient-to-b from-transparent via-primary/50 to-transparent animate-beam" style="animation-duration: 7s;"></div>
-        </div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden">
-             <div class="absolute -top-40 -right-[1px] w-[1px] h-40 bg-gradient-to-b from-accent/50 to-transparent animate-beam" style="animation-duration: 10s; animation-delay: 2s;"></div>
-        </div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden">
-             <div class="absolute -top-40 -right-[1px] w-[1px] h-40 bg-gradient-to-b from-transparent via-primary/30 to-transparent animate-beam" style="animation-duration: 5s; animation-delay: 4s;"></div>
-        </div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
-        <div class="border-r border-white/[0.03] h-full hidden md:block relative overflow-hidden"></div>
+      <nav class="site-nav" id="site-nav" aria-label="Primary navigation" data-open="false">
+        <a href="#services">What we automate</a>
+        <a href="#process">How it works</a>
+        <a href="#faq">Questions</a>
+        <a class="button button-small" href="#start" data-primary-cta>Tell us what you want automated</a>
+      </nav>
     </div>
+  </header>
 
-    <!-- ========== UNIFIED HEADER - Tesla Minimalism + Cyberpunk ========== -->
-    <header class="fixed top-0 left-0 right-0 z-[100] bg-[#0a0a0a]/80 backdrop-blur-xl border-b border-white/5">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between h-16 md:h-20">
+  <main id="main-content">
+    <section class="hero" id="top">
+      <div class="hero-matrix" aria-hidden="true"></div>
+      <div class="shell hero-grid">
+        <div class="hero-copy">
+          <p class="hero-kicker"><span aria-hidden="true"></span> Custom automation for real businesses</p>
+          <h1>Tell us what your business needs to do. We’ll automate it.</h1>
+          <p class="hero-summary">Barrios A2I turns your idea into a connected system for marketing, sales, and customer follow-up—built around the tools and process you already use.</p>
+          <div class="hero-actions">
+            <a class="button" href="#start" data-primary-cta>Tell us what you want automated</a>
+            <a class="text-link" href="#example">See one example <span aria-hidden="true">↓</span></a>
+          </div>
+          <p class="hero-note">No preset software package. No platform switch required.</p>
+        </div>
 
-          <!-- Logo Section -->
-          <a href="/" class="flex items-center gap-3 group">
-            <div class="relative w-14 h-14 md:w-20 md:h-20 flex items-center justify-center">
-              <img src="/brand/barrios-a2i-shard-logo.png" alt="Barrios A2I" class="w-full h-full object-contain transition-all duration-300 group-hover:drop-shadow-[0_0_12px_rgba(0,206,209,0.4)]">
-              <span class="absolute -top-0.5 -right-0.5 w-2 h-2 bg-[#FFD700] rounded-full shadow-[0_0_6px_#FFD700]"></span>
-            </div>
-            <div class="flex flex-col">
-              <span class="text-[9px] md:text-[10px] text-[#00CED1] font-mono tracking-[0.2em] uppercase opacity-80">SYSTEM_ACTIVE</span>
-              <span class="text-base md:text-lg font-bold tracking-tight leading-tight">
-                <span class="text-[#fafafa]">BARRIOS</span>
-                <span class="text-[#00CED1] ml-1">A2I</span>
-              </span>
-            </div>
-          </a>
-
-          <!-- Desktop Navigation -->
-          <nav class="hidden md:flex items-center gap-1">
-            <a href="#pricing" class="px-3 py-2 text-[#a1a1aa] hover:text-[#fafafa] transition-colors font-mono text-xs tracking-wider">
-              PRICING
-            </a>
-            <a href="/nexus-personal" class="px-3 py-2 font-mono text-xs tracking-wider group">
-              <span class="text-[#00CED1]">NEXUS</span>
-              <span class="inline-block w-1.5 h-1.5 bg-[#00CED1] rounded-full ml-1.5 shadow-[0_0_6px_#00CED1]"></span>
-            </a>
-            <a href="/creative-director" class="px-3 py-2 text-[#a1a1aa] hover:text-[#fafafa] transition-colors font-mono text-xs tracking-wider">
-              COMMERCIAL_LAB
-            </a>
-            <a href="/founder" class="px-3 py-2 text-[#a1a1aa] hover:text-[#fafafa] transition-colors font-mono text-xs tracking-wider">
-              FOUNDER
-            </a>
-            <a href="/command-center" class="px-3 py-2 font-mono text-xs tracking-wider group">
-              <span class="text-[#FFD700]">COMMAND</span>
-              <span class="inline-block w-1.5 h-1.5 bg-[#FFD700] rounded-full ml-1.5 shadow-[0_0_6px_#FFD700]"></span>
-            </a>
-
-            <!-- Auth Button (Clerk-aware) -->
-            <div id="desktop-auth" class="flex items-center ml-4 pl-4 border-l border-white/10">
-              <!-- Signed Out State (default) -->
-              <a id="desktop-auth-signedout" href="/sign-in" class="px-4 py-2 bg-gradient-to-r from-[#00CED1] to-[#00CED1]/80 text-[#0a0a0a] font-semibold text-xs tracking-wider rounded-lg hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] transition-all duration-300">
-                Sign In / Sign Up
-              </a>
-              <!-- Signed In State (hidden by default, shown by Clerk) -->
-              <div id="desktop-auth-signedin" class="hidden flex items-center gap-3">
-                <a href="/dashboard" class="px-3 py-2 text-[#a1a1aa] hover:text-[#fafafa] transition-colors font-mono text-xs tracking-wider">
-                  DASHBOARD
-                </a>
-                <div id="clerk-user-button" class="w-9 h-9 rounded-full bg-[#00CED1]/20 border border-[#00CED1]/30 overflow-hidden cursor-pointer hover:shadow-[0_0_15px_rgba(0,206,209,0.4)] transition-all"></div>
-              </div>
-            </div>
-          </nav>
-
-          <!-- Mobile Menu Button -->
-          <button id="mobile-menu-btn" class="md:hidden p-2 text-[#a1a1aa] hover:text-[#fafafa] transition-colors" aria-label="Toggle menu">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
-            </svg>
-          </button>
+        <div class="signal-map" role="img" aria-label="An example automation routes a new lead through response, qualification, follow-up, and reporting">
+          <div class="signal-map-header">
+            <span>Example workflow</span>
+            <span class="signal-live"><i aria-hidden="true"></i> Ready</span>
+          </div>
+          <div class="signal-input">
+            <span class="signal-icon" aria-hidden="true">+</span>
+            <span>
+              <small>Your idea</small>
+              “Follow up with every new lead.”
+            </span>
+          </div>
+          <div class="signal-track" aria-hidden="true"><span></span></div>
+          <ol class="signal-steps">
+            <li>
+              <span>01</span>
+              <div><strong>Lead arrives</strong><small>Website, ad, email, or referral</small></div>
+              <b>Captured</b>
+            </li>
+            <li>
+              <span>02</span>
+              <div><strong>Response goes out</strong><small>Fast, personal, and on brand</small></div>
+              <b>Sent</b>
+            </li>
+            <li>
+              <span>03</span>
+              <div><strong>Next step is handled</strong><small>Qualify, schedule, nurture, or alert</small></div>
+              <b>Routed</b>
+            </li>
+          </ol>
+          <div class="signal-result">
+            <small>Business outcome</small>
+            <strong>Every lead gets a clear next step.</strong>
+          </div>
         </div>
       </div>
+    </section>
 
-      <!-- Mobile Navigation -->
-      <div id="mobile-nav" class="hidden md:hidden bg-[#0a0a0a]/95 backdrop-blur-xl border-t border-white/5">
-        <nav class="px-4 py-3 space-y-1">
-          <a href="#pricing" class="block py-2.5 px-3 text-[#a1a1aa] hover:text-[#fafafa] hover:bg-white/5 rounded-md font-mono text-sm transition-colors">
-            PRICING
-          </a>
-          <a href="/nexus-personal" class="block py-2.5 px-3 text-[#00CED1] hover:bg-[#00CED1]/10 rounded-md font-mono text-sm transition-colors">
-            NEXUS <span class="inline-block w-1.5 h-1.5 bg-[#00CED1] rounded-full ml-1 shadow-[0_0_6px_#00CED1]"></span>
-          </a>
-          <a href="/creative-director" class="block py-2.5 px-3 text-[#a1a1aa] hover:text-[#fafafa] hover:bg-white/5 rounded-md font-mono text-sm transition-colors">
-            COMMERCIAL_LAB
-          </a>
-          <a href="/founder" class="block py-2.5 px-3 text-[#a1a1aa] hover:text-[#fafafa] hover:bg-white/5 rounded-md font-mono text-sm transition-colors">
-            FOUNDER
-          </a>
-          <a href="/command-center" class="block py-2.5 px-3 text-[#FFD700] hover:bg-[#FFD700]/10 rounded-md font-mono text-sm transition-colors">
-            COMMAND <span class="inline-block w-1.5 h-1.5 bg-[#FFD700] rounded-full ml-1 shadow-[0_0_6px_#FFD700]"></span>
-          </a>
-
-          <!-- Mobile Auth Button (Clerk-aware) -->
-          <div id="mobile-auth" class="mt-4 pt-4 border-t border-white/10">
-            <!-- Signed Out State -->
-            <a id="mobile-auth-signedout" href="/sign-in" class="block py-2.5 px-3 bg-gradient-to-r from-[#00CED1] to-[#00CED1]/80 text-[#0a0a0a] font-semibold text-sm rounded-md text-center hover:shadow-[0_0_20px_rgba(0,206,209,0.4)] transition-all duration-300">
-              Sign In / Sign Up
-            </a>
-            <!-- Signed In State -->
-            <div id="mobile-auth-signedin" class="hidden space-y-2">
-              <a href="/dashboard" class="block py-2.5 px-3 text-[#00CED1] hover:bg-[#00CED1]/10 rounded-md font-mono text-sm transition-colors text-center">
-                DASHBOARD
-              </a>
-              <button id="mobile-signout-btn" class="w-full py-2.5 px-3 text-[#a1a1aa] hover:text-[#fafafa] hover:bg-white/5 rounded-md font-mono text-sm transition-colors">
-                Sign Out
-              </button>
-            </div>
+    <section class="section services" id="services" data-reveal>
+      <div class="shell">
+        <div class="section-heading split-heading">
+          <p class="section-marker">What we automate</p>
+          <div>
+            <h2>Automation that moves customers forward.</h2>
+            <p>We remove the repetitive work between a new opportunity and the next useful action.</p>
           </div>
-        </nav>
+        </div>
+
+        <div class="capability-list">
+          <article class="capability">
+            <h3>Lead capture and response</h3>
+            <p>Collect inquiries from your website, ads, inboxes, or forms and respond while the opportunity is still fresh.</p>
+            <span>Capture · reply · notify</span>
+          </article>
+          <article class="capability">
+            <h3>Follow-up and nurturing</h3>
+            <p>Keep conversations moving with useful, personalized follow-up instead of relying on memory and manual reminders.</p>
+            <span>Qualify · schedule · nurture</span>
+          </article>
+          <article class="capability">
+            <h3>Campaign operations</h3>
+            <p>Connect content, approvals, publishing, audience lists, and campaign handoffs into one dependable flow.</p>
+            <span>Plan · prepare · publish</span>
+          </article>
+          <article class="capability">
+            <h3>Customer communication</h3>
+            <p>Send confirmations, updates, reminders, review requests, and support routing at the right moment.</p>
+            <span>Confirm · update · retain</span>
+          </article>
+          <article class="capability">
+            <h3>Connected reporting</h3>
+            <p>Bring the important activity from your tools into a clear owner view without another manual spreadsheet routine.</p>
+            <span>Collect · organize · report</span>
+          </article>
+          <article class="capability capability-open">
+            <h3>Something specific to your business</h3>
+            <p>If you can describe the result you want, we can map the steps, choose the right tools, and design the automation.</p>
+            <a href="#start">Describe your idea</a>
+          </article>
+        </div>
       </div>
-    </header>
+    </section>
 
-    <!-- Header Spacer -->
-    <div class="h-16 md:h-20"></div>
-
-    <!-- Mobile Menu Script -->
-    <script>
-    (function() {
-      const btn = document.getElementById('mobile-menu-btn');
-      const nav = document.getElementById('mobile-nav');
-      if (btn && nav) {
-        btn.addEventListener('click', () => {
-          nav.classList.toggle('hidden');
-        });
-      }
-    })();
-    </script>
-
-    <!-- Clerk Auth State Script -->
-    <script>
-    (function() {
-      // Wait for Clerk to load
-      window.addEventListener('load', async function() {
-        // Wait a bit for Clerk SDK to initialize
-        let attempts = 0;
-        const maxAttempts = 20;
-
-        const initClerk = async () => {
-          if (typeof window.Clerk === 'undefined') {
-            attempts++;
-            if (attempts < maxAttempts) {
-              setTimeout(initClerk, 250);
-            }
-            return;
-          }
-
-          try {
-            await window.Clerk.load();
-
-            const user = window.Clerk.user;
-
-            if (user) {
-              // User is signed in - show signed in state
-              const desktopSignedOut = document.getElementById('desktop-auth-signedout');
-              const desktopSignedIn = document.getElementById('desktop-auth-signedin');
-              const mobileSignedOut = document.getElementById('mobile-auth-signedout');
-              const mobileSignedIn = document.getElementById('mobile-auth-signedin');
-              const userBtn = document.getElementById('clerk-user-button');
-
-              if (desktopSignedOut) desktopSignedOut.classList.add('hidden');
-              if (desktopSignedIn) desktopSignedIn.classList.remove('hidden');
-              if (mobileSignedOut) mobileSignedOut.classList.add('hidden');
-              if (mobileSignedIn) mobileSignedIn.classList.remove('hidden');
-
-              // Set user avatar
-              if (userBtn && user.imageUrl) {
-                userBtn.innerHTML = '<img src="' + user.imageUrl + '" alt="Profile" class="w-full h-full object-cover" />';
-                userBtn.addEventListener('click', () => {
-                  window.location.href = '/dashboard';
-                });
-              }
-
-              // Handle sign out
-              const signOutBtn = document.getElementById('mobile-signout-btn');
-              if (signOutBtn) {
-                signOutBtn.addEventListener('click', async () => {
-                  await window.Clerk.signOut();
-                  window.location.reload();
-                });
-              }
-            }
-          } catch (err) {
-            console.log('Clerk init:', err);
-          }
-        };
-
-        initClerk();
-      });
-    })();
-    </script>
-
-    <!-- Main Content -->
-    <main class="pt-16 md:pt-24 relative">
-      
-      <!-- HERO SECTION -->
-      <section class="flex flex-col lg:flex-row items-center w-full max-w-7xl mx-auto z-10 mt-24 mb-24 px-6 gap-16 relative" id="hero">
-
-        <!-- Hero Background: Data Highway -->
-        <div class="absolute inset-0 -z-10 overflow-hidden opacity-30">
-          <img src="assets/backgrounds/data-highway.png" alt="" class="absolute w-full h-full object-cover object-center" style="mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%); -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 70%);">
+    <section class="section example" id="example" data-reveal>
+      <div class="shell example-layout">
+        <div class="example-copy">
+          <p class="section-marker">One idea, fully mapped</p>
+          <h2>“I don’t want another lead to slip through.”</h2>
+          <p>That one sentence is enough to start. We turn it into a practical workflow with clear decisions, useful handoffs, and human control where it matters.</p>
+          <p class="example-callout">The technology stays behind the scenes. Your team gets a process that simply works.</p>
         </div>
 
-        <!-- Animated Grid Background -->
-        <div class="hero-grid -z-5"></div>
-
-        <!-- Floating Accent Element -->
-        <div class="floating-accent w-32 h-32 -top-8 -right-8 hidden lg:block"></div>
-
-        <!-- Left Side: Content -->
-        <div class="w-full lg:w-1/2 flex flex-col gap-10 z-20">
-
-            <!-- Manifesto (Call & Response) -->
-            <div class="font-sans font-medium text-sm md:text-base tracking-wide stagger-1">
-                <div class="text-white/50 uppercase tracking-widest text-xs mb-2 font-mono">[ SYSTEM_MANIFESTO ]</div>
-                <div class="text-white/60">This is not automation.</div>
-                <div class="text-primary drop-shadow-[0_0_8px_rgba(0,206,209,0.5)]">
-                    This is operational intelligence.
-                </div>
-            </div>
-
-            <!-- HEADLINE - FUTURISTIC DISPLAY FONT -->
-            <div class="stagger-2">
-                <h1 class="text-5xl md:text-6xl lg:text-7xl font-display font-bold tracking-tight leading-[0.95] text-white">
-                    Your Business.
-                    <br>
-                    <span class="relative inline-block mt-2">
-                        With a
-                        <span class="italic bg-clip-text text-transparent bg-gradient-to-r from-white via-primary to-white bg-[length:200%_100%] animate-shimmer"> Nervous System.</span>
-                        <!-- Animated Gradient Underline -->
-                        <div class="absolute bottom-1 left-0 h-[2px] w-full animated-gradient"></div>
-                    </span>
-                </h1>
-            </div>
-
-            <!-- Subhead -->
-            <p class="text-lg md:text-xl text-white/90 font-sans font-normal max-w-[48ch] leading-relaxed stagger-3">
-                Barrios A2I installs <span class="text-white font-medium">autonomous intelligence</span> that senses, decides, and acts across your entire operation—continuously.
-            </p>
-
-            <!-- Buttons -->
-            <div class="flex flex-wrap gap-4 stagger-4">
-                <a href="/intake.html" class="btn-cyber group relative px-8 py-4 bg-primary text-[#0a0a1e] text-sm font-bold font-mono rounded">
-                  <span class="relative z-10 flex items-center gap-2">
-                    BUILD_WORKFORCE <iconify-icon icon="lucide:arrow-right" class="group-hover:translate-x-1 transition-transform"></iconify-icon>
-                  </span>
-                </a>
-
-                <a href="#stack" class="px-8 py-4 border border-white/10 bg-white/5 text-white text-sm font-mono rounded hover:bg-white/10 transition-all flex items-center gap-2 backdrop-blur-md hover:border-primary/30 card-hover">
-                  <iconify-icon icon="lucide:terminal" class="text-white/50"></iconify-icon>
-                  VIEW_ARCHITECTURE
-                </a>
-            </div>
-        </div>
-
-        <!-- Right Side: Neural Nexus Visualization -->
-        <div class="w-full lg:w-1/2 relative z-20 flex justify-center lg:justify-end stagger-5">
-            <!-- Ambient Glow -->
-            <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120%] h-[120%] bg-primary/10 blur-[100px] -z-10 rounded-full pointer-events-none mix-blend-screen"></div>
-
-            <!-- Neural Nexus Container -->
-            <div class="relative w-full max-w-md group">
-                <!-- Enhanced Glow behind -->
-                <div class="absolute -inset-1 bg-gradient-to-r from-primary via-blue-600 to-primary opacity-20 blur-2xl group-hover:opacity-30 transition duration-1000 animate-pulse-glow"></div>
-
-                <div id="neural-container" class="relative h-[400px] rounded-lg overflow-hidden border border-white/10 bg-void/90 backdrop-blur-xl shadow-2xl transition-all duration-500 hover:border-primary/30 hover:shadow-[0_0_40px_rgba(0,206,209,0.15)]">
-                    <canvas id="neural-canvas" class="absolute inset-0 w-full h-full block"></canvas>
-
-                    <!-- UI Overlay - Status Badge -->
-                    <div class="absolute top-4 left-4 flex items-center gap-2 z-10 bg-white/5 backdrop-blur-md px-3 py-1.5 rounded-md border border-white/10">
-                        <div class="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_8px_rgba(0,206,209,0.6)]"></div>
-                        <span class="text-[10px] font-mono text-primary/90 uppercase tracking-wider">System_Active</span>
-                    </div>
-
-                    <!-- UI Overlay - Node Count -->
-                    <div class="absolute bottom-4 right-4 z-10 bg-white/5 backdrop-blur-md px-3 py-2 rounded-md border border-white/10">
-                        <div class="text-right">
-                            <div class="text-2xl font-bold text-primary font-mono leading-none">59</div>
-                            <div class="text-[10px] text-muted uppercase tracking-wider mt-1">Nodes</div>
-                        </div>
-                    </div>
-
-                    <!-- Scanline overlay -->
-                    <div class="absolute inset-0 bg-gradient-to-b from-primary/[0.03] via-transparent to-transparent pointer-events-none"></div>
-                    <div class="absolute inset-0 bg-[length:100%_4px] bg-gradient-to-b from-transparent via-white/[0.02] to-transparent pointer-events-none"></div>
-                </div>
-            </div>
-        </div>
-      </section>
-
-      <!-- ========== VIDEO SHOWCASE ========== -->
-      <section class="relative py-24 overflow-hidden" id="video-showcase">
-        <div class="max-w-5xl mx-auto px-6 relative z-10">
-          <!-- Header -->
-          <div class="text-center mb-12">
-            <div class="text-xs font-mono text-primary/80 uppercase tracking-[0.3em] mb-4">
-              [ SYSTEM_SHOWCASE ]
-            </div>
-            <h2 class="text-3xl md:text-4xl font-display font-bold mb-4">
-              <span class="text-white">See the Intelligence </span>
-              <span class="bg-gradient-to-r from-primary via-cyan-300 to-teal-400 bg-clip-text text-transparent italic">in Action</span>
-            </h2>
-            <p class="text-white/60 max-w-xl mx-auto">
-              Watch how our AI Sales System transforms your pipeline into an autonomous revenue engine.
-            </p>
+        <div class="workflow" aria-label="Example lead follow-up workflow">
+          <div class="workflow-rail" aria-hidden="true"></div>
+          <div class="workflow-step">
+            <span>1</span>
+            <div><strong>Lead received</strong><small>Website form or ad response</small></div>
           </div>
-
-          <!-- Video Container with Glassmorphism + Animated Border -->
-          <div class="relative group">
-            <!-- Animated gradient border (outer) -->
-            <div class="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-purple-500 to-primary bg-[length:200%_200%] animate-[gradient-border-spin_4s_ease-in-out_infinite] opacity-60 group-hover:opacity-100 transition-opacity"></div>
-
-            <!-- Glass container -->
-            <div class="relative bg-[#0a0a1e]/80 backdrop-blur-xl rounded-2xl border border-white/10 overflow-hidden">
-              <!-- Video wrapper -->
-              <div class="relative aspect-video">
-                <video
-                  id="showcase-video"
-                  class="w-full h-full object-cover"
-                  preload="metadata"
-                  playsinline
-                >
-                  <source src="assets/videos/AI_Sales_System_Logo_Animation.mp4" type="video/mp4">
-                </video>
-
-                <!-- Scanline overlay -->
-                <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-20">
-                  <div class="absolute inset-0 bg-[length:100%_4px] bg-gradient-to-b from-transparent via-white/5 to-transparent"></div>
-                </div>
-
-                <!-- Play button overlay -->
-                <div id="play-overlay" class="video-overlay-fade absolute inset-0 flex items-center justify-center bg-black/30 cursor-pointer transition-all duration-300 group-hover:bg-black/20">
-                  <button class="w-20 h-20 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center animate-[play-pulse_2s_ease-in-out_infinite] hover:bg-primary/30 transition-colors">
-                    <svg class="w-8 h-8 text-primary ml-1" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-
-              <!-- HUD corner accents -->
-              <div class="absolute top-3 left-3 w-8 h-8 border-l-2 border-t-2 border-primary/50"></div>
-              <div class="absolute top-3 right-3 w-8 h-8 border-r-2 border-t-2 border-primary/50"></div>
-              <div class="absolute bottom-3 left-3 w-8 h-8 border-l-2 border-b-2 border-primary/50"></div>
-              <div class="absolute bottom-3 right-3 w-8 h-8 border-r-2 border-b-2 border-primary/50"></div>
-            </div>
+          <div class="workflow-step">
+            <span>2</span>
+            <div><strong>Personal reply</strong><small>Questions answered immediately</small></div>
+          </div>
+          <div class="workflow-step">
+            <span>3</span>
+            <div><strong>Lead qualified</strong><small>Need, timing, and fit organized</small></div>
+          </div>
+          <div class="workflow-step">
+            <span>4</span>
+            <div><strong>Tools updated</strong><small>CRM, calendar, and owner alert</small></div>
+          </div>
+          <div class="workflow-step workflow-outcome">
+            <span>✓</span>
+            <div><strong>Follow-up continues</strong><small>Until the customer acts or opts out</small></div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
-      <!-- ========== LEGENDARY REASONING ENGINE v3.0 - ENGINE SHOWCASE ========== -->
-      <section class="relative py-24 overflow-hidden" id="engine-showcase">
-        <!-- Glow path cursor effect -->
-        <div class="glow-path" id="glow-path"></div>
-
-        <div class="max-w-6xl mx-auto px-6 relative z-10">
-          <div class="text-center mb-16">
-            <div class="text-xs font-mono text-primary/80 uppercase tracking-[0.3em] mb-4">[ FRONTIER_MODELS ]</div>
-            <h2 class="text-4xl md:text-5xl font-display font-bold mb-6">
-              <span class="bg-gradient-to-r from-primary via-cyan-300 to-teal-400 bg-clip-text text-transparent">Three Engines.</span>
-              <br>One Legendary System.
-            </h2>
-            <p class="text-white/60 max-w-2xl mx-auto">
-              Select your reasoning engine. Each model brings unique strengths to your creative strategy.
-            </p>
-          </div>
-
-          <!-- Engine Cards -->
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-            <!-- Gemini 3.0 Flash -->
-            <div class="engine-card group relative p-6 bg-void/80 border border-white/10 rounded-2xl cursor-pointer transition-all duration-300 hover:border-primary/50 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(0,206,209,0.1)]" data-engine="gemini_flash_30" onclick="selectHeroEngine('gemini_flash_30')">
-              <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-4xl">💎</span>
-                  <span class="px-3 py-1 bg-primary/20 text-primary rounded-full font-mono text-[10px]">FASTEST</span>
-                </div>
-                <h3 class="text-lg font-bold text-white mb-1">Gemini 3.0 Flash</h3>
-                <p class="text-xs text-white/50 mb-5">1M Context • 300ms • $0.005/query</p>
-                <!-- Benchmarks -->
-                <div class="space-y-3">
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Latency</span>
-                      <span class="text-primary font-mono">300ms</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full" style="width: 95%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Context</span>
-                      <span class="text-primary font-mono">1M tokens</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full" style="width: 100%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Cost Efficiency</span>
-                      <span class="text-primary font-mono">98%</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-primary to-cyan-400 rounded-full" style="width: 98%"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Claude 4.5 Sonnet -->
-            <div class="engine-card group relative p-6 bg-void/80 border border-amber-500/30 rounded-2xl cursor-pointer transition-all duration-300 hover:border-amber-500/60 hover:-translate-y-2 scale-105 shadow-[0_0_40px_rgba(217,119,6,0.2)]" data-engine="claude_sonnet_45" onclick="selectHeroEngine('claude_sonnet_45')">
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-full text-[10px] font-bold text-black uppercase tracking-wider">Recommended</div>
-              <div class="absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent rounded-2xl"></div>
-              <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-4xl">🧠</span>
-                  <span class="px-3 py-1 bg-amber-500/20 text-amber-400 rounded-full font-mono text-[10px]">SMARTEST</span>
-                </div>
-                <h3 class="text-lg font-bold text-white mb-1">Claude 4.5 Sonnet</h3>
-                <p class="text-xs text-white/50 mb-5">64K Output • Agentic • $0.10/query</p>
-                <!-- Benchmarks -->
-                <div class="space-y-3">
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Reasoning</span>
-                      <span class="text-amber-400 font-mono">A++</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style="width: 98%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Output</span>
-                      <span class="text-amber-400 font-mono">64K tokens</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style="width: 100%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Agentic</span>
-                      <span class="text-amber-400 font-mono">★★★</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full" style="width: 95%"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- ChatGPT 5.2 -->
-            <div class="engine-card group relative p-6 bg-void/80 border border-white/10 rounded-2xl cursor-pointer transition-all duration-300 hover:border-emerald-500/50 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.1)]" data-engine="gpt52" onclick="selectHeroEngine('gpt52')">
-              <div class="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
-              <div class="relative z-10">
-                <div class="flex items-center justify-between mb-4">
-                  <span class="text-4xl">⚡</span>
-                  <span class="px-3 py-1 bg-emerald-500/20 text-emerald-400 rounded-full font-mono text-[10px]">VERSATILE</span>
-                </div>
-                <h3 class="text-lg font-bold text-white mb-1">ChatGPT 5.2</h3>
-                <p class="text-xs text-white/50 mb-5">400K Context • SOTA Logic • $0.15/query</p>
-                <!-- Benchmarks -->
-                <div class="space-y-3">
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Knowledge</span>
-                      <span class="text-emerald-400 font-mono">SOTA</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full" style="width: 100%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Context</span>
-                      <span class="text-emerald-400 font-mono">400K tokens</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full" style="width: 40%"></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div class="flex justify-between text-xs mb-1">
-                      <span class="text-white/50">Tool Calling</span>
-                      <span class="text-emerald-400 font-mono">★★★</span>
-                    </div>
-                    <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-emerald-500 to-green-400 rounded-full" style="width: 100%"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- CTA Button -->
-          <div class="text-center">
-            <button onclick="initializeSession()" class="group inline-flex items-center gap-3 px-12 py-5 bg-gradient-to-r from-primary to-purple-600 text-black font-bold font-mono text-sm uppercase tracking-wider rounded-xl transition-all duration-300 hover:shadow-[0_0_60px_rgba(0,206,209,0.4)] hover:-translate-y-1 pulse-glow">
-              INITIALIZE_SESSION
-              <iconify-icon icon="lucide:arrow-right" class="group-hover:translate-x-1 transition-transform"></iconify-icon>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- ========== 6-AGENT PIPELINE VISUALIZATION ========== -->
-      <section class="relative py-24 overflow-hidden border-y border-white/5" id="pipeline">
-        <div class="max-w-7xl mx-auto px-6">
-          <div class="text-center mb-16">
-            <div class="text-xs font-mono text-primary/80 uppercase tracking-[0.3em] mb-4">[ RAGNAROK_PIPELINE ]</div>
-            <h2 class="text-3xl md:text-4xl font-serif font-semibold mb-4">
-              <span class="bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">6 Specialized Agents</span>
-            </h2>
-            <p class="text-white/60">Working in perfect orchestration to generate your commercial strategy</p>
-          </div>
-
-          <!-- Pipeline SVG -->
-          <div class="overflow-x-auto pb-4">
-            <svg viewBox="0 0 1200 300" class="w-full md:min-w-[800px]">
-              <defs>
-                <linearGradient id="flowGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style="stop-color:#00CED1;stop-opacity:0" />
-                  <stop offset="50%" style="stop-color:#00CED1;stop-opacity:1" />
-                  <stop offset="100%" style="stop-color:#8B5CF6;stop-opacity:0" />
-                </linearGradient>
-                <filter id="glow">
-                  <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
-                  <feMerge>
-                    <feMergeNode in="coloredBlur"/>
-                    <feMergeNode in="SourceGraphic"/>
-                  </feMerge>
-                </filter>
-              </defs>
-
-              <!-- Agent Nodes -->
-              <g class="agent-node" transform="translate(100, 150)">
-                <circle r="45" fill="rgba(0, 206, 209, 0.15)" stroke="#00CED1" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">📤</text>
-                <text y="80" text-anchor="middle" fill="#00CED1" font-size="11" font-family="monospace">UPLOAD</text>
-              </g>
-
-              <g class="agent-node" transform="translate(300, 150)">
-                <circle r="45" fill="rgba(217, 119, 6, 0.15)" stroke="#D97706" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">🔍</text>
-                <text y="80" text-anchor="middle" fill="#D97706" font-size="11" font-family="monospace">BRAND ANALYST</text>
-              </g>
-
-              <g class="agent-node" transform="translate(500, 150)">
-                <circle r="45" fill="rgba(16, 185, 129, 0.15)" stroke="#10B981" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">🎯</text>
-                <text y="80" text-anchor="middle" fill="#10B981" font-size="11" font-family="monospace">STRATEGIST</text>
-              </g>
-
-              <g class="agent-node" transform="translate(700, 150)">
-                <circle r="45" fill="rgba(139, 92, 246, 0.15)" stroke="#8B5CF6" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">✍️</text>
-                <text y="80" text-anchor="middle" fill="#8B5CF6" font-size="11" font-family="monospace">SCRIPTWRITER</text>
-              </g>
-
-              <g class="agent-node" transform="translate(900, 150)">
-                <circle r="45" fill="rgba(236, 72, 153, 0.15)" stroke="#EC4899" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">🎬</text>
-                <text y="80" text-anchor="middle" fill="#EC4899" font-size="11" font-family="monospace">DIRECTOR</text>
-              </g>
-
-              <g class="agent-node" transform="translate(1100, 150)">
-                <circle r="45" fill="rgba(0, 206, 209, 0.15)" stroke="#00CED1" stroke-width="2"/>
-                <text y="8" text-anchor="middle" fill="#fff" font-size="28">🎥</text>
-                <text y="80" text-anchor="middle" fill="#00CED1" font-size="11" font-family="monospace">RENDERER</text>
-              </g>
-
-              <!-- Flow Lines with Animation -->
-              <path d="M150 150 L250 150" stroke="url(#flowGradient)" stroke-width="3" filter="url(#glow)" stroke-dasharray="10 5">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur="2s" repeatCount="indefinite"/>
-              </path>
-              <path d="M350 150 L450 150" stroke="url(#flowGradient)" stroke-width="3" filter="url(#glow)" stroke-dasharray="10 5">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur="2s" repeatCount="indefinite" begin="0.3s"/>
-              </path>
-              <path d="M550 150 L650 150" stroke="url(#flowGradient)" stroke-width="3" filter="url(#glow)" stroke-dasharray="10 5">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur="2s" repeatCount="indefinite" begin="0.6s"/>
-              </path>
-              <path d="M750 150 L850 150" stroke="url(#flowGradient)" stroke-width="3" filter="url(#glow)" stroke-dasharray="10 5">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur="2s" repeatCount="indefinite" begin="0.9s"/>
-              </path>
-              <path d="M950 150 L1050 150" stroke="url(#flowGradient)" stroke-width="3" filter="url(#glow)" stroke-dasharray="10 5">
-                <animate attributeName="stroke-dashoffset" from="100" to="0" dur="2s" repeatCount="indefinite" begin="1.2s"/>
-              </path>
-            </svg>
-          </div>
-        </div>
-      </section>
-
-      <!-- Engine Selector Scripts -->
-      <script>
-        // Engine selection for Hero
-        function selectHeroEngine(engineId) {
-          localStorage.setItem('barrios_active_engine', engineId);
-          document.querySelectorAll('.engine-card').forEach(card => {
-            card.classList.remove('active', 'border-primary/50', 'border-amber-500/60', 'border-emerald-500/50');
-            if (card.dataset.engine === engineId) {
-              card.classList.add('active');
-              if (engineId === 'gemini_flash_30') card.classList.add('border-primary/50');
-              if (engineId === 'claude_sonnet_45') card.classList.add('border-amber-500/60');
-              if (engineId === 'gpt52') card.classList.add('border-emerald-500/50');
-            }
-          });
-        }
-
-        function initializeSession() {
-          const engine = localStorage.getItem('barrios_active_engine') || 'claude_sonnet_45';
-          if (window.GenesisSession) {
-            GenesisSession.init();
-            GenesisSession.setEngine(engine);
-          }
-          window.location.href = '/creative-director.html';
-        }
-
-        // Glow path cursor effect
-        document.addEventListener('mousemove', (e) => {
-          const glowPath = document.getElementById('glow-path');
-          if (glowPath) {
-            glowPath.style.background = 'radial-gradient(600px circle at ' + e.clientX + 'px ' + e.clientY + 'px, rgba(0, 206, 209, 0.08), transparent 40%)';
-          }
-        });
-
-        // Initialize default engine
-        document.addEventListener('DOMContentLoaded', () => {
-          const savedEngine = localStorage.getItem('barrios_active_engine');
-          if (savedEngine) {
-            selectHeroEngine(savedEngine);
-          } else {
-            selectHeroEngine('claude_sonnet_45');
-          }
-        });
-      </script>
-
-      <style>
-        .glow-path {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          transition: background 0.3s ease;
-        }
-        .engine-card.active {
-          box-shadow: 0 0 40px rgba(0, 206, 209, 0.2);
-        }
-        .pulse-glow {
-          animation: pulse-glow 2s ease-in-out infinite;
-        }
-        @keyframes pulse-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(0, 206, 209, 0.3); }
-          50% { box-shadow: 0 0 40px rgba(0, 206, 209, 0.6); }
-        }
-      </style>
-
-      <!-- INFINITE LOGO MARQUEE (TECH STACK) -->
-      <section class="w-full border-y border-white/[0.08] bg-black/[0.2] py-8 mb-0 relative overflow-hidden">
-          <div class="absolute inset-0 z-10 marquee-mask pointer-events-none"></div>
-          <div class="max-w-7xl mx-auto px-6 flex overflow-hidden">
-              <div class="flex gap-16 animate-marquee items-center min-w-full shrink-0">
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:openai-icon" width="20"></iconify-icon> [ GPT-4o ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:python" width="20"></iconify-icon> [ PYTHON_NATIVE ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:stripe" width="28"></iconify-icon> [ PAYMENTS ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:react" width="20"></iconify-icon> [ REACT ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="simple-icons:anthropic" width="20"></iconify-icon> [ ANTHROPIC ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:aws" width="28"></iconify-icon> [ INFRASTRUCTURE ]
-                  </div>
-                   <!-- Set 2 -->
-                   <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:openai-icon" width="20"></iconify-icon> [ GPT-4o ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:python" width="20"></iconify-icon> [ PYTHON_NATIVE ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:stripe" width="28"></iconify-icon> [ PAYMENTS ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:react" width="20"></iconify-icon> [ REACT ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="simple-icons:anthropic" width="20"></iconify-icon> [ ANTHROPIC ]
-                  </div>
-                  <div class="flex items-center gap-2 text-muted font-mono text-[11px] uppercase tracking-wider font-bold opacity-50 grayscale hover:grayscale-0 transition-all duration-300 hover:text-white">
-                      <iconify-icon icon="logos:aws" width="28"></iconify-icon> [ INFRASTRUCTURE ]
-                  </div>
-              </div>
-          </div>
-      </section>
-
-      <!-- ═══════════════════════════════════════════════════════════════════════ -->
-      <!-- LIVE AUTONOMY SIGNAL SECTION (NEW) -->
-      <!-- ═══════════════════════════════════════════════════════════════════════ -->
-      <section class="relative w-full py-32 px-6 lg:px-8 z-10">
-        <div class="max-w-5xl mx-auto relative">
-          
-          <!-- [ SECTION LABEL ] - Top Left -->
-          <div class="absolute -top-12 left-0 md:left-4 flex items-center gap-3 animate-on-scroll [animation:animationIn_0.6s_ease-out_both] animate">
-            <span class="relative flex h-2 w-2">
-              <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-              <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-            </span>
-            <span class="font-mono text-xs text-white/40 tracking-widest uppercase">
-              [ LIVE_SIGNAL ]
-            </span>
-          </div>
-
-          <!-- [ CENTERPIECE ] - The Dominant Glass Panel -->
-          <div class="relative rounded-3xl border border-white/10 bg-[#0B1220]/60xl overflow-hidden shadow-2xl animate-on-scroll [animation:animationIn_0.8s_ease-out_0.1s_both] animate">
-            
-            <!-- Subtle Scanline Background -->
-            <div class="absolute inset-0 bg-[linear-gradient(to_bottom,transparent_0%,rgba(0,206,209,0.03)_50%,transparent_100%)] opacity-20 pointer-events-none"></div>
-            
-            <div class="p-8 md:p-12 lg:p-16 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-              
-              <!-- LEFT: The Narrative -->
-              <div>
-                <h2 class="text-4xl md:text-5xl font-sans font-medium tracking-tight text-white leading-[1.1] mb-6">
-                  Your business is emitting signals.
-                  
-                  <span class="text-white/40">We turn them into </span>
-                  <span class="text-primary">decisions.</span>
-                </h2>
-                
-                <div class="flex items-center gap-3 text-white/50 font-mono text-xs md:text-sm tracking-wide">
-                  <iconify-icon icon="lucide:activity" width="16" class="text-primary"></iconify-icon>
-                  <span>NEURAL ACTIVITY DETECTED ACROSS SYSTEMS</span>
-                </div>
-              </div>
-
-              <!-- RIGHT: The Live Signal Rows (Diagnostics) -->
-              <div class="space-y-6">
-                
-                <!-- Row 1: Request Flow -->
-                <div class="group relative flex items-center justify-between p-4 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors animate-on-scroll [animation:animationIn_0.6s_ease-out_0.2s_both] animate">
-                  <!-- Label Side -->
-                  <div class="flex items-center gap-4">
-                    <div class="p-2 rounded bg-white/5 text-white/40">
-                      <iconify-icon icon="lucide:zap" width="16"></iconify-icon>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="text-[10px] text-white/30 font-mono tracking-widest mb-1">SIGNAL:</span>
-                      <span class="text-sm font-mono text-white/80 tracking-tight">REQUEST FLOW</span>
-                    </div>
-                  </div>
-
-                  <!-- Animated Connector (The "Live") -->
-                  <div class="flex-1 mx-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent signal-line"></div>
-
-                  <!-- Value Side -->
-                  <div class="stat-glow font-display font-bold text-xl text-white" data-animate-number data-value="230000" data-suffix="+">
-                    0
-                  </div>
-                </div>
-
-                <!-- Row 2: Accuracy (Highlighted) -->
-                <div class="group relative flex items-center justify-between p-4 rounded-lg border border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors glass-card animate-on-scroll [animation:animationIn_0.6s_ease-out_0.4s_both] animate">
-                  <!-- Label Side -->
-                  <div class="flex items-center gap-4">
-                    <div class="p-2 rounded bg-primary/10 text-primary">
-                      <iconify-icon icon="lucide:activity" width="16"></iconify-icon>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="text-[10px] text-primary/60 font-mono tracking-widest mb-1">SIGNAL:</span>
-                      <span class="text-sm font-mono text-white tracking-tight">DECISION ACCURACY</span>
-                    </div>
-                  </div>
-
-                  <!-- Animated Connector (The "Live" Part) -->
-                  <div class="flex-1 mx-4 h-px bg-gradient-to-r from-transparent via-primary/30 to-transparent animated-gradient"></div>
-
-                  <!-- Value Side -->
-                  <div class="stat-glow font-display font-bold text-xl text-primary drop-shadow-[0_0_12px_rgba(0,206,209,0.6)]" data-animate-number data-value="97" data-suffix=".5%">
-                    0
-                  </div>
-                </div>
-
-                <!-- Row 3: Cost Compression -->
-                <div class="group relative flex items-center justify-between p-4 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] transition-colors animate-on-scroll [animation:animationIn_0.6s_ease-out_0.6s_both] animate">
-                  <!-- Label Side -->
-                  <div class="flex items-center gap-4">
-                    <div class="p-2 rounded bg-white/5 text-white/40">
-                      <iconify-icon icon="lucide:trending-down" width="16"></iconify-icon>
-                    </div>
-                    <div class="flex flex-col">
-                      <span class="text-[10px] text-white/30 font-mono tracking-widest mb-1">SIGNAL:</span>
-                      <span class="text-sm font-mono text-white/80 tracking-tight">COST COMPRESSION</span>
-                    </div>
-                  </div>
-
-                  <!-- Animated Connector (The "Live" Part) -->
-                  <div class="flex-1 mx-4 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent signal-line signal-line-delay-2"></div>
-
-                  <!-- Value Side -->
-                  <div class="stat-glow font-display font-bold text-xl text-emerald-400" data-animate-number data-value="-70" data-suffix="%">
-                    0
-                  </div>
-                </div>
-
-              </div>
-            </div>
-
-            <!-- BOTTOM BAR: The Micro-Copy & CTA -->
-            <div class="border-t border-white/5 bg-black/20 p-6 md:px-12 flex flex-col md:flex-row justify-between items-center gap-4 text-center md:text-left">
-              <p class="font-serif italic text-white/60 text-sm md:text-base">
-                "Autonomy compounds. Manual effort decays."
-              </p>
-              
-              <button class="group flex items-center gap-2 text-xs font-mono text-white/40 hover:text-primary transition-colors tracking-widest uppercase">
-                View Signal Map
-                <iconify-icon icon="lucide:arrow-right" width="12" class="group-hover:translate-x-1 transition-transform"></iconify-icon>
-              </button>
-            </div>
-
-          </div>
-
-        </div>
-      </section>
-
-      <!-- Section Divider -->
-      <div class="section-divider"></div>
-
-            <!-- NEURAL LATTICE: INTELLIGENCE TOPOLOGY -->
-      <section class="relative py-24 md:py-32 overflow-hidden scroll-mt-36" id="stack">
-
-        <!-- Background: Deep Grid -->
-        <div class="absolute inset-0 bg-[linear-gradient(rgba(0,206,209,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,206,209,0.03)_1px,transparent_1px)] bg-[size:60px_60px] opacity-20 pointer-events-none"></div>
-        <div class="hidden md:block absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 blur-[150px] rounded-full pointer-events-none"></div>
-
-        <div class="relative max-w-7xl mx-auto px-6 z-10">
-
-          <!-- Header -->
-          <div class="text-center mb-16 md:mb-24">
-            <p class="text-primary text-xs font-mono uppercase tracking-[0.3em] mb-4 animate-pulse">
-              [ Neural_Topology ]
-            </p>
-            <h2 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white tracking-tight mb-4">
-              The Architecture of <span class="italic text-primary">Autonomy</span>.
-            </h2>
-            <p class="text-white/50 text-sm md:text-base uppercase tracking-widest font-mono">
-              // Modular intelligence nodes working in unison
-            </p>
-          </div>
-
-          <!-- LATTICE CONTAINER -->
-          <div class="relative flex flex-col items-center justify-center min-h-[700px] md:min-h-[650px] w-full">
-
-            <!-- VISUAL CONNECTORS (Desktop SVG Layer) -->
-            <svg class="hidden md:block absolute inset-0 w-full h-full pointer-events-none z-10" style="opacity: 0.4;">
-              <!-- Animated pulse lines -->
-              <defs>
-                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style="stop-color:#00c2ff;stop-opacity:0" />
-                  <stop offset="50%" style="stop-color:#00c2ff;stop-opacity:1" />
-                  <stop offset="100%" style="stop-color:#00c2ff;stop-opacity:0" />
-                </linearGradient>
-              </defs>
-              <!-- Top Left to Center -->
-              <line x1="18%" y1="18%" x2="50%" y2="50%" stroke="#00c2ff" stroke-width="1" stroke-dasharray="8,4" class="animate-dash" />
-              <!-- Top Right to Center -->
-              <line x1="82%" y1="18%" x2="50%" y2="50%" stroke="#00c2ff" stroke-width="1" stroke-dasharray="8,4" class="animate-dash" />
-              <!-- Bottom Left to Center -->
-              <line x1="18%" y1="82%" x2="50%" y2="50%" stroke="#00c2ff" stroke-width="1" stroke-dasharray="8,4" class="animate-dash" />
-              <!-- Bottom Right to Center -->
-              <line x1="82%" y1="82%" x2="50%" y2="50%" stroke="#fbbf24" stroke-width="1" stroke-dasharray="8,4" class="animate-dash" />
-
-              <!-- Data packet pulses traveling on lines -->
-              <circle r="3" fill="#00c2ff" class="animate-packet-tl">
-                <animateMotion dur="3s" repeatCount="indefinite" path="M 18 18 L 50 50" />
-              </circle>
-              <circle r="3" fill="#00c2ff" class="animate-packet-tr">
-                <animateMotion dur="3.5s" repeatCount="indefinite" path="M 82 18 L 50 50" />
-              </circle>
-              <circle r="3" fill="#00c2ff" class="animate-packet-bl">
-                <animateMotion dur="2.8s" repeatCount="indefinite" path="M 18 82 L 50 50" />
-              </circle>
-              <circle r="3" fill="#fbbf24" class="animate-packet-br">
-                <animateMotion dur="4s" repeatCount="indefinite" path="M 82 82 L 50 50" />
-              </circle>
-            </svg>
-
-            <!-- THE CORE: RAGNAROK BRAIN (Center) -->
-            <div class="relative z-20 w-64 h-64 md:w-72 md:h-72 lg:w-80 lg:h-80 flex items-center justify-center mb-8 md:mb-0">
-              <!-- Core Glows -->
-              <div class="absolute inset-0 bg-primary/10 blur-[80px] rounded-full animate-pulse-slow"></div>
-              <div class="absolute inset-[-10px] border border-primary/20 rounded-full"></div>
-              <div class="absolute inset-[-20px] border border-primary/10 rounded-full"></div>
-
-              <!-- The "Brain" Visual -->
-              <div class="relative w-full h-full bg-[#0b0d1a] border-2 border-primary/50 rounded-full flex flex-col items-center justify-center text-center p-6 shadow-[0_0_60px_rgba(0,206,209,0.2)] overflow-hidden group hover:border-primary hover:shadow-[0_0_80px_rgba(0,206,209,0.3)] transition-all duration-500">
-                <!-- Internal Texture -->
-                <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,206,209,0.15),transparent_70%)]"></div>
-
-                <!-- Video Background (optional) -->
-                <div class="absolute inset-0 overflow-hidden rounded-full opacity-30">
-                  <video autoplay loop muted playsinline class="w-full h-full object-cover scale-150">
-                    <source src="https://barrios-a2i-website-yvh6.vercel.app/video/ragnarok-brain.mp4" type="video/mp4">
-                  </video>
-                </div>
-
-                <h3 class="relative z-10 text-3xl md:text-4xl font-serif text-white mb-2 drop-shadow-lg">
-                  Ragnarok
-                </h3>
-                <div class="relative z-10 text-[10px] font-mono text-primary uppercase tracking-[0.2em] mb-4">
-                  [ Core_Orchestrator ]
-                </div>
-                <div class="relative z-10 flex gap-4 text-[10px] font-mono text-white/60">
-                  <span class="border border-white/10 px-2 py-1 bg-black/40">59 AGENTS</span>
-                  <span class="border border-white/10 px-2 py-1 bg-black/40">∞ MEMORY</span>
-                </div>
-
-                <!-- Spinning dashed ring -->
-                <div class="absolute inset-2 border-2 border-dashed border-primary/30 rounded-full animate-spin-slow pointer-events-none"></div>
-              </div>
-            </div>
-
-            <!-- SATELLITE NODES -->
-            <!-- Mobile: Stacked below | Desktop: Positioned at corners -->
-
-            <!-- TOP LEFT: Marketing Overlord -->
-            <div class="node-card w-full md:w-72 lg:w-80 md:absolute md:top-0 md:left-0 lg:left-8 z-30 my-3 md:my-0 group">
-              <div class="relative bg-[#0b0d1a]/95 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:border-primary/50 hover:shadow-[0_0_30px_rgba(0,206,209,0.15)] transition-all duration-300 hover:scale-[1.02]">
-                <!-- Corner dot -->
-                <div class="absolute top-3 right-3">
-                  <div class="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(0,206,209,0.8)]"></div>
-                </div>
-                <h4 class="text-xl font-serif text-white mb-1 group-hover:text-primary transition-colors">Marketing Overlord</h4>
-                <div class="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-3">/// CAMPAIGN_ORCHESTRATOR</div>
-                <p class="text-sm text-white/50 leading-relaxed">Autonomous campaign management & copy generation across all channels.</p>
-                <div class="mt-4 text-[10px] font-mono text-primary/70 border border-primary/20 inline-block px-2 py-1 bg-primary/5">[ $199/MO ]</div>
-              </div>
-            </div>
-
-            <!-- TOP RIGHT: Commercial Lab -->
-            <a href="/creative-director" class="node-card w-full md:w-72 lg:w-80 md:absolute md:top-0 md:right-0 lg:right-8 z-30 my-3 md:my-0 group block">
-              <div class="relative bg-[#0b0d1a]/95 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:border-brand-gold/50 hover:shadow-[0_0_30px_rgba(255,215,0,0.15)] transition-all duration-300 hover:scale-[1.02]">
-                <div class="absolute top-3 right-3">
-                  <div class="w-2 h-2 bg-brand-gold rounded-full shadow-[0_0_8px_rgba(255,215,0,0.8)] animate-pulse"></div>
-                </div>
-                <h4 class="text-xl font-serif text-white mb-1 group-hover:text-brand-gold transition-colors">Commercial_Lab</h4>
-                <div class="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-3">/// AI_AD_STUDIO</div>
-                <p class="text-sm text-white/50 leading-relaxed">Token-based AI commercial generation. Full 64-second ads from text.</p>
-                <div class="mt-4 text-[10px] font-mono text-brand-gold/70 border border-brand-gold/20 inline-block px-2 py-1 bg-brand-gold/5">[ FROM $299 ]</div>
-              </div>
-            </a>
-
-            <!-- BOTTOM LEFT: Cinesite Autopilot -->
-            <div class="node-card w-full md:w-72 lg:w-80 md:absolute md:bottom-0 md:left-0 lg:left-8 z-30 my-3 md:my-0 group">
-              <div class="relative bg-[#0b0d1a]/95 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:border-green-500/50 hover:shadow-[0_0_30px_rgba(34,197,94,0.15)] transition-all duration-300 hover:scale-[1.02]">
-                <div class="absolute top-3 right-3">
-                  <div class="w-2 h-2 bg-green-500 rounded-full shadow-[0_0_8px_rgba(34,197,94,0.8)]"></div>
-                </div>
-                <h4 class="text-xl font-serif text-white mb-1 group-hover:text-green-400 transition-colors">Cinesite Autopilot</h4>
-                <div class="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-3">/// CONVERSION_SURFACE</div>
-                <p class="text-sm text-white/50 leading-relaxed">Self-optimizing landing pages that A/B test themselves in real-time.</p>
-                <div class="mt-4 text-[10px] font-mono text-green-400/70 border border-green-500/20 inline-block px-2 py-1 bg-green-500/5">[ $1,500 ]</div>
-              </div>
-            </div>
-
-            <!-- BOTTOM RIGHT: Lingua Node (Beta) -->
-            <div class="node-card w-full md:w-72 lg:w-80 md:absolute md:bottom-0 md:right-0 lg:right-8 z-30 my-3 md:my-0 group">
-              <div class="relative bg-[#0b0d1a]/95 backdrop-blur-md border border-white/10 rounded-xl p-6 hover:border-accent/50 hover:shadow-[0_0_30px_rgba(251,191,36,0.15)] transition-all duration-300 hover:scale-[1.02]">
-                <!-- Beta badge -->
-                <span class="absolute -top-3 left-4 bg-accent/20 border border-accent/50 text-accent text-[9px] font-bold uppercase px-2 py-0.5 rounded-full shadow-[0_0_10px_rgba(251,191,36,0.3)]">Beta_Node</span>
-                <div class="absolute top-3 right-3">
-                  <div class="w-2 h-2 bg-accent rounded-full shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-pulse"></div>
-                </div>
-                <h4 class="text-xl font-serif text-white mb-1 group-hover:text-accent transition-colors">Lingua Node</h4>
-                <div class="text-[10px] font-mono text-white/40 uppercase tracking-wider mb-3">/// LINGUISTIC_DECODE</div>
-                <p class="text-sm text-white/50 leading-relaxed">Experimental companion node. Inter-species translation protocols.</p>
-                <div class="mt-4 text-[10px] font-mono text-accent/70 border border-accent/20 inline-block px-2 py-1 bg-accent/5">[ BETA ]</div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- Section Divider -->
-      <div class="section-divider"></div>
-
-      <!-- OPERATIONAL VELOCITY SECTION -->
-      <section class="w-full max-w-7xl mx-auto px-6 mb-32 relative z-20 scroll-mt-36" id="velocity">
-
-        <!-- Section Header - Enhanced Command Center Style -->
-        <div class="flex flex-col gap-3 mb-12 [animation:animationIn_0.8s_ease-out_0.2s_both] animate-on-scroll animate">
-          <div class="flex items-center gap-3">
-            <span class="relative flex h-3 w-3">
-              <span class="absolute inline-flex h-full w-full rounded-full bg-green-500 status-live"></span>
-            </span>
-            <span class="text-[11px] font-mono text-green-400 uppercase tracking-[0.2em] font-bold">[ LIVE_METRICS ]</span>
-            <span class="text-[9px] font-mono text-white/30 uppercase tracking-wider hidden md:inline">// SYSTEM OPERATIONAL</span>
-          </div>
-          <h2 class="text-4xl md:text-6xl font-display font-bold tracking-tighter">
-            <span class="text-green-400 drop-shadow-[0_0_25px_rgba(34,197,94,0.6)]">Operational</span>
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-primary via-cyan-300 to-primary bg-[length:200%_100%] animate-shimmer">Velocity</span>
-          </h2>
-          <p class="text-white/60 font-sans text-sm md:text-base border-l-2 border-green-500/50 pl-4 mt-2 max-w-xl">Real-time performance metrics of your autonomous digital workforce.</p>
+    <section class="section process" id="process" data-reveal>
+      <div class="shell">
+        <div class="section-heading">
+          <p class="section-marker">How it works</p>
+          <h2>From a rough idea to a working system.</h2>
+          <p>You do not need to know which apps, models, or integrations are required. That is our job.</p>
         </div>
 
-        <!-- Main HUD Card Container -->
-        <div class="hud-card rounded-[20px] border border-green-500/20 hover:border-green-500/40 p-0 overflow-hidden relative group corner-accent transition-all duration-500">
+        <ol class="process-list">
+          <li>
+            <span>01</span>
+            <h3>Tell us the outcome</h3>
+            <p>Describe what is slow, repetitive, or getting missed in plain language.</p>
+          </li>
+          <li>
+            <span>02</span>
+            <h3>We map the workflow</h3>
+            <p>We identify the triggers, decisions, tools, information, and human checkpoints.</p>
+          </li>
+          <li>
+            <span>03</span>
+            <h3>We build and connect it</h3>
+            <p>We assemble the system around your current operation and test each path.</p>
+          </li>
+          <li>
+            <span>04</span>
+            <h3>We launch and improve it</h3>
+            <p>We put it into use, watch the real workflow, and refine what needs attention.</p>
+          </li>
+        </ol>
+      </div>
+    </section>
 
-          <!-- Animated Node Grid Background -->
-          <div class="ops-grid-bg rounded-[20px]"></div>
+    <section class="section why" id="why" data-reveal>
+      <div class="shell why-layout">
+        <div class="why-statement">
+          <p class="section-marker">Why Barrios A2I</p>
+          <h2>Built around your process—not someone else’s template.</h2>
+        </div>
+        <div class="why-points">
+          <article>
+            <h3>Start with the business problem</h3>
+            <p>We choose the technology after we understand what the workflow needs to accomplish.</p>
+          </article>
+          <article>
+            <h3>Connect what you already use</h3>
+            <p>Your forms, inboxes, calendar, CRM, spreadsheets, and internal tools can work as one system.</p>
+          </article>
+          <article>
+            <h3>Keep people in control</h3>
+            <p>Approvals, exceptions, and sensitive decisions stay visible and reviewable.</p>
+          </article>
+          <article>
+            <h3>Improve after launch</h3>
+            <p>Real usage shows where the workflow should become faster, clearer, or more useful.</p>
+          </article>
+        </div>
+      </div>
+    </section>
 
-          <!-- Data Streams -->
-          <div class="data-stream-bg rounded-[20px]">
-            <div class="data-stream-extra" style="left: 45%; animation-delay: 2s;"></div>
-            <div class="data-stream-extra" style="left: 75%; animation-delay: 3.5s;"></div>
-          </div>
-
-          <!-- Radial hover glow -->
-          <div class="absolute inset-0 bg-[radial-gradient(600px_at_50%_30%,rgba(34,197,94,0.1),transparent)] opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-5"></div>
-
-          <!-- Containment Grid Overlay -->
-          <div class="containment-grid absolute inset-0 pointer-events-none z-5"></div>
-
-          <!-- Scanline overlay - Enhanced -->
-          <div class="absolute inset-0 pointer-events-none z-10 opacity-20 scanlines-animated"></div>
-
-          <!-- Inner Content -->
-          <div class="relative z-20 p-8 md:p-12">
-
-            <!-- Live Status Bar -->
-            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8 pb-6 border-b border-white/10">
-              <div class="flex items-center gap-4">
-                <div class="flex items-center gap-2">
-                  <span class="relative flex h-2.5 w-2.5">
-                    <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
-                    <span class="relative inline-flex h-2.5 w-2.5 rounded-full bg-green-500"></span>
-                  </span>
-                  <span class="text-green-400 text-xs font-mono uppercase tracking-widest">Realtime</span>
-                </div>
-                <span class="text-white/30 hidden md:inline">|</span>
-                <span class="text-xs font-mono text-white/50 uppercase tracking-wider hidden md:inline">Neural pathways optimized</span>
-              </div>
-
-              <!-- Terminal-Style Ticker -->
-              <div class="terminal-ticker overflow-hidden flex-1 max-w-xl hidden md:flex items-center">
-                <div class="flex whitespace-nowrap gap-6 text-xs font-mono text-primary animate-marquee">
-                  <span><span class="text-white/40">[14:23:07]</span> LEAD_QUALIFIED: <span class="text-green-400">$18.4K</span> OPPORTUNITY</span>
-                  <span><span class="text-white/40">[14:23:12]</span> SUPPORT_RESOLVED: <span class="text-green-400">420ms</span></span>
-                  <span><span class="text-white/40">[14:23:18]</span> AD_SPEND_OPTIMIZED: <span class="text-green-400">-23% CPA</span></span>
-                  <span><span class="text-white/40">[14:23:24]</span> CHURN_RISK: <span class="text-amber-400">ROUTED TO SUCCESS</span></span>
-                  <span><span class="text-white/40">[14:23:31]</span> LEAD_QUALIFIED: <span class="text-green-400">$18.4K</span> OPPORTUNITY</span>
-                  <span><span class="text-white/40">[14:23:38]</span> SUPPORT_RESOLVED: <span class="text-green-400">420ms</span></span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Metrics Grid - Enhanced with Sparklines and Animated Borders -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-
-              <!-- Metric 1: Monthly Decisions -->
-              <div class="metrics-card-glow metrics-card-stagger group/card relative flex flex-col p-6 rounded-xl glass-card card-hover animate-on-scroll">
-                <div class="flex justify-between items-start mb-1">
-                  <div class="metric-value text-4xl md:text-5xl font-display font-bold text-white group-hover/card:text-primary transition-colors drop-shadow-[0_0_20px_rgba(0,206,209,0.2)]" data-animate-number data-value="230" data-suffix="k+">0</div>
-                  <div class="sparkline">
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                  </div>
-                </div>
-                <p class="mt-2 text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-primary/80">Monthly Decisions</p>
-                <p class="mt-2 text-xs text-white/40 leading-relaxed">High-volume actions across sales, support, and ops.</p>
-                <div class="absolute -bottom-2 -right-2 h-20 w-20 rounded-full bg-primary/15 blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
-              </div>
-
-              <!-- Metric 2: Autonomous Accuracy -->
-              <div class="metrics-card-glow metrics-card-stagger group/card relative flex flex-col p-6 rounded-xl glass-card card-hover animate-on-scroll">
-                <div class="flex justify-between items-start mb-1">
-                  <div class="metric-value text-4xl md:text-5xl font-display font-bold text-white group-hover/card:text-amber-400 transition-colors drop-shadow-[0_0_20px_rgba(245,158,11,0.2)]">97.5%</div>
-                  <div class="sparkline">
-                    <div class="sparkline-bar sparkline-bar-gold"></div>
-                    <div class="sparkline-bar sparkline-bar-gold"></div>
-                    <div class="sparkline-bar sparkline-bar-gold"></div>
-                    <div class="sparkline-bar sparkline-bar-gold"></div>
-                    <div class="sparkline-bar sparkline-bar-gold"></div>
-                  </div>
-                </div>
-                <p class="mt-2 text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-amber-500/80">Autonomous Accuracy</p>
-                <p class="mt-2 text-xs text-white/40 leading-relaxed">Tasks completed correctly without human intervention.</p>
-                <div class="absolute -bottom-2 -right-2 h-20 w-20 rounded-full bg-amber-500/15 blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
-              </div>
-
-              <!-- Metric 3: Signal-to-Action -->
-              <div class="metrics-card-glow metrics-card-stagger group/card relative flex flex-col p-6 rounded-xl glass-card card-hover animate-on-scroll">
-                <div class="flex justify-between items-start mb-1">
-                  <div class="metric-value text-4xl md:text-5xl font-display font-bold text-white group-hover/card:text-green-400 transition-colors drop-shadow-[0_0_20px_rgba(34,197,94,0.2)]">&lt;2s</div>
-                  <div class="sparkline">
-                    <div class="sparkline-bar sparkline-bar-green"></div>
-                    <div class="sparkline-bar sparkline-bar-green"></div>
-                    <div class="sparkline-bar sparkline-bar-green"></div>
-                    <div class="sparkline-bar sparkline-bar-green"></div>
-                    <div class="sparkline-bar sparkline-bar-green"></div>
-                  </div>
-                </div>
-                <p class="mt-2 text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-green-500/80">Signal-to-Action</p>
-                <p class="mt-2 text-xs text-white/40 leading-relaxed">Average time from business signal to executed response.</p>
-                <div class="absolute -bottom-2 -right-2 h-20 w-20 rounded-full bg-green-500/15 blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
-              </div>
-
-              <!-- Metric 4: Active AI Agents -->
-              <div class="metrics-card-glow metrics-card-stagger group/card relative flex flex-col p-6 rounded-xl glass-card card-hover animate-on-scroll">
-                <div class="flex justify-between items-start mb-1">
-                  <div class="metric-value text-4xl md:text-5xl font-display font-bold text-white group-hover/card:text-cyan-300 transition-colors drop-shadow-[0_0_20px_rgba(0,206,209,0.15)]" data-animate-number data-value="59" data-suffix="">0</div>
-                  <div class="sparkline">
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                    <div class="sparkline-bar"></div>
-                  </div>
-                </div>
-                <p class="mt-2 text-[10px] font-bold font-mono uppercase tracking-[0.2em] text-white/60">Active AI Agents</p>
-                <p class="mt-2 text-xs text-white/40 leading-relaxed">Specialized workers running in parallel in your cloud.</p>
-                <div class="absolute -bottom-2 -right-2 h-20 w-20 rounded-full bg-cyan-500/10 blur-2xl opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"></div>
-              </div>
-
-            </div>
-
-            <!-- Footer Explanation - Enhanced Pull Quote Style -->
-            <div class="mt-12 pt-8 border-t border-white/10">
-              <div class="relative pl-6 border-l-2 border-primary/40 max-w-2xl">
-                <p class="text-white/50 font-sans text-base leading-relaxed">
-                  Stop staring at static dashboards. The Barrios A2I nervous system is always on—<span class="text-white font-medium">sensing data, making micro-decisions, and executing workflows.</span>
-                </p>
-                <p class="text-white/30 text-sm mt-3 font-mono">While your competitors analyze reports, your system has already acted.</p>
-              </div>
-
-              <!-- Tagline with Dramatic Glow -->
-              <div class="mt-10 flex items-center justify-center gap-6">
-                <div class="h-px flex-1 max-w-24 bg-gradient-to-r from-transparent via-primary/30 to-primary/60"></div>
-                <span class="tagline-pulse text-sm md:text-base font-mono uppercase tracking-[0.4em] text-primary font-bold">Intelligence that never sleeps</span>
-                <div class="h-px flex-1 max-w-24 bg-gradient-to-l from-transparent via-primary/30 to-primary/60"></div>
-              </div>
-            </div>
-
+    <section class="section start" id="start" data-reveal>
+      <div class="shell start-layout">
+        <div class="start-copy">
+          <p class="section-marker">Start with your idea</p>
+          <h2>What should happen automatically?</h2>
+          <p>Tell us the outcome you want or the repetitive work you want gone. A rough description is enough.</p>
+          <div class="direct-contact">
+            <span>Prefer email?</span>
+            <a href="mailto:alienation2innovation@gmail.com">alienation2innovation@gmail.com</a>
           </div>
         </div>
-      </section>
 
-<!-- REALITY GAP SECTION (System Diagnostics) -->
-      <section class="relative py-24 overflow-hidden scroll-mt-36" id="architecture">
-
-        <!-- Background Grid & Ambience -->
-        <div class="absolute inset-0 bg-[linear-gradient(to_right,#ffffff05_1px,transparent_1px),linear-gradient(to_bottom,#ffffff05_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none"></div>
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-primary/10 blur-[120px] rounded-full pointer-events-none"></div>
-
-        <div class="relative max-w-6xl mx-auto px-6">
-
-          <!-- Header -->
-          <div class="text-center mb-16">
-            <p class="text-xs font-mono uppercase tracking-[0.3em] text-primary mb-3 animate-pulse">
-              [ System_Diagnostics ]
-            </p>
-            <h2 class="text-4xl md:text-5xl font-display font-bold text-white tracking-tight">
-              The <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-200 to-primary">Honest Truth</span>.
-            </h2>
-            <p class="mt-4 text-white/60 max-w-xl mx-auto font-sans">
-              Humans sleep. Humans make mistakes. The Barrios A2I system does neither.
-            </p>
+        <form class="idea-form" id="automation-form" action="https://formspree.io/f/mdanjawv" method="post">
+          <input type="hidden" name="_subject" value="New Barrios A2I automation idea">
+          <div class="form-grid">
+            <div class="field">
+              <label for="lead-name">Your name</label>
+              <input id="lead-name" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="lead-email">Work email</label>
+              <input id="lead-email" name="email" type="email" autocomplete="email" required>
+            </div>
           </div>
-
-          <!-- The Comparison Grid -->
-          <div class="grid grid-cols-1 md:grid-cols-12 gap-4 md:gap-0 items-start">
-
-            <!-- LABELS COLUMN (Desktop) -->
-            <div class="hidden md:flex md:col-span-3 flex-col gap-0 pr-8 text-right pt-14">
-              <div class="h-20 flex items-center justify-end">
-                <span class="text-xs font-bold uppercase tracking-[0.2em] text-white/40 font-mono">Monthly Cost</span>
-              </div>
-              <div class="h-20 flex items-center justify-end">
-                <span class="text-xs font-bold uppercase tracking-[0.2em] text-white/40 font-mono">Turnaround</span>
-              </div>
-              <div class="h-20 flex items-center justify-end">
-                <span class="text-xs font-bold uppercase tracking-[0.2em] text-white/40 font-mono">Context Window</span>
-              </div>
-              <div class="h-20 flex items-center justify-end">
-                <span class="text-xs font-bold uppercase tracking-[0.2em] text-white/40 font-mono">Availability</span>
-              </div>
-            </div>
-
-            <!-- LEGACY COLUMNS (The "Old Way" - DEFEATED) -->
-            <div class="md:col-span-5 relative defeated-column">
-              <!-- Vertical divider -->
-              <div class="absolute top-0 bottom-0 right-0 w-px bg-gradient-to-b from-transparent via-red-500/20 to-transparent hidden md:block"></div>
-
-              <!-- Header Labels -->
-              <div class="grid grid-cols-2 gap-4 mb-4">
-                <div class="text-center text-red-400/40 font-mono text-[10px] uppercase tracking-widest">Traditional Agency</div>
-                <div class="text-center text-red-400/40 font-mono text-[10px] uppercase tracking-widest">Freelancer</div>
-              </div>
-
-              <!-- Data Rows -->
-              <div class="grid grid-cols-2 gap-4">
-                <!-- Row 1: Cost -->
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 0.3s">$2,000+</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Monthly</span>
-                </div>
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 0.5s">$3,500+</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Monthly</span>
-                </div>
-
-                <!-- Row 2: Time -->
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 0.7s">5-7 Days</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Turnaround</span>
-                </div>
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 0.9s">48 Hours</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Turnaround</span>
-                </div>
-
-                <!-- Row 3: Context -->
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 1.1s">Fragmented</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Context</span>
-                </div>
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 1.3s">Zero</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Context</span>
-                </div>
-
-                <!-- Row 4: Availability -->
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 1.5s">9-5 EST</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Hours</span>
-                </div>
-                <div class="h-20 flex flex-col items-center justify-center rounded-lg bg-red-500/[0.02] border border-red-500/10">
-                  <span class="defeated-value font-mono text-sm strike-animate" style="--strike-delay: 1.7s">Irregular</span>
-                  <span class="text-[9px] text-red-400/20 uppercase mt-1 md:hidden">Hours</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- THE BARRIOS COLUMN (The "Winner" - VICTORY) -->
-            <div class="md:col-span-4 relative mt-8 md:mt-0 md:pl-6">
-              <!-- Glowing Backdrop -->
-              <div class="absolute -inset-4 bg-primary/25 blur-2xl rounded-xl opacity-60"></div>
-
-              <div class="victory-column relative bg-[#0a0a1e]/90 border-2 border-primary/60 rounded-xl p-6 shadow-[0_0_60px_rgba(0,206,209,0.2)] backdrop-blur-xl overflow-hidden">
-
-                <!-- Scanline Effect -->
-                <div class="absolute inset-0 pointer-events-none overflow-hidden">
-                  <div class="absolute inset-0 bg-gradient-to-b from-transparent via-primary/5 to-transparent h-20 w-full animate-scan"></div>
-                </div>
-
-                <!-- Header -->
-                <div class="text-center mb-6 border-b border-primary/40 pb-4 relative z-10">
-                  <h3 class="text-xl font-display font-bold text-white tracking-tight">Barrios A2I</h3>
-                  <div class="system-active-badge inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full border border-primary/40 bg-primary/10">
-                    <span class="relative flex h-2.5 w-2.5">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-primary shadow-[0_0_8px_rgba(0,206,209,0.8)]"></span>
-                    </span>
-                    <span class="text-[10px] font-mono text-primary uppercase tracking-[0.15em] font-bold">System Active</span>
-                  </div>
-                </div>
-
-                <!-- Values with Animated Entry -->
-                <div class="flex flex-col gap-6 relative z-10">
-                  <!-- Cost -->
-                  <div class="h-20 flex flex-col items-center justify-center">
-                    <span class="stat-animate text-3xl md:text-4xl font-display font-bold text-primary drop-shadow-[0_0_20px_rgba(0,206,209,0.6)]" style="--stat-delay: 0.4s">$199</span>
-                    <span class="text-[9px] text-primary/60 uppercase tracking-wider mt-1 font-mono font-bold">Monthly Cost</span>
-                  </div>
-                  <!-- Time -->
-                  <div class="h-20 flex flex-col items-center justify-center">
-                    <span class="stat-animate text-3xl md:text-4xl font-display font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" style="--stat-delay: 0.6s">&lt; 2s</span>
-                    <span class="text-[9px] text-primary/60 uppercase tracking-wider mt-1 font-mono font-bold">Turnaround</span>
-                  </div>
-                  <!-- Context -->
-                  <div class="h-20 flex flex-col items-center justify-center">
-                    <span class="stat-animate text-3xl md:text-4xl font-display font-bold text-accent drop-shadow-[0_0_15px_rgba(245,158,11,0.4)]" style="--stat-delay: 0.8s">12TB</span>
-                    <span class="text-[9px] text-primary/60 uppercase tracking-wider mt-1 font-mono font-bold">Context Window</span>
-                  </div>
-                  <!-- Availability -->
-                  <div class="h-20 flex flex-col items-center justify-center">
-                    <span class="stat-animate text-3xl md:text-4xl font-display font-bold text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]" style="--stat-delay: 1.0s">24/7/365</span>
-                    <span class="text-[9px] text-primary/60 uppercase tracking-wider mt-1 font-mono font-bold">Availability</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
+          <div class="field">
+            <label for="lead-company">Business name</label>
+            <input id="lead-company" name="company" type="text" autocomplete="organization" required>
           </div>
+          <div class="field">
+            <label for="automation-idea">What do you want to happen automatically?</label>
+            <textarea id="automation-idea" name="automationIdea" rows="5" required placeholder="For example: Every new lead should receive a personal reply, answer a few questions, and book the right appointment."></textarea>
+          </div>
+          <button class="button form-button" type="submit">Send my automation idea</button>
+          <p class="form-note">Your information is used only to discuss this request.</p>
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+    </section>
+
+    <section class="section faq" id="faq" data-reveal>
+      <div class="shell faq-layout">
+        <div>
+          <p class="section-marker">Questions</p>
+          <h2>What business owners usually ask first.</h2>
         </div>
-      </section>
-
-      <!-- ═══════════════════════════════════════════════════════════════════════ -->
-      <!-- GO LIVE IN 5 DAYS - MISSION BRIEFING TIMELINE -->
-      <!-- ═══════════════════════════════════════════════════════════════════════ -->
-      <section class="relative py-24 overflow-hidden" id="timeline">
-
-        <!-- Background Grid -->
-        <div class="absolute inset-0 bg-[linear-gradient(rgba(0,206,209,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,206,209,0.02)_1px,transparent_1px)] bg-[size:60px_60px] opacity-30 pointer-events-none"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-primary/8 blur-[100px] rounded-full pointer-events-none"></div>
-
-        <div class="max-w-6xl mx-auto px-6 relative z-10">
-
-          <!-- Header -->
-          <div class="text-center mb-16">
-            <p class="text-xs font-mono uppercase tracking-[0.3em] text-primary mb-3">
-              [ Mission_Timeline ]
-            </p>
-            <h2 class="text-4xl md:text-5xl font-display font-bold text-white tracking-tight">
-              Go <span class="text-primary drop-shadow-[0_0_20px_rgba(0,206,209,0.5)]">Live</span> in 5 Days.
-            </h2>
-            <p class="mt-4 text-white/50 max-w-xl mx-auto font-sans">
-              From first call to full deployment. Your nervous system, operational.
-            </p>
-          </div>
-
-          <!-- Timeline Container -->
-          <div class="relative">
-
-            <!-- SVG Connection Lines (Desktop) -->
-            <svg class="hidden md:block absolute top-8 left-[10%] w-[80%] h-2 z-0" preserveAspectRatio="none">
-              <defs>
-                <linearGradient id="timeline-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                  <stop offset="0%" style="stop-color:#00CED1;stop-opacity:0.2" />
-                  <stop offset="50%" style="stop-color:#00CED1;stop-opacity:0.8" />
-                  <stop offset="100%" style="stop-color:#F59E0B;stop-opacity:0.6" />
-                </linearGradient>
-              </defs>
-              <line x1="0%" y1="50%" x2="100%" y2="50%" stroke="url(#timeline-gradient)" stroke-width="2" class="timeline-connector" />
-            </svg>
-
-            <!-- Day Nodes Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-5 gap-8 md:gap-4 relative z-10">
-
-              <!-- DAY 1 -->
-              <div class="timeline-card flex flex-col items-center text-center">
-                <div class="timeline-node timeline-node-1 w-16 h-16 rounded-full bg-[#0b0d1a] border-2 border-primary flex items-center justify-center mb-4">
-                  <span class="day-number text-2xl font-display font-bold text-primary">1</span>
-                </div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-white mb-2 font-bold">Discovery</h3>
-                <p class="text-xs text-white/40 leading-relaxed max-w-[140px]">
-                  Deep-dive into your ops, pain points, and goals.
-                </p>
-              </div>
-
-              <!-- DAY 2 -->
-              <div class="timeline-card flex flex-col items-center text-center">
-                <div class="timeline-node timeline-node-2 w-16 h-16 rounded-full bg-[#0b0d1a] border-2 border-primary flex items-center justify-center mb-4">
-                  <span class="day-number text-2xl font-display font-bold text-primary">2</span>
-                </div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-white mb-2 font-bold">Architecture</h3>
-                <p class="text-xs text-white/40 leading-relaxed max-w-[140px]">
-                  Map your automation pathways and agent topology.
-                </p>
-              </div>
-
-              <!-- DAY 3 -->
-              <div class="timeline-card flex flex-col items-center text-center">
-                <div class="timeline-node timeline-node-3 w-16 h-16 rounded-full bg-[#0b0d1a] border-2 border-primary flex items-center justify-center mb-4">
-                  <span class="day-number text-2xl font-display font-bold text-primary">3</span>
-                </div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-white mb-2 font-bold">Build</h3>
-                <p class="text-xs text-white/40 leading-relaxed max-w-[140px]">
-                  Wire agents, integrations, and decision logic.
-                </p>
-              </div>
-
-              <!-- DAY 4 -->
-              <div class="timeline-card flex flex-col items-center text-center">
-                <div class="timeline-node timeline-node-4 w-16 h-16 rounded-full bg-[#0b0d1a] border-2 border-primary flex items-center justify-center mb-4">
-                  <span class="day-number text-2xl font-display font-bold text-primary">4</span>
-                </div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-white mb-2 font-bold">Test</h3>
-                <p class="text-xs text-white/40 leading-relaxed max-w-[140px]">
-                  Stress-test every pathway. Calibrate responses.
-                </p>
-              </div>
-
-              <!-- DAY 5 - DEPLOY (Gold/Accent) -->
-              <div class="timeline-card flex flex-col items-center text-center">
-                <div class="timeline-node timeline-node-5 w-16 h-16 rounded-full bg-[#0b0d1a] border-2 border-accent flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(245,158,11,0.3)]">
-                  <span class="day-number text-2xl font-display font-bold text-accent">5</span>
-                </div>
-                <h3 class="text-sm font-mono uppercase tracking-wider text-accent mb-2 font-bold">Deploy</h3>
-                <p class="text-xs text-white/40 leading-relaxed max-w-[140px]">
-                  Go live. Your nervous system is now operational.
-                </p>
-              </div>
-
-            </div>
-          </div>
-
-          <!-- Stats Bar -->
-          <div class="mt-16 grid grid-cols-3 gap-4 max-w-2xl mx-auto">
-            <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <div class="text-2xl font-display font-bold text-primary drop-shadow-[0_0_10px_rgba(0,206,209,0.4)]" data-animate-number data-value="60" data-suffix="%">0</div>
-              <p class="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-1">Faster than DIY</p>
-            </div>
-            <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <div class="text-2xl font-display font-bold text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" data-animate-number data-value="95" data-suffix="%">0</div>
-              <p class="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-1">First-Time Success</p>
-            </div>
-            <div class="text-center p-4 rounded-xl bg-white/[0.02] border border-white/5 backdrop-blur-sm">
-              <div class="text-2xl font-display font-bold text-accent drop-shadow-[0_0_10px_rgba(245,158,11,0.4)]" data-animate-number data-value="40" data-suffix="%+">0</div>
-              <p class="text-[10px] font-mono uppercase tracking-wider text-white/40 mt-1">Cost Reduction</p>
-            </div>
-          </div>
-
+        <div class="faq-list">
+          <details>
+            <summary>What can you automate?</summary>
+            <p>Any repeatable computer-based workflow can be evaluated. We focus this service on marketing, lead handling, sales follow-up, customer communication, and the reporting around those activities.</p>
+          </details>
+          <details>
+            <summary>Do I need to know exactly what to build?</summary>
+            <p>No. Start with the result you want, the work that keeps repeating, or the place customers are getting stuck. We map the system from there.</p>
+          </details>
+          <details>
+            <summary>Will I need to replace my current software?</summary>
+            <p>Usually not. We first look for safe ways to connect and improve the tools your business already relies on.</p>
+          </details>
+          <details>
+            <summary>Can people approve important steps?</summary>
+            <p>Yes. Human review can remain anywhere a decision needs judgment, accountability, or personal attention.</p>
+          </details>
+          <details>
+            <summary>How is pricing determined?</summary>
+            <p>Pricing depends on the workflow, integrations, volume, and ongoing support required. We define the scope before recommending a build.</p>
+          </details>
         </div>
-      </section>
+      </div>
+    </section>
+  </main>
 
-            <!-- DEPLOYMENT PROTOCOLS SECTION -->
-      <section id="pricing" class="relative py-24 mb-32 overflow-hidden scroll-mt-36">
-
-        <!-- Background Ambience -->
-        <div class="absolute inset-0 bg-[linear-gradient(rgba(0,206,209,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,206,209,0.03)_1px,transparent_1px)] bg-[size:40px_40px] opacity-20 pointer-events-none"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full max-w-4xl bg-primary/5 blur-[120px] rounded-full pointer-events-none"></div>
-
-        <div class="relative max-w-7xl mx-auto px-6">
-
-          <!-- Header -->
-          <div class="text-center mb-20">
-            <p class="text-primary text-xs font-mono uppercase tracking-[0.3em] mb-4">
-              [ Initialization_Paths ]
-            </p>
-            <h2 class="text-4xl md:text-5xl lg:text-6xl font-display font-bold text-white tracking-tight mb-4">
-              Choose Your <span class="italic text-white/60">Deployment Path</span>.
-            </h2>
-            <p class="text-white/50 max-w-xl mx-auto text-sm md:text-base font-sans">
-              Start with a single mission or hand us your entire nervous system.
-            </p>
-          </div>
-
-          <!-- The 3-Card Grid -->
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-
-            <!-- CARD 1: COMMERCIAL LAB (Token-Based AI Ads) -->
-            <div class="group relative flex flex-col rounded-3xl bg-white/[0.02] border border-brand-gold/20 p-[1px] transition-all duration-500 hover:border-brand-gold/50 hover:shadow-[0_0_40px_rgba(255,215,0,0.15)]">
-              <div class="relative flex flex-col h-full bg-[#0b0d1a] rounded-[22px] p-8 overflow-hidden">
-
-                <!-- Hover gradient -->
-                <div class="absolute inset-0 bg-gradient-to-br from-brand-gold/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-
-                <!-- Top Label -->
-                <div class="text-[10px] font-mono uppercase tracking-[0.2em] mb-6 text-brand-gold/80">
-                  AI_COMMERCIAL_STUDIO
-                </div>
-
-                <!-- Header -->
-                <div class="mb-8">
-                  <h3 class="text-2xl font-serif text-white mb-2">Commercial_Lab</h3>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-bold text-brand-gold">$299</span>
-                    <span class="text-xs font-mono text-white/40">one-time pilot</span>
-                  </div>
-                  <p class="mt-4 text-white/50 text-sm leading-relaxed border-t border-white/5 pt-4 font-sans">
-                    Token-based AI commercial generation. Full 64-second ads from text prompts.
-                  </p>
-                </div>
-
-                <!-- Tier Overview -->
-                <div class="space-y-3 mb-8 flex-grow">
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-1.5 h-1.5 rounded-full bg-brand-gold shadow-[0_0_6px_rgba(255,215,0,0.8)]"></div>
-                      <span class="text-[10px] font-mono uppercase tracking-wider text-brand-gold/70">RAPID PILOT</span>
-                    </div>
-                    <span class="text-[10px] font-mono text-white/50">$299 one-time · 8 TOKENS</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-1.5 h-1.5 rounded-full bg-brand-gold shadow-[0_0_6px_rgba(255,215,0,0.8)]"></div>
-                      <span class="text-[10px] font-mono uppercase tracking-wider text-brand-gold/70">PROTOTYPER</span>
-                    </div>
-                    <span class="text-[10px] font-mono text-white/50">$599/mo · 16 TOKENS</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-1.5 h-1.5 rounded-full bg-brand-gold shadow-[0_0_6px_rgba(255,215,0,0.8)]"></div>
-                      <span class="text-[10px] font-mono uppercase tracking-wider text-brand-gold/70">GROWTH</span>
-                    </div>
-                    <span class="text-[10px] font-mono text-white/50">$1,199/mo · 40 TOKENS</span>
-                  </div>
-                  <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3">
-                      <div class="w-1.5 h-1.5 rounded-full bg-brand-gold shadow-[0_0_6px_rgba(255,215,0,0.8)]"></div>
-                      <span class="text-[10px] font-mono uppercase tracking-wider text-brand-gold/70">SCALE</span>
-                    </div>
-                    <span class="text-[10px] font-mono text-white/50">$2,499/mo · 96 TOKENS</span>
-                  </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="mt-auto">
-                  <p class="text-[11px] text-white/40 italic mb-6 leading-relaxed">
-                    "8 tokens = 1 full 64-second commercial. Script, voiceover, video, captions—all included."
-                  </p>
-                  <a href="/checkout.html?tier=0" class="block w-full py-4 rounded-lg font-mono text-xs uppercase tracking-widest bg-brand-gold/10 border border-brand-gold/30 text-brand-gold hover:bg-brand-gold hover:text-[#0a0a1e] hover:border-brand-gold transition-all duration-300 text-center">
-                    [ SUBSCRIBE NOW ]
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            <!-- CARD 2: MARKETING OVERLORD (Campaign Autopilot) -->
-            <div class="group relative flex flex-col rounded-3xl bg-white/[0.02] border border-white/10 p-[1px] transition-all duration-500">
-              <!-- Coming Soon Badge -->
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-white/20 text-white/70 px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest z-20">
-                COMING SOON
-              </div>
-              <div class="relative flex flex-col h-full bg-[#0b0d1a] rounded-[22px] p-8 overflow-hidden opacity-60">
-
-                <!-- Hover gradient -->
-                <div class="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 pointer-events-none"></div>
-
-                <!-- Top Label -->
-                <div class="text-[10px] font-mono uppercase tracking-[0.2em] mb-6 text-primary/80">
-                  CAMPAIGN AUTOPILOT
-                </div>
-
-                <!-- Header -->
-                <div class="mb-8">
-                  <h3 class="text-2xl font-serif text-white mb-2">Marketing Overlord</h3>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-bold text-primary">$199</span>
-                    <span class="text-xs font-mono text-white/40">/ MO + Setup</span>
-                  </div>
-                  <p class="mt-4 text-white/50 text-sm leading-relaxed border-t border-white/5 pt-4 font-sans">
-                    Your always-on campaign brain: plans, writes, launches, and optimizes while you sleep.
-                  </p>
-                </div>
-
-                <!-- Features -->
-                <div class="space-y-3 mb-8 flex-grow">
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,206,209,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-primary/70">FUNNEL_MAP</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,206,209,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-primary/70">MULTI_CHANNEL_DEPLOY</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,206,209,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-primary/70">LIVE_OPTIMIZATION</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_6px_rgba(0,206,209,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-primary/70">PERFORMANCE_REPORTS</span>
-                  </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="mt-auto">
-                  <p class="text-[11px] text-white/40 italic mb-6 leading-relaxed">
-                    "Built for founders who want a consistent pipeline without hiring a full marketing team."
-                  </p>
-                  <button disabled class="w-full py-4 rounded-lg font-mono text-xs uppercase tracking-widest bg-white/[0.03] border border-white/10 text-white/50 opacity-50 cursor-not-allowed">
-                    [ COMING_SOON ]
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <!-- CARD 3: TOTAL COMMAND (Enterprise - Highlighted) -->
-            <div class="group relative flex flex-col rounded-3xl bg-white/[0.02] border border-accent/30 p-[1px] transition-all duration-500 hover:border-accent/60 hover:shadow-[0_0_40px_rgba(251,191,36,0.15)] lg:-mt-4 lg:mb-4 lg:scale-105 z-10">
-
-              <!-- Enterprise Badge -->
-              <div class="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-[#0a0a1e] px-3 py-1 rounded-full text-[9px] font-bold uppercase tracking-widest shadow-[0_0_15px_rgba(251,191,36,0.4)] z-20">
-                Enterprise Choice
-              </div>
-
-              <div class="relative flex flex-col h-full bg-[#0b0d1a] rounded-[22px] p-8 overflow-hidden">
-
-                <!-- Hover gradient -->
-                <div class="absolute inset-0 bg-gradient-to-br from-accent/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none"></div>
-
-                <!-- Top Label -->
-                <div class="text-[10px] font-mono uppercase tracking-[0.2em] mb-6 text-accent/80">
-                  TOTAL COMMAND
-                </div>
-
-                <!-- Header -->
-                <div class="mb-8">
-                  <h3 class="text-2xl font-serif text-white mb-2">Total Command</h3>
-                  <div class="flex items-baseline gap-1">
-                    <span class="text-3xl font-bold text-white">Custom</span>
-                  </div>
-                  <p class="mt-4 text-white/50 text-sm leading-relaxed border-t border-white/5 pt-4 font-sans">
-                    Enterprise-grade logic architecture. We wire your entire operation into a single nervous system.
-                  </p>
-                </div>
-
-                <!-- Features -->
-                <div class="space-y-3 mb-8 flex-grow">
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(251,191,36,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-accent/70">PRIVATE_LLM</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(251,191,36,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-accent/70">FULL_AUTONOMY</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(251,191,36,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-accent/70">ON_PREMISE_DEPLOY</span>
-                  </div>
-                  <div class="flex items-center gap-3">
-                    <div class="w-1.5 h-1.5 rounded-full bg-accent shadow-[0_0_6px_rgba(251,191,36,0.8)]"></div>
-                    <span class="text-[10px] font-mono uppercase tracking-wider text-accent/70">DEDICATED_SUPPORT</span>
-                  </div>
-                </div>
-
-                <!-- Footer -->
-                <div class="mt-auto">
-                  <p class="text-[11px] text-white/40 italic mb-6 leading-relaxed">
-                    "Built for teams who want Barrios A2I as the brain of the company, not just another tool."
-                  </p>
-                  <button onclick="openIntakeTerminal('Total Command')" class="w-full py-4 rounded-lg font-mono text-xs uppercase tracking-widest font-bold bg-gradient-to-r from-amber-600 to-accent text-[#0a0a1e] shadow-[0_0_20px_rgba(251,191,36,0.4)] hover:shadow-[0_0_30px_rgba(251,191,36,0.6)] transition-all duration-300">
-                    [ Contact Engineering ]
-                  </button>
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-<!-- ========== GLOBAL FOOTER (INTELLIGENCE ARCHITECTURE) ========== -->
-      <footer class="relative w-full bg-[#050508] pt-16 md:pt-24 pb-8 md:pb-12 px-4 md:px-6 border-t border-white/5 overflow-hidden">
-          <!-- Volumetric Glow Background - Hidden on mobile -->
-          <div class="hidden md:block absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[200px] bg-[#00CED1]/5 blur-[100px] rounded-full pointer-events-none"></div>
-
-          <!-- Subtle Grid Pattern -->
-          <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:32px_32px] opacity-30 pointer-events-none"></div>
-
-          <div class="max-w-7xl mx-auto relative z-10">
-
-              <!-- Top Section: Brand + Tagline + Status -->
-              <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-12 md:mb-16 pb-8 md:pb-12 border-b border-white/5">
-                  <!-- Brand Block -->
-                  <div class="group">
-                      <a href="/" class="flex items-center gap-3 mb-3">
-                          <img src="/brand/barrios-a2i-shard-logo.png" alt="Barrios A2I" class="w-14 h-14 md:w-20 md:h-20 object-contain opacity-90 group-hover:opacity-100 transition-opacity">
-                          <h2 class="text-2xl md:text-3xl font-black tracking-tighter text-white transition-colors group-hover:text-[#00CED1]">
-                              BARRIOS <span class="text-[#FFD700]">A2I</span>
-                          </h2>
-                      </a>
-                      <p class="text-[#94a3b8] font-mono text-[10px] md:text-xs tracking-[0.2em] uppercase">
-                          The Intelligence Architecture
-                      </p>
-                  </div>
-
-                  <!-- System Status Indicator -->
-                  <div class="flex items-center gap-3 px-4 py-2 bg-white/[0.03] backdrop-blur-sm border border-white/5 rounded-lg">
-                      <span class="relative flex h-2.5 w-2.5">
-                          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
-                      </span>
-                      <span class="font-mono text-[10px] md:text-xs text-emerald-400 tracking-wider uppercase">All Systems Operational</span>
-                  </div>
-              </div>
-
-              <!-- Navigation Grid -->
-              <div class="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12 mb-12 md:mb-16">
-
-                  <!-- Products Column -->
-                  <div>
-                      <h4 class="font-mono text-[10px] md:text-xs text-[#00CED1] tracking-[0.15em] uppercase mb-4 md:mb-6 flex items-center gap-2">
-                          <span class="text-[#00CED1]/40">[</span>
-                          Products
-                          <span class="text-[#00CED1]/40">]</span>
-                      </h4>
-                      <ul class="space-y-3">
-                          <li>
-                              <a href="/nexus-personal" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  NEXUS Personal
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/creative-director" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  A2I Commercial Lab
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/command-center" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Command Center
-                              </a>
-                          </li>
-                      </ul>
-                  </div>
-
-                  <!-- Company Column -->
-                  <div>
-                      <h4 class="font-mono text-[10px] md:text-xs text-[#00CED1] tracking-[0.15em] uppercase mb-4 md:mb-6 flex items-center gap-2">
-                          <span class="text-[#00CED1]/40">[</span>
-                          Company
-                          <span class="text-[#00CED1]/40">]</span>
-                      </h4>
-                      <ul class="space-y-3">
-                          <li>
-                              <a href="/#about" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  About
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/founder" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Founder
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/contact.html" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Contact
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/status" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  System Status
-                              </a>
-                          </li>
-                      </ul>
-                  </div>
-
-                  <!-- Legal Column -->
-                  <div>
-                      <h4 class="font-mono text-[10px] md:text-xs text-[#00CED1] tracking-[0.15em] uppercase mb-4 md:mb-6 flex items-center gap-2">
-                          <span class="text-[#00CED1]/40">[</span>
-                          Legal
-                          <span class="text-[#00CED1]/40">]</span>
-                      </h4>
-                      <ul class="space-y-3">
-                          <li>
-                              <a href="/privacy-directive" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Privacy Directive
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/terms-of-service" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Terms of Service
-                              </a>
-                          </li>
-                          <li>
-                              <a href="/data-sovereignty" class="text-sm text-[#94a3b8] hover:text-white transition-colors duration-200 flex items-center gap-2 group">
-                                  <span class="w-1 h-1 bg-[#00CED1]/50 rounded-full group-hover:bg-[#00CED1] transition-colors"></span>
-                                  Data Sovereignty
-                              </a>
-                          </li>
-                      </ul>
-                  </div>
-
-                  <!-- Connect Column -->
-                  <div>
-                      <h4 class="font-mono text-[10px] md:text-xs text-[#00CED1] tracking-[0.15em] uppercase mb-4 md:mb-6 flex items-center gap-2">
-                          <span class="text-[#00CED1]/40">[</span>
-                          Connect
-                          <span class="text-[#00CED1]/40">]</span>
-                      </h4>
-                      <!-- Social Icons -->
-                      <div class="flex items-center gap-4 mb-6">
-                          <a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener"
-                             class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/[0.03] border border-white/5 text-[#94a3b8] hover:text-[#00CED1] hover:border-[#00CED1]/30 hover:bg-[#00CED1]/5 transition-all duration-200">
-                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
-                          </a>
-                          <a href="https://x.com/BarriosA2I" target="_blank" rel="noopener"
-                             class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/[0.03] border border-white/5 text-[#94a3b8] hover:text-[#00CED1] hover:border-[#00CED1]/30 hover:bg-[#00CED1]/5 transition-all duration-200">
-                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
-                          </a>
-                          <a href="https://www.instagram.com/barrios.ai.gary/" target="_blank" rel="noopener"
-                             class="w-9 h-9 flex items-center justify-center rounded-lg bg-white/[0.03] border border-white/5 text-[#94a3b8] hover:text-[#00CED1] hover:border-[#00CED1]/30 hover:bg-[#00CED1]/5 transition-all duration-200">
-                              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/></svg>
-                          </a>
-                      </div>
-                      <!-- Email -->
-                      <a href="mailto:alienation2innovation@gmail.com" class="text-sm text-[#94a3b8] hover:text-[#00CED1] transition-colors duration-200 font-mono">
-                          alienation2innovation@gmail.com
-                      </a>
-                  </div>
-              </div>
-
-              <!-- Bottom Bar: Copyright -->
-              <div class="flex flex-col md:flex-row justify-between items-center gap-4 pt-8 border-t border-white/5">
-                  <p class="font-mono text-[10px] md:text-xs text-[#64748b] tracking-wider">
-                      &copy; <span id="footer-year">2025</span> BARRIOS A2I INC. ALL RIGHTS RESERVED.
-                  </p>
-                  <div class="flex items-center gap-6">
-                      <a href="/privacy-directive" class="font-mono text-[10px] md:text-xs text-[#64748b] hover:text-white transition-colors">Privacy</a>
-                      <a href="/terms-of-service" class="font-mono text-[10px] md:text-xs text-[#64748b] hover:text-white transition-colors">Terms</a>
-                      <a href="/data-sovereignty" class="font-mono text-[10px] md:text-xs text-[#64748b] hover:text-white transition-colors">Data</a>
-                  </div>
-              </div>
-          </div>
-
-          <!-- Update year dynamically -->
-          <script>
-              document.getElementById('footer-year').textContent = new Date().getFullYear();
-          </script>
-      </footer>
-
-
-    </main>
-
-    <!-- Interactive JS for Mouse Effects -->
-    <script>
-      const body = document.getElementById('main-body');
-      document.addEventListener('mousemove', (e) => {
-          const x = e.clientX;
-          const y = e.clientY;
-          const blobs = document.querySelectorAll('.aurora-blob');
-          blobs.forEach((blob, index) => {
-              const speed = (index + 1) * 20;
-              const moveX = (window.innerWidth - x) / speed;
-              const moveY = (window.innerHeight - y) / speed;
-              blob.style.transform = `translate(${moveX}px, ${moveY}px)`;
-          });
-      });
-    </script>
-    <script src="js/intake-terminal.js"></script>
-
-    <!-- Lead Capture System -->
-    <script src="js/lead-capture.js"></script>
-
-    <!-- Nexus Brain Chat System -->
-    <script src="js/nexus-chat.js"></script>
-    <script src="js/nexus-panel.js"></script>
-    <script src="js/nexus-launcher.js"></script>
-
-    <!-- Revenue Activation Scripts -->
-    <script src="js/config.js"></script>
-    <script src="js/proof-sections.js"></script>
-    <script src="js/revenue-activation.js"></script>
-
-    <!-- Footer Email Capture -->
-    <script>
-    (function() {
-      // Wire up all footer email inputs
-      document.querySelectorAll('input[type="email"]').forEach(function(input) {
-        const button = input.parentElement.querySelector('button');
-        if (!button) return;
-
-        // Handle click
-        button.addEventListener('click', function(e) {
-          e.preventDefault();
-          captureFooterEmail(input, button);
-        });
-
-        // Handle enter key
-        input.addEventListener('keydown', function(e) {
-          if (e.key === 'Enter') {
-            e.preventDefault();
-            captureFooterEmail(input, button);
-          }
-        });
-      });
-
-      function captureFooterEmail(input, button) {
-        const email = input.value.trim();
-        if (!email || !email.includes('@')) {
-          // Visual feedback - shake input
-          input.style.borderColor = '#ef4444';
-          setTimeout(() => input.style.borderColor = '', 1000);
-          return;
-        }
-
-        // Capture the lead
-        if (window.LeadCapture) {
-          window.LeadCapture.capture({
-            email: email,
-            source: 'footer_newsletter',
-            message: 'Newsletter signup'
-          });
-        }
-
-        // Visual feedback - success
-        input.value = '';
-        input.placeholder = 'Signal received!';
-        input.style.borderColor = '#22c55e';
-        button.innerHTML = '<iconify-icon icon="lucide:check" width="16" class="text-green-500"></iconify-icon>';
-
-        // Reset after 3 seconds
-        setTimeout(function() {
-          input.placeholder = 'Enter frequency...';
-          input.style.borderColor = '';
-          button.innerHTML = '<iconify-icon icon="lucide:send" width="16" class="text-brand-teal group-hover:scale-110 transition-transform"></iconify-icon>';
-        }, 3000);
-      }
-    })();
-    </script>
-
-    <!-- Neural Nexus Visualization -->
-    <script src="js/neural-nexus.js"></script>
-
-    <!-- Counting Animation for Stats -->
-    <script>
-    (function() {
-      function animateValue(el, start, end, duration, suffix) {
-        let startTimestamp = null;
-        const step = (timestamp) => {
-          if (!startTimestamp) startTimestamp = timestamp;
-          const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-          const eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
-          const current = Math.floor(eased * (end - start) + start);
-          el.textContent = (current >= 0 ? current.toLocaleString() : current) + suffix;
-          if (progress < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      }
-
-      const countObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const el = entry.target;
-            const value = el.dataset.value;
-            const suffix = el.dataset.suffix || '';
-            // Handle negative numbers
-            const end = parseInt(value);
-            animateValue(el, 0, end, 2000, suffix);
-            countObserver.unobserve(el);
-          }
-        });
-      }, { threshold: 0.5 });
-
-      document.addEventListener('DOMContentLoaded', () => {
-        document.querySelectorAll('[data-animate-number]').forEach(el => {
-          countObserver.observe(el);
-        });
-      });
-    })();
-    </script>
-
-    <!-- Video Showcase Controls -->
-    <script>
-    (function() {
-      document.addEventListener('DOMContentLoaded', function() {
-        const video = document.getElementById('showcase-video');
-        const playOverlay = document.getElementById('play-overlay');
-
-        if (video && playOverlay) {
-          playOverlay.addEventListener('click', function() {
-            if (video.paused) {
-              video.play();
-              playOverlay.classList.add('hidden');
-            }
-          });
-
-          video.addEventListener('ended', function() {
-            playOverlay.classList.remove('hidden');
-          });
-
-          video.addEventListener('pause', function() {
-            playOverlay.classList.remove('hidden');
-          });
-
-          // Click video to pause
-          video.addEventListener('click', function() {
-            if (!video.paused) {
-              video.pause();
-            }
-          });
-        }
-      });
-    })();
-    </script>
-
-</body></html>
+  <footer class="site-footer">
+    <div class="shell footer-inner">
+      <div>
+        <a class="footer-brand" href="#top">Barrios A2I</a>
+        <p>Custom automation for the way your business actually works.</p>
+      </div>
+      <div class="footer-links" aria-label="Footer navigation">
+        <a href="mailto:alienation2innovation@gmail.com">Contact</a>
+        <a href="/privacy-directive">Privacy</a>
+        <a href="/terms-of-service">Terms</a>
+        <a href="/data-sovereignty">Data</a>
+      </div>
+      <p class="copyright">© 2026 Barrios A2I Inc.</p>
+    </div>
+  </footer>
+</body>
+</html>
