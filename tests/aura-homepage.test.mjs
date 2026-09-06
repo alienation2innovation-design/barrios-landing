@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 
 const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
-const requiredSocials = [
-  'https://www.linkedin.com/in/gary-barrios-3953b2390/',
-  'https://x.com/BarriosA2I',
-  'https://www.instagram.com/barrios.ai.gary/',
-  'https://www.tiktok.com/@garyjbarrios',
-  'https://www.reddit.com/user/BarriosA2I/'
-];
+const requiredSocialCounts = new Map([
+  ['https://www.linkedin.com/in/gary-barrios-3953b2390/', 3],
+  ['https://x.com/BarriosA2I', 2],
+  ['https://www.instagram.com/barriosa2i/', 2],
+  ['https://www.tiktok.com/@garyjbarrios', 2],
+  ['https://www.reddit.com/user/BarriosA2I/', 3],
+  ['https://github.com/alienation2innovation-design', 1]
+]);
 
 let response;
 let html;
@@ -56,12 +57,12 @@ test('the served document keeps the Barrios message readable without JavaScript'
   assert.match(fallback, /href="#no-js-automate"/i);
 });
 
-test('the social signal and footer expose all five approved profiles without Facebook', () => {
+test('the social signal, Meet Gary panel, and footer expose the approved profiles without Facebook', () => {
   const anchors = [...markup.matchAll(/<a\b[^>]*>/gi)].map((match) => match[0]);
 
-  for (const socialUrl of requiredSocials) {
+  for (const [socialUrl, expectedCount] of requiredSocialCounts) {
     const matching = anchors.filter((tag) => getAttribute(tag, 'href') === socialUrl);
-    assert.equal(matching.length, 2, `${socialUrl} must appear once in the signal strip and once in the footer`);
+    assert.equal(matching.length, expectedCount, `${socialUrl} must appear in every approved location`);
     for (const tag of matching) {
       assert.equal(getAttribute(tag, 'target'), '_blank');
       assert.equal(getAttribute(tag, 'rel'), 'noopener noreferrer');
@@ -69,6 +70,7 @@ test('the social signal and footer expose all five approved profiles without Fac
     }
   }
 
+  assert.doesNotMatch(markup, /https:\/\/www\.instagram\.com\/barrios\.ai\.gary\//i);
   assert.doesNotMatch(markup, /(?:href|aria-label)=["'][^"']*facebook/i);
 });
 
