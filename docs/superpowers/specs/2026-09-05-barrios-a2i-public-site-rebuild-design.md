@@ -30,6 +30,7 @@ The live homepage is public/index.html. Authenticated application routes use the
 ## Out of Scope
 
 - Reprogramming or connecting the NEXUS backend.
+- Connecting Calendly or creating live appointment availability and booking.
 - Redesigning protected product tools or the dashboard.
 - Changing Clerk, Stripe, Prisma, DNS, billing, secrets, or databases.
 - Publishing fixed prices before the pricing model is approved.
@@ -98,7 +99,19 @@ Redirects are added only after their destinations exist and are verified. No leg
 6. Trust and Control covering human approval, compatibility, privacy, and visibility.
 7. A concise About section.
 8. Focused frequently asked questions.
-9. Final Start a Project CTA.
+9. A compact social signal strip with LinkedIn, X, Instagram, TikTok, and Reddit.
+10. Final Start a Project CTA.
+11. Footer with one permanent, in-flow Book Now control above the footer columns.
+
+Approved public social profiles:
+
+- LinkedIn: https://www.linkedin.com/in/gary-barrios-3953b2390/
+- X: https://x.com/BarriosA2I
+- Instagram: https://www.instagram.com/barrios.ai.gary/
+- TikTok: https://www.tiktok.com/@garyjbarrios
+- Reddit: https://www.reddit.com/user/BarriosA2I/
+
+Facebook is intentionally excluded. The five profiles appear in the “Connect with Barrios A2I” signal strip and again as compact “Elsewhere” links in the footer. They open in a new tab with `rel="noopener noreferrer"` and descriptive accessible names.
 
 ## Visual System
 
@@ -124,7 +137,8 @@ The public site becomes a Next.js marketing surface with focused reusable respon
 
 - MarketingShell provides the shared public-page frame.
 - MarketingHeader provides the logo, section links, mobile navigation, and primary CTA.
-- MarketingFooter provides contact and legal links.
+- SocialSignalStrip provides the approved five-profile social treatment without becoming a generic card grid.
+- MarketingFooter provides contact, legal, social, and the static Book Now entry point.
 - AuraLanding contains the approved landing sections in their original order.
 - AutomationBriefForm owns the /start form and submission states.
 - NexusAssistantShell provides one consistent launcher and panel across public routes.
@@ -139,6 +153,10 @@ The first implementation is visual only. The launcher and panel appear across pu
 Before backend integration, sending displays a clear upgrading state and directs the visitor to Start a Project. Model selection, retrieval, conversation storage, analytics, safety policy, and backend integration require a separate design.
 
 The existing code contains competing backends: public/js/nexus-api.js uses https://api.barriosa2i.com, while api/nexus/chat.js still uses a Render URL. This mismatch is a recorded follow-up dependency and will not be copied into the new shell.
+
+The existing floating launcher and hero text trigger open the normal automation-assistant state. The footer Book Now control opens the same shared panel in a distinct scheduling-preview state with the heading “Let’s schedule a conversation,” the prompt “Tell me what you’d like to automate and when you’d prefer to meet,” and the preference chips “This week,” “Next week,” and “I’m flexible.” The panel is explicitly labeled `SCHEDULING PREVIEW`; it does not fetch availability, collect booking data, create a meeting, or imply that Calendly is connected.
+
+Book Now has one permanent location at the top edge of the footer, after the final CTA and before the footer columns. Its dimensional visual treatment may overlap the footer border, but the control remains in normal document flow. It is never `position: fixed` or `position: sticky`, never follows the viewport, and has no idle bobbing animation. Desktop placement is near the footer’s upper-right edge; phone placement is wide and centered above the footer columns. It remains clear of the Back to top control and the fixed NEXUS launcher.
 
 ## Project-intake Data Flow
 
@@ -158,6 +176,7 @@ On failure, the form preserves entered text, explains that nothing was sent, off
 - Image and logo dimensions are reserved to prevent layout shift.
 - Navigation, buttons, and assistant controls are keyboard accessible.
 - The assistant uses dialog semantics, focus management, focus restoration, and Escape-key support.
+- All NEXUS triggers use `aria-controls` and accurate `aria-expanded` state. Closing the shared panel restores focus to whichever trigger opened it, including Book Now.
 - Text contrast and touch targets meet WCAG 2.2 AA expectations.
 
 Performance targets:
@@ -186,11 +205,14 @@ Before requesting production approval:
 3. Verify every legacy redirect and destination.
 4. Test project-intake success, failure, and duplicate-submit protection.
 5. Exercise NEXUS open, close, quick prompts, draft behavior, focus management, and upgrading state without transmitting messages.
-6. Check desktop, tablet, and small-mobile widths in Chrome and Edge.
-7. Check keyboard-only navigation and reduced-motion behavior.
-8. Compare desktop and mobile screenshots against the approved Aura project.
-9. Review browser console output and Vercel preview logs.
-10. Confirm that Clerk, dashboard routes, and protected product flows were not changed by the marketing migration.
+6. Verify the hero and floating NEXUS triggers open the normal state, while Book Now opens scheduling-preview mode in the same panel.
+7. Verify Book Now remains in normal footer flow at every viewport and does not move with scrolling.
+8. Verify all five exact social URLs appear in the social strip and footer, open safely in new tabs, and that no Facebook link is present.
+9. Check desktop, tablet, and small-mobile widths in Chrome and Edge.
+10. Check keyboard-only navigation and reduced-motion behavior.
+11. Compare desktop and mobile screenshots against the approved Aura project.
+12. Review browser console output and Vercel preview logs.
+13. Confirm that Clerk, dashboard routes, and protected product flows were not changed by the marketing migration.
 
 ## Deployment and Rollback
 
@@ -222,6 +244,8 @@ The public rebuild is complete when:
 - Public navigation is consistent and contains no dead links.
 - Project intake succeeds through a first-party endpoint and fails gracefully.
 - The visual NEXUS shell is consistent across public routes and marked unavailable until backend integration.
+- Book Now is anchored in the footer and opens the shared NEXUS scheduling preview without live booking behavior.
+- LinkedIn, X, Instagram, TikTok, and Reddit are present in both approved social locations; Facebook is absent.
 - Legacy promotional routes reach verified replacement destinations without loops.
 - Dashboard, authentication, and protected product flows remain operational.
 - Responsive, accessibility, and performance checks meet the targets above.
