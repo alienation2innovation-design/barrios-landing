@@ -1,322 +1,2727 @@
 <!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Barrios A2I designs and builds custom marketing, sales, and customer follow-up automations from your business idea.">
-  <meta name="theme-color" content="#050a0f">
-  <title>Barrios A2I | Custom Business Automation</title>
-  <link rel="canonical" href="https://barriosa2i.com/">
-  <link rel="icon" href="/favicon.ico" sizes="any">
-  <link rel="stylesheet" href="/landing-v3.css">
-  <script src="/landing-v3.js" defer></script>
-</head>
-<body>
-  <a class="skip-link" href="#main-content">Skip to content</a>
+<html lang="en" data-theme="dark"><head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+    <title>
+      Barrios A2I — Connected marketing automation built around your business
+    </title>
+    <meta name="description" content="Barrios A2I turns your business idea, workflow, and existing tools into one connected marketing automation system.">
+    <meta name="theme-color" content="#141518">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+    <link rel="stylesheet" href="/aura-landing.css">
 
-  <header class="site-header">
-    <div class="shell header-inner">
-      <a class="brand" href="#top" aria-label="Barrios A2I home">
-        <img src="/brand/barrios-a2i-shard-logo.png" width="500" height="500" alt="" fetchpriority="high">
-        <span class="brand-copy">
-          <span>Barrios A2I</span>
-          <small>Automation, built around you</small>
-        </span>
-      </a>
-
-      <button class="menu-toggle" id="menu-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
-        <span class="sr-only">Open navigation</span>
-        <span aria-hidden="true"></span>
-        <span aria-hidden="true"></span>
-      </button>
-
-      <nav class="site-nav" id="site-nav" aria-label="Primary navigation" data-open="false">
-        <a href="#services">What we automate</a>
-        <a href="#process">How it works</a>
-        <a href="#faq">Questions</a>
-        <a class="button button-small" href="#start" data-primary-cta>Tell us what you want automated</a>
-      </nav>
-    </div>
-  </header>
-
-  <main id="main-content">
-    <section class="hero" id="top">
-      <div class="hero-matrix" aria-hidden="true"></div>
-      <div class="shell hero-grid">
-        <div class="hero-copy">
-          <p class="hero-kicker"><span aria-hidden="true"></span> Custom automation for real businesses</p>
-          <h1>Tell us what your business needs to do. We’ll automate it.</h1>
-          <p class="hero-summary">Barrios A2I turns your idea into a connected system for marketing, sales, and customer follow-up—built around the tools and process you already use.</p>
-          <div class="hero-actions">
-            <a class="button" href="#start" data-primary-cta>Tell us what you want automated</a>
-            <a class="text-link" href="#example">See one example <span aria-hidden="true">↓</span></a>
-          </div>
-          <p class="hero-note">No preset software package. No platform switch required.</p>
+    <style>
+      /* ============================================================================
+      ECHO LANTERN — single-file landing page
+      ----------------------------------------------------------------------------
+      1.  Design tokens
+      2.  Reset + base
+      3.  Tailwind-compatible utility layer
+      4.  Primitives (buttons, pills, glass, glyphs)
+      5.  Chrome (preloader, cursor, scroll rail, nav)
+      6.  Sections
+      7.  Motion (keyframes + reveal system)
+      8.  Responsive
+      ========================================================================== */
+      /* -- 1. DESIGN TOKENS ----------------------------------------------------- */
+      :root{
+      /* Stem families. Each is primary (lit) / secondary (mid) / tertiary (shadow) */
+      --a-1:#7ff0d4; --a-2:#2fd6ae; --a-3:#0e8f75;   /* SUB   — mint     */
+      --b-1:#ffa38c; --b-2:#ff6a45; --b-3:#c73415;   /* KIT   — coral    */
+      --c-1:#ffe27a; --c-2:#f5c518; --c-3:#a37c00;   /* AIR   — butter   */
+      --d-1:#b9a5ff; --d-2:#8a6df0; --d-3:#4b32b0;   /* LEAD  — violet   */
+      --e-1:#ffb3bd; --e-2:#ff7d8f; --e-3:#ff3355;   /* REC   — rose     */
+      /* Surface ramp */
+      --ink:#141518;
+      --ink-2:#191a1e;
+      --ink-3:#202127;
+      --hair:rgba(255,255,255,.09);
+      --hair-2:rgba(255,255,255,.16);
+      --paper:#ffffff;
+      --paper-rgb:255,255,255;
+      --mute:rgba(255,255,255,.42);
+      --mute-2:rgba(255,255,255,.25);
+      --disabled:#3e3e3e;
+      /* Live stem colour — re-pointed by JS as the page scrolls */
+      --stem-1:var(--a-1);
+      --stem-2:var(--a-2);
+      --stem-3:var(--a-3);
+      /* Type scale — fluid, clamped */
+      --t-xs:.6875rem;
+      --t-sm:.75rem;
+      --t-base:.875rem;
+      --t-md:1rem;
+      --t-lg:clamp(1.125rem,1.6vw,1.375rem);
+      --t-xl:clamp(1.5rem,2.4vw,2rem);
+      --t-2xl:clamp(2rem,4vw,3.25rem);
+      --t-3xl:clamp(2.75rem,6.4vw,5.5rem);
+      --t-mega:clamp(3.5rem,13vw,12rem);
+      /* Rhythm */
+      --gutter:clamp(1.25rem,4vw,3rem);
+      --section-y:clamp(5rem,12vw,11rem);
+      --max:78rem;
+      /* Ring geometry, lifted from the reference's proportions */
+      --ring-intro:46.875vw;
+      --ring-panel:16.7vw;
+      /* Easing — the reference's signature curve is the first one */
+      --ease-flick:cubic-bezier(.12,.65,0,.99);
+      --ease-out:cubic-bezier(.16,1,.3,1);
+      --ease-in-out:cubic-bezier(.65,0,.35,1);
+      --ease-back:cubic-bezier(.34,1.56,.64,1);
+      --dur-fast:.2s;
+      --dur:.5s;
+      --dur-slow:.9s;
+      color-scheme:dark;
+      }
+      /* -- 2. RESET + BASE ------------------------------------------------------ */
+      *,*::before,*::after{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+      @media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+      body{
+      margin:0;
+      background:var(--ink);
+      color:var(--paper);
+      font-family:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+      font-weight:500;
+      font-size:var(--t-base);
+      line-height:1.55;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      overflow-x:clip;
+      }
+      /* Film grain — the reference ships a noise.png; this is the same effect, inline */
+      body::after{
+      content:"";
+      position:fixed;inset:0;
+      z-index:9000;
+      pointer-events:none;
+      opacity:.4;
+      mix-blend-mode:overlay;
+      background-image:url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='.5'/%3E%3C/svg%3E");
+      background-size:160px 160px;
+      }
+      img,svg,canvas{display:block;max-width:100%}
+      h1,h2,h3,h4,p,figure,blockquote,ul,ol,dl,dd{margin:0}
+      ul,ol{list-style:none;padding:0}
+      a{color:inherit;text-decoration:none}
+      button{font:inherit;color:inherit;border:0;background:none;padding:0}
+      :focus-visible{outline:2px solid var(--stem-1);outline-offset:3px;border-radius:4px}
+      ::selection{background:var(--stem-2);color:var(--ink)}
+      ::-webkit-scrollbar{width:10px;height:10px}
+      ::-webkit-scrollbar-track{background:var(--ink)}
+      ::-webkit-scrollbar-thumb{background:#2c2d33;border-radius:10px;border:2px solid var(--ink)}
+      ::-webkit-scrollbar-thumb:hover{background:#3b3c44}
+      /* -- 3. TAILWIND-COMPATIBLE UTILITY LAYER --------------------------------- */
+      /* Class names mirror Tailwind 1:1 so the markup can be dropped into a real
+      Tailwind build (see tailwind.config.js) without touching a single element. */
+      .relative{position:relative}.absolute{position:absolute}.fixed{position:fixed}
+      .sticky{position:sticky}.static{position:static}
+      .inset-0{inset:0}.top-0{top:0}.left-0{left:0}.right-0{right:0}.bottom-0{bottom:0}
+      .z-10{z-index:10}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}
+      .block{display:block}.inline-block{display:inline-block}.inline-flex{display:inline-flex}
+      .flex{display:flex}.grid{display:grid}.hidden{display:none}
+      .flex-col{flex-direction:column}.flex-row{flex-direction:row}
+      .flex-wrap{flex-wrap:wrap}.flex-nowrap{flex-wrap:nowrap}
+      .flex-1{flex:1 1 0%}.flex-none{flex:none}.shrink-0{flex-shrink:0}.grow{flex-grow:1}
+      .items-start{align-items:flex-start}.items-center{align-items:center}
+      .items-end{align-items:flex-end}.items-baseline{align-items:baseline}
+      .justify-start{justify-content:flex-start}.justify-center{justify-content:center}
+      .justify-between{justify-content:space-between}.justify-end{justify-content:flex-end}
+      .gap-1{gap:.25rem}.gap-2{gap:.5rem}.gap-3{gap:.75rem}.gap-4{gap:1rem}
+      .gap-6{gap:1.5rem}.gap-8{gap:2rem}.gap-12{gap:3rem}.gap-16{gap:4rem}
+      .w-full{width:100%}.h-full{height:100%}.w-auto{width:auto}.h-auto{height:auto}
+      .min-h-screen{min-height:100svh}.h-screen{height:100svh}
+      .max-w-none{max-width:none}
+      .overflow-hidden{overflow:hidden}.overflow-visible{overflow:visible}
+      .text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}
+      .uppercase{text-transform:uppercase}.capitalize{text-transform:capitalize}
+      .font-normal{font-weight:400}.font-medium{font-weight:500}.font-bold{font-weight:700}
+      .italic{font-style:italic}.not-italic{font-style:normal}
+      .leading-none{line-height:1}.leading-tight{line-height:1.15}.leading-snug{line-height:1.35}
+      .leading-relaxed{line-height:1.7}
+      .tracking-tight{letter-spacing:-.02em}.tracking-wide{letter-spacing:.06em}
+      .tracking-widest{letter-spacing:.18em}
+      .text-xs{font-size:var(--t-xs)}.text-sm{font-size:var(--t-sm)}
+      .text-base{font-size:var(--t-base)}.text-md{font-size:var(--t-md)}
+      .text-lg{font-size:var(--t-lg)}.text-xl{font-size:var(--t-xl)}
+      .text-2xl{font-size:var(--t-2xl)}.text-3xl{font-size:var(--t-3xl)}
+      .text-mega{font-size:var(--t-mega)}
+      .text-mute{color:var(--mute)}.text-mute-2{color:var(--mute-2)}
+      .text-stem{color:var(--stem-1)}.text-ink{color:var(--ink)}
+      .rounded-full{border-radius:9999px}.rounded-2xl{border-radius:1rem}
+      .rounded-3xl{border-radius:1.5rem}.rounded-xl{border-radius:.75rem}
+      .border{border:1px solid var(--hair)}.border-0{border:0}
+      .pointer-events-none{pointer-events:none}.pointer-events-auto{pointer-events:all}
+      .cursor-pointer{cursor:pointer}
+      .select-none{user-select:none;-webkit-user-select:none}
+      .mx-auto{margin-left:auto;margin-right:auto}
+      .mt-2{margin-top:.5rem}.mt-4{margin-top:1rem}.mt-6{margin-top:1.5rem}
+      .mt-8{margin-top:2rem}.mt-12{margin-top:3rem}.mt-16{margin-top:4rem}
+      .mb-2{margin-bottom:.5rem}.mb-4{margin-bottom:1rem}.mb-6{margin-bottom:1.5rem}
+      .mb-8{margin-bottom:2rem}.mb-12{margin-bottom:3rem}.mb-16{margin-bottom:4rem}
+      .p-4{padding:1rem}.p-6{padding:1.5rem}.p-8{padding:2rem}
+      .px-4{padding-left:1rem;padding-right:1rem}
+      .py-2{padding-top:.5rem;padding-bottom:.5rem}
+      .py-4{padding-top:1rem;padding-bottom:1rem}
+      /* -- 4. PRIMITIVES -------------------------------------------------------- */
+      .shell{width:100%;max-width:var(--max);margin-inline:auto;padding-inline:var(--gutter)}
+      .shell-wide{width:100%;max-width:96rem;margin-inline:auto;padding-inline:var(--gutter)}
+      /* Pill button — mirrors the reference's 4rem-tall, 4rem-padded capsule */
+      .btn{
+      --btn-bg:var(--paper);
+      --btn-fg:var(--ink);
+      position:relative;
+      display:inline-flex;align-items:center;justify-content:center;gap:.5rem;
+      height:3rem;padding:0 2rem;border-radius:9999px;
+      background:var(--btn-bg);color:var(--btn-fg);
+      border:1px solid rgba(0,0,0,.9);
+      font-size:var(--t-sm);font-weight:500;letter-spacing:.01em;
+      cursor:pointer;white-space:nowrap;
+      transition:background-color var(--dur-fast) ease,transform var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur) var(--ease-out),color var(--dur-fast) ease;
+      will-change:transform;
+      }
+      @media (min-width:700px){.btn{height:3.75rem;padding:0 3rem;font-size:var(--t-md)}}
+      .btn--stem{--btn-bg:var(--stem-1)}
+      .btn--stem:hover{--btn-bg:var(--stem-2)}
+      .btn--ghost{
+      --btn-bg:transparent;--btn-fg:var(--paper);
+      border-color:var(--hair-2);
+      }
+      .btn--ghost:hover{--btn-bg:rgba(255,255,255,.08);border-color:var(--hair-2)}
+      .btn:hover{box-shadow:0 0 0 8px rgba(var(--paper-rgb),.05)}
+      .btn:active{transform:scale(.97)}
+      .btn:disabled{--btn-bg:var(--disabled);--btn-fg:var(--mute);cursor:not-allowed}
+      /* Layer order inside every button is fixed: background (the element itself)
+      → hover effect (::before, inert) → label (always on top).
+      The roll is a two-line stack inside a one-line window, so it travels 50% of
+      its own height. Translating -100% moves it by two lines and empties the
+      button — that was the disappearing-label bug. */
+      .btn::before{
+      content:"";position:absolute;inset:0;border-radius:inherit;z-index:1;
+      pointer-events:none;
+      background:radial-gradient(120% 140% at 50% 120%,rgba(0,0,0,.10),transparent 70%);
+      opacity:0;transition:opacity var(--dur-fast) ease;
+      }
+      .btn--ghost::before{
+      background:radial-gradient(120% 140% at 50% 120%,rgba(255,255,255,.14),transparent 70%);
+      }
+      .btn:hover::before{opacity:1}
+      .btn__label{
+      position:relative;z-index:2;            /* text is always the top layer */
+      display:block;overflow:hidden;
+      height:1.3em;line-height:1.3em;
+      }
+      .btn__label>span{display:block;transition:transform .42s var(--ease-flick)}
+      .btn__label>span::after{content:attr(data-t);display:block}
+      /* Only real hover pointers get the roll. On touch, :hover latches after a tap
+      and would leave the label parked mid-travel. */
+      @media (hover:hover) and (pointer:fine){
+      .btn:hover .btn__label>span,
+      .btn:focus-visible .btn__label>span{transform:translateY(-50%)}
+      }
+      @media (hover:none),(pointer:coarse){
+      .btn__label>span{transform:none!important}
+      }
+      /* Small tag pill */
+      .tag{
+      display:inline-flex;align-items:center;gap:.5rem;
+      height:1.75rem;padding:0 .875rem;border-radius:9999px;
+      background:rgba(var(--paper-rgb),.07);
+      font-size:var(--t-xs);letter-spacing:.16em;text-transform:uppercase;
+      color:var(--mute);
+      }
+      .tag__dot{width:.375rem;height:.375rem;border-radius:50%;background:var(--stem-2);
+      box-shadow:0 0 0 3px color-mix(in srgb,var(--stem-2) 25%,transparent)}
+      /* Glass card */
+      .glass{
+      position:relative;
+      background:linear-gradient(160deg,rgba(var(--paper-rgb),.055),rgba(var(--paper-rgb),.02));
+      border:1px solid var(--hair);
+      border-radius:1.25rem;
+      -webkit-backdrop-filter:blur(14px) saturate(130%);
+      backdrop-filter:blur(14px) saturate(130%);
+      overflow:hidden;
+      }
+      .glass::before{
+      content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+      background:linear-gradient(140deg,rgba(var(--paper-rgb),.22),transparent 38%);
+      -webkit-mask:linear-gradient(#000,#000) content-box,linear-gradient(#000,#000);
+      -webkit-mask-composite:xor;mask-composite:exclude;
+      padding:1px;
+      opacity:.7;
+      }
+      /* Section header block */
+      .sec-head{display:flex;flex-direction:column;align-items:flex-start;gap:1.25rem;max-width:44rem}
+      .sec-head h2{font-size:var(--t-2xl);line-height:1.02;letter-spacing:-.028em;font-weight:500}
+      .sec-head p{color:var(--mute);font-size:var(--t-lg);line-height:1.5;max-width:36rem}
+      .sec-rule{height:1px;background:var(--hair);width:100%}
+      /* Wordmark — two stacked lowercase lines, difference-blended like the source */
+      .wordmark{display:block;line-height:.86;letter-spacing:-.03em;font-weight:500}
+      .wordmark span{display:block}
+      /* Stem glyph — the tall abstract "letterform" columns */
+      .glyph{
+      width:100%;height:100%;overflow:visible;
+      fill:transparent;
+      stroke:var(--glyph,var(--stem-2));
+      stroke-width:2.2;opacity:.32;
+      transition:fill .7s var(--ease-flick),stroke .7s ease;
+      }
+      .glyph.is-filled{fill:var(--glyph,var(--stem-1));stroke:transparent;opacity:.8}
+      .show__art .glyph{opacity:.16}
+      /* -- 5. CHROME ------------------------------------------------------------ */
+      /* 5a. Preloader — capsule that fills with liquid, exactly the source's device */
+      #boot{
+      position:fixed;inset:0;z-index:9500;
+      background:var(--ink);
+      display:flex;align-items:center;justify-content:center;flex-direction:column;
+      gap:2.5rem;
+      transition:opacity .7s var(--ease-out),visibility .7s;
+      }
+      #boot.is-done{opacity:0;visibility:hidden;pointer-events:none}
+      .boot__cap{
+      position:relative;
+      width:clamp(74px,11vw,146px);
+      aspect-ratio:146/380;
+      border-radius:9999px;
+      background:rgba(var(--paper-rgb),.05);
+      border:1px solid var(--hair);
+      overflow:hidden;
+      }
+      .boot__fill{
+      position:absolute;left:0;right:0;bottom:0;
+      height:var(--p,0%);
+      background:linear-gradient(180deg,var(--a-1),var(--a-3));
+      transition:height .35s var(--ease-out);
+      }
+      .boot__fill::after{
+      content:"";position:absolute;left:-25%;right:-25%;top:-14px;height:28px;
+      border-radius:50%;
+      background:var(--a-1);
+      animation:bob 2.6s ease-in-out infinite;
+      }
+      .boot__meta{display:flex;align-items:baseline;gap:.75rem;color:var(--mute)}
+      .boot__pct{font-size:var(--t-2xl);color:var(--paper);line-height:1;font-variant-numeric:tabular-nums}
+      .boot__word{font-size:var(--t-xs);letter-spacing:.24em;text-transform:uppercase}
+      /* 5b. Custom cursor */
+      .cur{position:fixed;top:0;left:0;z-index:9200;pointer-events:none;opacity:0;
+      mix-blend-mode:difference;will-change:transform;transition:opacity .3s ease}
+      .cur.is-live{opacity:1}
+      .cur__dot{width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff}
+      .cur__ring{width:34px;height:34px;margin:-17px;border-radius:50%;
+      border:1px solid rgba(255,255,255,.8);
+      transition:width .3s var(--ease-out),height .3s var(--ease-out),
+      margin .3s var(--ease-out),opacity .3s ease,border-color .3s ease}
+      .cur.is-hot .cur__ring{width:64px;height:64px;margin:-32px;border-color:#fff}
+      .cur.is-down .cur__ring{width:24px;height:24px;margin:-12px}
+      @media (hover:none),(pointer:coarse){.cur{display:none}}
+      /* 5c. Scroll rail */
+      #rail{position:fixed;top:0;left:0;height:2px;z-index:8000;
+      width:var(--w,0%);background:var(--stem-2);
+      box-shadow:0 0 14px color-mix(in srgb,var(--stem-2) 70%,transparent);
+      transition:background-color .6s ease,box-shadow .6s ease}
+      /* 5d. Navigation */
+      #nav{
+      position:fixed;top:0;left:0;right:0;z-index:7000;
+      padding:clamp(.875rem,2vw,1.5rem) var(--gutter);
+      transition:transform .5s var(--ease-flick),padding .5s var(--ease-flick);
+      }
+      #nav.is-hidden{transform:translateY(-115%)}
+      .nav__inner{
+      max-width:var(--max);margin-inline:auto;
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;
+      height:3.5rem;padding:0 .625rem 0 1.125rem;
+      border-radius:9999px;
+      border:1px solid transparent;
+      transition:background-color .5s var(--ease-out),border-color .5s var(--ease-out),
+      backdrop-filter .5s ease,box-shadow .5s ease;
+      }
+      #nav.is-stuck .nav__inner{
+      background:rgba(20,21,24,.8);
+      border-color:var(--hair);
+      -webkit-backdrop-filter:blur(18px) saturate(140%);
+      backdrop-filter:blur(18px) saturate(140%);
+      box-shadow:0 12px 40px -18px rgba(0,0,0,.9);
+      }
+      .nav__mark{display:flex;align-items:center;gap:.625rem;mix-blend-mode:difference}
+      .nav__mark .wordmark{font-size:.8125rem}
+      .nav__seal{width:1.875rem;height:1.875rem;flex:none}
+      .nav__links{display:none;align-items:center;gap:.125rem}
+      @media (min-width:940px){.nav__links{display:flex}}
+      .nav__link{
+      position:relative;padding:.5rem .875rem;border-radius:9999px;
+      font-size:var(--t-sm);color:var(--mute);
+      transition:color .3s ease;
+      }
+      .nav__link::before{
+      content:"";position:absolute;inset:0;border-radius:inherit;
+      background:rgba(var(--paper-rgb),.09);
+      z-index:0;
+      transform:scale(.72);opacity:0;
+      transition:transform .42s var(--ease-flick),opacity .3s ease;
+      }
+      .nav__link:hover{color:var(--paper)}
+      .nav__link:hover::before{transform:scale(1);opacity:1}
+      .nav__link span{position:relative;z-index:1}
+      .nav__right{display:flex;align-items:center;gap:.5rem}
+      .nav__cta{height:2.5rem;padding:0 1.375rem;font-size:var(--t-sm)}
+      @media (max-width:520px){.nav__cta{display:none}}
+      .nav__burger{
+      display:grid;place-items:center;width:2.5rem;height:2.5rem;border-radius:9999px;
+      background:rgba(var(--paper-rgb),.07);cursor:pointer;
+      }
+      @media (min-width:940px){.nav__burger{display:none}}
+      .nav__burger i{display:block;width:15px;height:1.5px;background:#fff;border-radius:2px;
+      transition:transform .45s var(--ease-flick),opacity .2s ease}
+      .nav__burger i+i{margin-top:4px}
+      .nav__burger.is-open i:first-child{transform:translateY(2.75px) rotate(45deg)}
+      .nav__burger.is-open i:last-child{transform:translateY(-2.75px) rotate(-45deg)}
+      /* Mobile sheet */
+      #sheet{
+      position:fixed;inset:0;z-index:6900;
+      background:var(--ink-2);
+      display:flex;flex-direction:column;justify-content:center;gap:.25rem;
+      padding:6rem var(--gutter) 3rem;
+      clip-path:inset(0 0 100% 0);
+      transition:clip-path .8s var(--ease-flick);
+      pointer-events:none;
+      }
+      #sheet.is-open{clip-path:inset(0 0 0 0);pointer-events:all}
+      #sheet a{
+      font-size:clamp(2rem,10vw,3.5rem);line-height:1.1;letter-spacing:-.03em;
+      color:var(--paper);
+      opacity:0;transform:translateY(28px);
+      transition:opacity .5s ease,transform .6s var(--ease-flick),color .3s ease;
+      }
+      #sheet.is-open a{opacity:1;transform:none}
+      #sheet a:hover{color:var(--stem-1)}
+      #sheet .sheet__foot{margin-top:2.5rem;color:var(--mute);font-size:var(--t-sm)}
+      /* -- 6. SECTIONS ---------------------------------------------------------- */
+      /* 6a. HERO */
+      #hero{
+      position:relative;min-height:100svh;overflow:hidden;isolation:isolate;
+      display:grid;grid-template-rows:1fr auto 1fr;justify-items:center;
+      padding:clamp(4rem,9vh,6rem) var(--gutter) clamp(3.5rem,8vh,5rem);
+      }
+      .hero__glyphs{
+      position:absolute;inset:0;z-index:1;
+      display:grid;grid-template-columns:repeat(4,1fr);
+      gap:clamp(.5rem,2vw,1.5rem);
+      padding:clamp(3rem,7vh,6rem) var(--gutter);
+      pointer-events:none;
+      }
+      .hero__glyphs>div{position:relative;display:flex;align-items:center;justify-content:center;
+      overflow:hidden}
+      .hero__glyphs>div:nth-child(3),.hero__glyphs>div:nth-child(4){display:none}
+      @media (min-width:700px){.hero__glyphs>div:nth-child(3),.hero__glyphs>div:nth-child(4){display:flex}}
+      @media (max-width:699px){.hero__glyphs{grid-template-columns:repeat(2,1fr)}}
+      /* The ring stage: CSS glow + hotspot behind the WebGL canvas, screen-blend above */
+      .hero__stage{
+      position:relative;grid-row:2;align-self:center;
+      width:min(42vw,50vh);min-width:15rem;aspect-ratio:1;
+      z-index:3;
+      }
+      @media (max-width:699px){.hero__stage{width:min(78vw,40vh)}}
+      .ring__glow{
+      position:absolute;top:50%;left:50%;translate:-50% -50%;
+      width:96.5%;aspect-ratio:1;border-radius:50%;
+      background:var(--stem-2);
+      filter:blur(4rem);
+      opacity:.26;
+      transition:background-color .8s var(--ease-out);
+      }
+      .ring__core{
+      position:absolute;top:50%;left:50%;translate:-50% -50%;
+      width:42%;aspect-ratio:1;border-radius:50%;
+      background:radial-gradient(circle at 44% 40%,
+      color-mix(in srgb,var(--stem-1) 46%,transparent) 0%,
+      color-mix(in srgb,var(--stem-3) 46%,transparent) 46%,
+      transparent 72%);
+      filter:blur(26px);
+      opacity:.5;
+      }
+      /* the ring canvas is deliberately larger than its stage so the glow and the
+      motion-blur trail have somewhere to go; max-width has to be released
+      because canvas is a replaced element and the reset caps it at 100% */
+      #gl-ring{position:absolute;top:-12%;left:-12%;width:124%;height:124%;
+      max-width:none;z-index:2}
+      .ring__bloom{
+      position:absolute;top:50%;left:50%;translate:-50% -50%;
+      width:104%;aspect-ratio:1;border-radius:50%;
+      background:radial-gradient(circle,transparent 36%,
+      color-mix(in srgb,var(--stem-1) 34%,transparent) 48%,transparent 60%);
+      mix-blend-mode:screen;opacity:.26;z-index:4;filter:blur(18px);
+      }
+      /* The ring's opening is now empty by design — the hole is the composition's
+      rest point rather than a slot for a control. */
+      /* Hero type overlay — sits above the ring, difference-blended */
+      .hero__lede{
+      grid-row:3;align-self:center;width:100%;max-width:var(--max);z-index:5;
+      display:flex;align-items:flex-start;justify-content:space-between;
+      gap:clamp(1.25rem,4vw,3rem);flex-wrap:wrap;
+      padding-top:clamp(.75rem,2.5vh,1.75rem);
+      }
+      .hero__sub{
+      font-size:var(--t-md);color:rgba(255,255,255,.72);
+      max-width:24rem;line-height:1.6;
+      opacity:0;transform:translateY(18px);
+      transition:opacity .8s ease .18s,transform .9s var(--ease-flick) .18s;
+      }
+      .is-booted .hero__sub{opacity:1;transform:none}
+      .hero__acts{
+      display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;
+      opacity:0;transform:translateY(18px);
+      transition:opacity .8s ease .32s,transform .9s var(--ease-flick) .32s;
+      }
+      .is-booted .hero__acts{opacity:1;transform:none}
+      @media (max-width:699px){
+      .hero__lede{flex-direction:column;align-items:center;text-align:center}
+      .hero__sub{max-width:30rem}
+      }
+      .hero__foot{
+      position:absolute;left:0;right:0;bottom:clamp(.75rem,2vh,1.25rem);z-index:6;
+      display:flex;align-items:center;justify-content:space-between;gap:1rem;
+      padding-inline:var(--gutter);
+      max-width:var(--max);margin-inline:auto;
+      font-size:var(--t-xs);color:var(--mute-2);letter-spacing:.16em;text-transform:uppercase;
+      }
+      .hero__scroll{display:flex;align-items:center;gap:.625rem}
+      .hero__scroll i{display:block;width:1px;height:34px;background:linear-gradient(var(--stem-2),transparent);
+      animation:rail 2.4s var(--ease-in-out) infinite}
+      .hero__stems{display:none;gap:.5rem}
+      @media (min-width:700px){.hero__stems{display:flex}}
+      .hero__stems b{
+      width:.5rem;height:.5rem;border-radius:50%;background:var(--sw);
+      opacity:.4;transition:opacity .4s ease,transform .4s var(--ease-back);
+      }
+      .hero__stems b.on{opacity:1;transform:scale(1.5)}
+      /* 6b. TICKER */
+      .ticker{
+      border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);
+      padding:1.125rem 0;overflow:hidden;
+      background:var(--ink-2);
+      --tick-dur:38s;
+      }
+      .ticker__track{display:flex;width:max-content;animation:slide var(--tick-dur) linear infinite}
+      .ticker:hover .ticker__track{animation-play-state:paused}
+      .ticker__track>div{display:flex;align-items:center;gap:2.5rem;padding-right:2.5rem}
+      .ticker em{font-style:normal;font-size:clamp(1rem,1.8vw,1.4rem);letter-spacing:-.01em;
+      color:rgba(255,255,255,.82);white-space:nowrap}
+      .ticker s{text-decoration:none;color:var(--stem-2);font-size:1rem}
+      /* 6c. FEATURES */
+      .feat-grid{display:grid;gap:clamp(.75rem,1.4vw,1.125rem);grid-template-columns:1fr}
+      @media (min-width:640px){.feat-grid{grid-template-columns:repeat(2,1fr)}}
+      @media (min-width:1060px){.feat-grid{grid-template-columns:repeat(3,1fr)}}
+      .feat{
+      overflow:visible;
+      padding:clamp(1.5rem,2.4vw,2.125rem);
+      min-height:15rem;
+      display:flex;flex-direction:column;justify-content:space-between;gap:clamp(1.5rem,4vw,2.75rem);
+      transform-style:preserve-3d;
+      transition:transform .5s var(--ease-out),border-color .5s ease;
+      will-change:transform;
+      }
+      .feat:hover{border-color:var(--hair-2)}
+      .feat__spot{
+      position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+      overflow:hidden;
+      background:radial-gradient(320px circle at var(--mx,50%) var(--my,50%),
+      color-mix(in srgb,var(--sw) 22%,transparent),transparent 68%);
+      transition:opacity .35s ease;
+      }
+      .feat:hover .feat__spot{opacity:1}
+      .feat__ico{
+      width:2.75rem;height:2.75rem;border-radius:.875rem;display:grid;place-items:center;
+      background:color-mix(in srgb,var(--sw) 16%,transparent);
+      border:1px solid color-mix(in srgb,var(--sw) 30%,transparent);
+      transform:translateZ(28px);
+      }
+      .feat__ico svg{width:1.25rem;height:1.25rem;stroke:var(--sw);fill:none;
+      stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+      .feat__body{transform:translateZ(16px)}
+      .feat h3{font-size:var(--t-lg);font-weight:500;letter-spacing:-.015em;margin-bottom:.5rem}
+      .feat p{color:var(--mute);font-size:var(--t-base);line-height:1.6}
+      .feat__n{position:absolute;top:1.25rem;right:1.375rem;font-size:var(--t-xs);
+      color:var(--mute-2);letter-spacing:.16em}
+      /* 6d. SHOWCASE — pinned horizontal scroll */
+      #showcase{position:relative;background:var(--ink-2)}
+      .show__pin{position:sticky;top:0;height:100svh;overflow:hidden;display:flex;
+      flex-direction:column}
+      .show__head{
+      padding:clamp(6rem,13vh,8.5rem) var(--gutter) 0;
+      max-width:96rem;margin-inline:auto;width:100%;
+      display:flex;align-items:flex-end;justify-content:space-between;gap:2rem;flex-wrap:wrap;
+      }
+      .show__head h2{font-size:clamp(1.75rem,3.2vw,2.75rem)}
+      .show__count{font-size:var(--t-sm);color:var(--mute-2);font-variant-numeric:tabular-nums}
+      .show__count b{color:var(--stem-1);font-weight:500}
+      .show__viewport{flex:1;display:flex;align-items:center;overflow:hidden}
+      .show__track{display:flex;flex:none;width:max-content;
+      gap:clamp(1rem,2vw,1.75rem);padding-inline:var(--gutter);
+      will-change:transform}
+      .show__panel{
+      position:relative;flex:none;
+      width:clamp(17rem,30vw,26rem);
+      aspect-ratio:283/380;
+      border-radius:1.5rem;overflow:hidden;
+      border:1px solid var(--hair);
+      background:linear-gradient(170deg,rgba(var(--paper-rgb),.05),rgba(var(--paper-rgb),.015));
+      display:flex;flex-direction:column;justify-content:flex-end;
+      padding:clamp(1.25rem,2vw,1.875rem);
+      transition:border-color .5s ease,transform .6s var(--ease-out);
+      }
+      .show__panel:hover{border-color:color-mix(in srgb,var(--sw) 46%,transparent)}
+      .show__art{position:absolute;inset:0;z-index:0;overflow:hidden}
+      .show__art .glyph{position:absolute;top:-8%;left:50%;translate:-50% 0;
+      width:74%;height:116%;opacity:.5}
+      .show__ring{
+      position:absolute;top:38%;left:50%;translate:-50% -50%;
+      width:58%;aspect-ratio:1;border-radius:50%;
+      background:
+      radial-gradient(circle at 42% 38%,rgba(255,255,255,.55) 0%,transparent 26%),
+      conic-gradient(from 210deg,var(--sw3),var(--sw),var(--sw2),var(--sw3));
+      -webkit-mask:radial-gradient(circle,transparent 33%,#000 34%,#000 100%);
+      mask:radial-gradient(circle,transparent 33%,#000 34%,#000 100%);
+      box-shadow:0 0 70px -6px color-mix(in srgb,var(--sw) 62%,transparent);
+      transition:transform .8s var(--ease-out),filter .8s ease;
+      }
+      .show__panel:hover .show__ring{transform:translate(-50%,-50%) scale(1.06) rotate(12deg)}
+      .show__meta{position:relative;z-index:2}
+      .show__k{font-size:var(--t-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--sw)}
+      .show__panel h3{font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em;margin:.5rem 0 .5rem}
+      .show__panel p{color:var(--mute);font-size:var(--t-base);line-height:1.55}
+      .show__stats{display:flex;gap:1.25rem;margin-top:1.125rem;padding-top:1.125rem;
+      border-top:1px solid var(--hair)}
+      .show__stats div{font-size:var(--t-xs);color:var(--mute-2);letter-spacing:.1em;
+      text-transform:uppercase}
+      .show__stats b{display:block;font-size:var(--t-md);color:var(--paper);
+      letter-spacing:normal;text-transform:none;font-weight:500;font-variant-numeric:tabular-nums}
+      .show__bar{height:2px;background:var(--hair);margin:0 var(--gutter) clamp(2rem,5vh,3.5rem);
+      max-width:96rem;width:calc(100% - var(--gutter)*2);margin-inline:auto;position:relative}
+      .show__bar i{position:absolute;left:0;top:0;height:100%;width:var(--p,10%);
+      background:var(--stem-2);transition:background-color .5s ease}
+      /* 6e. GALLERY */
+      .gal{
+      display:grid;gap:clamp(.625rem,1.2vw,1rem);
+      grid-template-columns:repeat(2,1fr);
+      }
+      @media (min-width:760px){.gal{grid-template-columns:repeat(4,1fr)}}
+      .gal__cell{
+      position:relative;overflow:hidden;border-radius:1rem;
+      border:1px solid var(--hair);
+      aspect-ratio:1;
+      cursor:pointer;
+      }
+      .gal__cell.tall{grid-row:span 2;aspect-ratio:1/2.06}
+      @media (max-width:759px){.gal__cell.tall{grid-row:span 1;aspect-ratio:1}}
+      .gal__cell svg{width:100%;height:100%;
+      transition:transform 1.1s var(--ease-out),filter .6s ease;
+      transform:scale(1.001)}
+      .gal__cell:hover svg{transform:scale(1.09)}
+      .gal__cap{
+      position:absolute;left:0;right:0;bottom:0;padding:1rem;z-index:6;
+      display:flex;align-items:flex-end;justify-content:space-between;gap:.75rem;
+      background:linear-gradient(transparent,rgba(0,0,0,.78));
+      transform:translateY(102%);
+      transition:transform .55s var(--ease-flick);
+      }
+      .gal__cell:hover .gal__cap{transform:none}
+      .gal__cap h4{font-size:var(--t-base);font-weight:500}
+      .gal__cap span{font-size:var(--t-xs);color:var(--mute);white-space:nowrap}
+      /* 6f. TIMELINE */
+      .tl{position:relative;display:grid;gap:0;margin-top:clamp(2.5rem,5vw,4rem)}
+      .tl__spine{
+      position:absolute;left:.6875rem;top:.5rem;bottom:.5rem;width:2px;
+      background:var(--hair);border-radius:2px;
+      }
+      @media (min-width:820px){.tl__spine{left:50%;translate:-1px 0}}
+      .tl__spine i{display:block;width:100%;height:var(--p,0%);border-radius:2px;
+      background:linear-gradient(var(--a-2),var(--b-2),var(--c-2),var(--d-2));
+      transition:height .12s linear}
+      .tl__row{
+      position:relative;display:grid;grid-template-columns:auto 1fr;
+      gap:1.5rem;padding-block:clamp(1.5rem,3vw,2.5rem);
+      }
+      .tl__row>.tl__node{grid-column:1;grid-row:1}
+      .tl__row>.tl__card{grid-column:2;grid-row:1}
+      @media (min-width:820px){
+      .tl__row{grid-template-columns:1fr auto 1fr;gap:clamp(2rem,4vw,4rem);align-items:center}
+      .tl__row>.tl__card{grid-column:1}
+      .tl__row>.tl__spacer{grid-column:3}
+      .tl__row:nth-child(even)>.tl__card{grid-column:3}
+      .tl__row:nth-child(even)>.tl__spacer{grid-column:1}
+      .tl__row>.tl__node{grid-column:2;grid-row:1}
+      }
+      .tl__node{
+      width:1.5rem;height:1.5rem;border-radius:50%;flex:none;
+      display:grid;place-items:center;
+      background:var(--ink);border:2px solid var(--hair);
+      transition:border-color .5s var(--ease-out),transform .6s var(--ease-back),
+      box-shadow .6s ease;
+      z-index:2;
+      }
+      .tl__node b{width:.4375rem;height:.4375rem;border-radius:50%;background:var(--hair-2);
+      transition:background-color .5s ease}
+      .is-in .tl__node{border-color:var(--sw);transform:scale(1.14);
+      box-shadow:0 0 0 6px color-mix(in srgb,var(--sw) 12%,transparent)}
+      .is-in .tl__node b{background:var(--sw)}
+      .tl__card{
+      opacity:0;transform:translateY(26px);
+      transition:opacity .7s ease,transform .8s var(--ease-flick);
+      }
+      .is-in .tl__card{opacity:1;transform:none}
+      .tl__card .tl__step{font-size:var(--t-xs);letter-spacing:.2em;text-transform:uppercase;
+      color:var(--sw)}
+      .tl__card h3{font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em;margin:.5rem 0 .625rem}
+      .tl__card p{color:var(--mute);line-height:1.6;max-width:30rem}
+      @media (min-width:820px){.tl__row:nth-child(odd) .tl__card{text-align:right}
+      .tl__row:nth-child(odd) .tl__card p{margin-left:auto}}
+      .tl__spacer{display:none}
+      @media (min-width:820px){.tl__spacer{display:block}}
+      /* 6g. PRICING */
+      .price-grid{display:grid;gap:clamp(.75rem,1.4vw,1.125rem);
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,17.5rem),1fr));align-items:stretch}
+      .plan{
+      position:relative;padding:clamp(1.75rem,2.6vw,2.5rem);
+      display:flex;flex-direction:column;gap:1.5rem;
+      transition:transform .55s var(--ease-out),border-color .5s ease;
+      }
+      .plan:hover{transform:translateY(-6px);border-color:var(--hair-2)}
+      .plan--hot{border-color:color-mix(in srgb,var(--d-2) 45%,transparent)}
+      .plan--hot::after{
+      content:"";position:absolute;top:-40%;left:50%;translate:-50% 0;
+      width:120%;aspect-ratio:1;border-radius:50%;z-index:-1;
+      background:var(--d-2);filter:blur(80px);opacity:.16;pointer-events:none;
+      }
+      .plan__flag{position:absolute;top:1.25rem;right:1.25rem}
+      .plan__name{font-size:var(--t-xs);letter-spacing:.2em;text-transform:uppercase;color:var(--sw)}
+      .plan__fig{display:flex;align-items:baseline;gap:.5rem}
+      .plan__fig b{font-size:clamp(2.5rem,5vw,3.5rem);font-weight:500;line-height:1;
+      letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+      .plan__fig span{color:var(--mute);font-size:var(--t-sm)}
+      .plan__note{color:var(--mute);font-size:var(--t-base);line-height:1.6}
+      .plan ul{display:flex;flex-direction:column;gap:.75rem;flex:1}
+      .plan li{display:flex;gap:.75rem;align-items:flex-start;font-size:var(--t-base);
+      color:rgba(255,255,255,.78);line-height:1.5}
+      .plan li svg{width:1rem;height:1rem;flex:none;margin-top:.28rem;stroke:var(--sw);
+      fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+      .plan .btn{width:100%}
+      .price-toggle{display:inline-flex;padding:.25rem;border-radius:9999px;
+      background:rgba(var(--paper-rgb),.07);gap:.25rem}
+      .price-toggle button{position:relative;z-index:1;
+      padding:.5rem 1.125rem;border-radius:9999px;font-size:var(--t-sm);
+      color:var(--mute);cursor:pointer;transition:background-color .35s var(--ease-out),color .3s ease}
+      .price-toggle button:hover:not(.on){color:var(--paper)}
+      .price-toggle button.on{background:var(--paper);color:var(--ink)}
+      /* 6h. TESTIMONIALS */
+      .quotes{overflow:hidden;display:flex;flex-direction:column;gap:clamp(.75rem,1.4vw,1.125rem);
+      -webkit-mask:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent);
+      mask:linear-gradient(90deg,transparent,#000 9%,#000 91%,transparent)}
+      .quotes__row{display:flex;gap:clamp(.75rem,1.4vw,1.125rem);width:max-content}
+      .quotes__row.r1{animation:slide 56s linear infinite}
+      .quotes__row.r2{animation:slide 68s linear infinite reverse}
+      .quotes:hover .quotes__row{animation-play-state:paused}
+      .quote{
+      width:clamp(17rem,26vw,23rem);flex:none;padding:1.5rem;
+      display:flex;flex-direction:column;gap:1.125rem;justify-content:space-between;
+      transition:border-color .4s ease,transform .5s var(--ease-out);
+      }
+      .quote:hover{border-color:var(--hair-2);transform:translateY(-4px)}
+      .quote p{color:rgba(255,255,255,.82);line-height:1.6;font-size:var(--t-base)}
+      .quote footer{display:flex;align-items:center;gap:.75rem}
+      .quote__av{
+      position:relative;overflow:hidden;
+      width:2.25rem;height:2.25rem;border-radius:50%;flex:none;
+      display:grid;place-items:center;
+      /* the family gradient is the ground the portrait sits on, and the fallback
+      surface if a portrait file is missing */
+      background:conic-gradient(from 140deg,var(--sw),var(--sw2),var(--sw3),var(--sw));
+      box-shadow:0 0 0 1px color-mix(in srgb,var(--sw) 45%,transparent),
+      0 4px 12px -4px rgba(0,0,0,.7);
+      }
+      .quote__av i{
+      position:relative;z-index:0;font-style:normal;
+      font-size:var(--t-xs);color:rgba(0,0,0,.68);font-weight:700;
+      }
+      .quote__av img{
+      position:absolute;inset:0;z-index:1;
+      width:100%;height:100%;
+      object-fit:cover;
+      object-position:50% 28%;   /* bias up: keeps the head in frame on a square crop */
+      border-radius:inherit;
+      background:var(--ink-3);
+      }
+      .quote__who b{display:block;font-weight:500;font-size:var(--t-sm)}
+      .quote__who span{color:var(--mute-2);font-size:var(--t-xs)}
+      /* 6i. FAQ */
+      .faq{border-top:1px solid var(--hair);margin-top:clamp(2rem,4vw,3rem)}
+      .faq__item{border-bottom:1px solid var(--hair)}
+      .faq__q{
+      width:100%;display:flex;align-items:center;justify-content:space-between;gap:1.5rem;
+      padding:clamp(1.125rem,2.2vw,1.75rem) 0;text-align:left;cursor:pointer;
+      font-size:var(--t-lg);letter-spacing:-.015em;font-weight:500;
+      transition:color .3s ease;
+      }
+      .faq__q:hover{color:var(--stem-1)}
+      .faq__sign{
+      width:2rem;height:2rem;flex:none;border-radius:50%;position:relative;
+      border:1px solid var(--hair);
+      transition:background-color .4s ease,border-color .4s ease,transform .5s var(--ease-flick);
+      }
+      .faq__sign::before,.faq__sign::after{
+      content:"";position:absolute;top:50%;left:50%;translate:-50% -50%;
+      background:currentColor;border-radius:2px;
+      transition:transform .45s var(--ease-flick),opacity .3s ease;
+      }
+      .faq__sign::before{width:11px;height:1.5px}
+      .faq__sign::after{width:1.5px;height:11px}
+      .faq__item.is-open .faq__sign{transform:rotate(180deg);border-color:var(--stem-2)}
+      .faq__item.is-open .faq__sign::after{transform:translate(-50%,-50%) scaleY(0)}
+      .faq__a{overflow:hidden;height:0;transition:height .55s var(--ease-flick)}
+      .faq__a>div{padding-bottom:clamp(1.25rem,2.4vw,2rem);color:var(--mute);
+      max-width:44rem;line-height:1.7}
+      /* 6j. CTA */
+      #cta{position:relative;overflow:hidden;isolation:isolate;
+      padding-block:clamp(6rem,15vw,12rem)}
+      /* canvas is a replaced element: inset:0 alone leaves it at its 300x150
+      intrinsic size, so the box has to be stated explicitly */
+      #gl-dust{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.85}
+      #cta::before{
+      content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
+      background:radial-gradient(ellipse 70% 60% at 50% 52%,
+      color-mix(in srgb,var(--d-3) 34%,transparent),transparent 72%);
+      }
+      .cta__inner{position:relative;z-index:2;text-align:center}
+      .cta__mega{
+      font-size:var(--t-mega);line-height:.88;letter-spacing:-.04em;font-weight:500;
+      color:transparent;
+      -webkit-text-stroke:1.5px var(--stem-1);
+      animation:hue 14s linear infinite;
+      }
+      .cta__mega em{font-style:normal;color:var(--stem-1);-webkit-text-stroke:0}
+      .cta__note{margin:clamp(1.5rem,3vw,2.25rem) auto 0;max-width:34rem;
+      color:rgba(255,255,255,.68);font-size:var(--t-lg)}
+      .cta__acts{margin-top:clamp(1.75rem,3.5vw,2.75rem);display:flex;gap:.75rem;
+      flex-wrap:wrap;justify-content:center}
+      .cta__fine{margin-top:1.5rem;color:var(--mute-2);font-size:var(--t-xs);
+      letter-spacing:.14em;text-transform:uppercase}
+      /* 6k. FOOTER */
+      #foot{border-top:1px solid var(--hair);background:var(--ink-2);
+      padding-block:clamp(3rem,6vw,5rem) 2rem}
+      .foot__top{display:grid;gap:clamp(2rem,4vw,3rem);
+      grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))}
+      .foot__brand{grid-column:1/-1}
+      @media (min-width:820px){.foot__brand{grid-column:span 2}}
+      .foot__brand .wordmark{font-size:clamp(2rem,4.5vw,3.25rem);color:var(--paper)}
+      .foot__brand p{margin-top:1rem;color:var(--mute);max-width:22rem;line-height:1.6}
+      .foot__col h5{font-size:var(--t-xs);letter-spacing:.2em;text-transform:uppercase;
+      color:var(--mute-2);margin-bottom:1rem;font-weight:500}
+      .foot__col a{display:block;padding:.3125rem 0;color:rgba(255,255,255,.72);
+      font-size:var(--t-base);transition:color .3s ease,transform .4s var(--ease-out)}
+      .foot__col a:hover{color:var(--stem-1);transform:translateX(4px)}
+      .foot__giant{
+      margin-top:clamp(3rem,7vw,5rem);
+      font-size:clamp(2.25rem,12.8vw,11.5rem);line-height:.82;letter-spacing:-.05em;
+      white-space:nowrap;overflow:hidden;
+      color:transparent;-webkit-text-stroke:1px var(--hair-2);
+      user-select:none;pointer-events:none;text-align:center;
+      }
+      .foot__bar{margin-top:clamp(2rem,4vw,3rem);padding-top:1.5rem;border-top:1px solid var(--hair);
+      display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
+      color:var(--mute-2);font-size:var(--t-xs)}
+      .foot__bar nav{display:flex;gap:1.25rem;flex-wrap:wrap}
+      .foot__bar a:hover{color:var(--paper)}
+      .to-top{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;
+      transition:color .3s ease}
+      .to-top:hover{color:var(--paper)}
+      .to-top svg{width:.75rem;height:.75rem;stroke:currentColor;fill:none;stroke-width:2;
+      transition:transform .4s var(--ease-back)}
+      .to-top:hover svg{transform:translateY(-3px)}
+      /* -- 7. MOTION ------------------------------------------------------------ */
+      @keyframes slide{from{transform:translate3d(0,0,0)}to{transform:translate3d(-50%,0,0)}}
+      @keyframes bob{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-4px) scaleY(.82)}}
+      @keyframes rail{0%{transform:scaleY(0);transform-origin:top}
+      45%{transform:scaleY(1);transform-origin:top}
+      55%{transform:scaleY(1);transform-origin:bottom}
+      100%{transform:scaleY(0);transform-origin:bottom}}
+      @keyframes hue{0%,100%{-webkit-text-stroke-color:var(--a-1)}
+      25%{-webkit-text-stroke-color:var(--b-1)}
+      50%{-webkit-text-stroke-color:var(--c-1)}
+      75%{-webkit-text-stroke-color:var(--d-1)}}
+      @keyframes float-y{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+      @keyframes draw{to{stroke-dashoffset:0}}
+      /* Reveal system — a single class drives every scroll-in transition */
+      [data-rv]{opacity:0;transition:opacity .85s var(--ease-out),transform .95s var(--ease-flick)}
+      [data-rv="up"]{transform:translateY(34px)}
+      [data-rv="fade"]{transform:none}
+      [data-rv="left"]{transform:translateX(-36px)}
+      [data-rv="right"]{transform:translateX(36px)}
+      [data-rv="zoom"]{transform:scale(.94)}
+      [data-rv="mask"]{opacity:1;transform:none;position:relative;overflow:hidden}
+      [data-rv="mask"]::after{
+      content:"";position:absolute;inset:0;z-index:5;background:var(--ink);
+      transform-origin:50% 100%;
+      transition:transform 1.05s var(--ease-flick);
+      }
+      .rv-in[data-rv="mask"]::after{transform:scaleY(0)}
+      .rv-in[data-rv]{opacity:1;transform:none}
+      /* Split-text lines */
+      .split{display:block;overflow:hidden;padding-bottom:.14em;margin-bottom:-.14em}
+      .split>i{display:block;font-style:normal;transform:translateY(105%);
+      transition:transform 1s var(--ease-flick)}
+      .rv-in .split>i,.split.rv-in>i{transform:none}
+      @media (prefers-reduced-motion:reduce){
+      *,*::before,*::after{
+      animation-duration:.001ms!important;animation-iteration-count:1!important;
+      transition-duration:.001ms!important;
+      }
+      [data-rv]{opacity:1!important;transform:none!important}
+      [data-rv="mask"]::after{transform:scaleY(0)!important}
+      .split>i{transform:none!important}
+      }
+      /* -- 8. RESPONSIVE -------------------------------------------------------- */
+      @media (max-width:699px){
+      .show__panel{width:min(76vw,20rem)}
+      .hero__foot{font-size:9px}
+      }
+      .sec{padding-block:var(--section-y)}
+      .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0}
+      /* -------------------------------------------------------------------------
+      Capture mode — the mockup renderer adds .capture to <html>. Motion is
+      frozen and every reveal is resolved, the sticky chrome is pinned to the top
+      of the document so it appears exactly once in a stitched full-page render,
+      and the pinned showcase is unrolled into a static four-up so the whole
+      section fits one screen.
+      ---------------------------------------------------------------------- */
+      html.capture *{animation:none!important;transition:none!important}
+      html.capture [data-rv]{opacity:1!important;transform:none!important}
+      html.capture [data-rv="mask"]::after{transform:scaleY(0)!important}
+      html.capture .split>i{transform:none!important}
+      html.capture #boot,html.capture .cur,html.capture #rail{display:none!important}
+      html.capture #nav{position:absolute}
+      html.capture #showcase{height:auto!important}
+      html.capture .show__pin{position:static;height:auto;padding-bottom:clamp(2rem,5vw,3.5rem)}
+      html.capture .show__viewport{overflow:visible;padding-block:clamp(1.5rem,4vw,2.5rem)}
+      html.capture .show__track{
+      transform:none!important;width:100%;display:grid;
+      grid-template-columns:repeat(4,1fr);gap:clamp(.75rem,1.4vw,1.125rem);
+      }
+      html.capture .show__panel{width:auto;aspect-ratio:283/420}
+      html.capture .show__ring{top:33%;width:50%}
+      html.capture .ticker__track{transform:none!important}
+      html.capture .quotes__row{transform:none!important}
+      html.capture .quotes{-webkit-mask:none;mask:none}
+    </style>
+    <script>
+      /* Still mode: append ?capture to the URL (or add the class from a headless
+      driver) to freeze every animation, resolve every scroll reveal and unroll
+      the pinned sections. Used by tools/mockup.py and handy for design review. */
+      if (/[?&#]capture/.test(location.href)) document.documentElement.classList.add('capture');
+    </script>
+  </head>
+  <body>
+    <noscript>
+      <style>
+        body > :not(noscript){display:none!important}
+        noscript{display:block}
+        .no-js-home{min-height:100vh;padding:clamp(2rem,7vw,6rem);background:#05080d;color:#f5f8fa;font-family:"Noto Sans",system-ui,sans-serif}
+        .no-js-home__inner{width:min(52rem,100%);margin:0 auto}
+        .no-js-home img{width:8rem;height:8rem;object-fit:contain}
+        .no-js-home h1{max-width:16ch;margin:2rem 0 1rem;font-size:clamp(2.5rem,8vw,5.5rem);line-height:.95;letter-spacing:-.04em}
+        .no-js-home p{max-width:42rem;color:#9aa7b2;font-size:1.1rem;line-height:1.7}
+        .no-js-home a{display:inline-flex;margin-top:2rem;padding:.9rem 1.25rem;border-radius:999px;background:#4debe8;color:#05080d;font-weight:700}
+        .no-js-home section{margin-top:5rem;padding-top:2rem;border-top:1px solid rgba(77,235,232,.25)}
+        .no-js-home ul{display:grid;gap:1rem;margin-top:1.5rem;padding-left:1.2rem;color:#d7e0e7;line-height:1.6}
+      </style>
+      <main class="no-js-home">
+        <div class="no-js-home__inner">
+          <img src="/brand/barrios-a2i-logo.png" width="2048" height="2048" alt="Barrios A2I">
+          <h1>Connected marketing automation built around your business.</h1>
+          <p>From lead capture to customer follow-up, Barrios A2I turns your idea into one connected system built around the way your business already works.</p>
+          <a href="#no-js-automate">See what we can automate</a>
+          <section id="no-js-automate">
+            <h2>Tell us what your business needs to do. We’ll automate it.</h2>
+            <ul>
+              <li>Lead capture, qualification, and instant responses</li>
+              <li>CRM, pipeline, appointment, and reminder workflows</li>
+              <li>Campaign approvals, customer follow-up, reviews, and reporting</li>
+              <li>Custom automation designed around your process and existing tools</li>
+            </ul>
+            <p>Enable JavaScript to explore the full interactive site and the visual NEXUS assistant preview.</p>
+          </section>
         </div>
+      </main>
+    </noscript>
+    <!-- ========================================================================
+     SVG SPRITE — abstract stem glyphs + iconography
+     Each glyph is a 283x745 column, the same tall proportion the reference
+     uses for a stem tile. Stroke = unselected, fill = selected.
+     ===================================================================== -->
+    <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+      <symbol id="g-sub" viewBox="0 0 283 745">
+        <path d="M141.5 3C219.6 3 281 64.4 281 142.5c0 47.7-29.1 88.9-70.4 109 41.3 20.1 70.4 61.3 70.4 109s-29.1 88.9-70.4 109c41.3 20.1 70.4 61.3 70.4 109 0 78.1-61.4 163.5-139.5 163.5S2 656.6 2 578.5c0-47.7 29.1-88.9 70.4-109C31.1 449.4 2 408.2 2 360.5s29.1-88.9 70.4-109C31.1 231.4 2 190.2 2 142.5 2 64.4 63.4 3 141.5 3Z"></path>
+      </symbol>
+      <symbol id="g-kit" viewBox="0 0 283 745">
+        <path d="M3 3h115l58 142.4V3h104v125.6l-76 90.2 76 96.8v145.6L112.6 546.2l.6 1.4L280 506v236H177V592h-59v150H3V618l76-198L3 128Z"></path>
+      </symbol>
+      <symbol id="g-air" viewBox="0 0 283 745">
+        <circle cx="35.4" cy="37" r="40"></circle>
+        <circle cx="106.1" cy="37" r="40"></circle>
+        <circle cx="176.9" cy="37" r="40"></circle>
+        <circle cx="247.6" cy="37" r="40"></circle>
+        <circle cx="35.4" cy="111" r="40"></circle>
+        <circle cx="106.1" cy="111" r="40"></circle>
+        <circle cx="176.9" cy="111" r="40"></circle>
+        <circle cx="247.6" cy="111" r="40"></circle>
+        <circle cx="35.4" cy="186" r="40"></circle>
+        <circle cx="106.1" cy="186" r="40"></circle>
+        <circle cx="176.9" cy="186" r="40"></circle>
+        <circle cx="247.6" cy="186" r="40"></circle>
+        <circle cx="35.4" cy="260" r="40"></circle>
+        <circle cx="106.1" cy="260" r="40"></circle>
+        <circle cx="176.9" cy="260" r="40"></circle>
+        <circle cx="247.6" cy="260" r="40"></circle>
+        <circle cx="35.4" cy="335" r="40"></circle>
+        <circle cx="106.1" cy="335" r="40"></circle>
+        <circle cx="176.9" cy="335" r="40"></circle>
+        <circle cx="247.6" cy="335" r="40"></circle>
+        <circle cx="35.4" cy="409" r="40"></circle>
+        <circle cx="106.1" cy="409" r="40"></circle>
+        <circle cx="176.9" cy="409" r="40"></circle>
+        <circle cx="247.6" cy="409" r="40"></circle>
+        <circle cx="35.4" cy="484" r="40"></circle>
+        <circle cx="106.1" cy="484" r="40"></circle>
+        <circle cx="176.9" cy="484" r="40"></circle>
+        <circle cx="247.6" cy="484" r="40"></circle>
+        <circle cx="35.4" cy="558" r="40"></circle>
+        <circle cx="106.1" cy="558" r="40"></circle>
+        <circle cx="176.9" cy="558" r="40"></circle>
+        <circle cx="247.6" cy="558" r="40"></circle>
+        <circle cx="35.4" cy="633" r="40"></circle>
+        <circle cx="106.1" cy="633" r="40"></circle>
+        <circle cx="176.9" cy="633" r="40"></circle>
+        <circle cx="247.6" cy="633" r="40"></circle>
+        <circle cx="35.4" cy="707" r="40"></circle>
+        <circle cx="106.1" cy="707" r="40"></circle>
+        <circle cx="176.9" cy="707" r="40"></circle>
+        <circle cx="247.6" cy="707" r="40"></circle>
+      </symbol>
+      <symbol id="g-lead" viewBox="0 0 283 745">
+        <path d="M141.5 2C219 2 281 64 281 141.5V240c0 28-23 51-51 51s-51 23-51 51v62c0 28 23 51 51 51s51 23 51 51v97.5C281 681 219 743 141.5 743S2 681 2 603.5V506c0-28 23-51 51-51s51-23 51-51v-62c0-28-23-51-51-51S2 268 2 240v-98.5C2 64 64 2 141.5 2Z"></path>
+      </symbol>
+      <symbol id="seal" viewBox="0 0 64 64">
+        <circle cx="32" cy="32" r="29" fill="none" stroke="currentColor" stroke-width="3"></circle>
+        <circle cx="32" cy="32" r="11" fill="currentColor"></circle>
+      </symbol>
+    </svg>
 
-        <div class="signal-map" role="img" aria-label="An example automation routes a new lead through response, qualification, follow-up, and reporting">
-          <div class="signal-map-header">
-            <span>Example workflow</span>
-            <span class="signal-live"><i aria-hidden="true"></i> Ready</span>
-          </div>
-          <div class="signal-input">
-            <span class="signal-icon" aria-hidden="true">+</span>
-            <span>
-              <small>Your idea</small>
-              “Follow up with every new lead.”
+    <!-- ===================== PRELOADER ===================== -->
+    <div id="boot" role="status" aria-live="polite">
+      <div class="boot__cap"><div class="boot__fill" id="bootFill"></div></div>
+      <div class="boot__meta">
+        <span class="boot__pct" id="bootPct">0</span>
+        <span class="boot__word">warming the room</span>
+      </div>
+    </div>
+
+    <!-- ===================== CURSOR + RAIL ===================== -->
+    <div class="cur" id="curRing" aria-hidden="true">
+      <div class="cur__ring"></div>
+    </div>
+    <div class="cur" id="curDot" aria-hidden="true">
+      <div class="cur__dot"></div>
+    </div>
+    <div id="rail" aria-hidden="true"></div>
+
+    <!-- ===================== NAV ===================== -->
+    <header id="nav">
+      <div class="nav__inner">
+        <a href="#hero" class="nav__mark brand-signal-link" aria-label="Barrios A2I, home">
+          <span style="display:block;position:relative;flex:none;width:clamp(9rem,18vw,14rem);height:clamp(2.25rem,4vw,3rem);overflow:hidden" class="brand-signal-art">
+            <img src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" fetchpriority="high" style="position:absolute;top:50%;left:50%;width:auto;height:clamp(4.5rem,8vw,6rem);max-width:none;object-fit:contain;transform:translate(-50%,-50%)">
+          </span>
+        </a>
+        <nav class="nav__links" aria-label="Primary">
+          <a class="nav__link" href="#kit"><span>The kit</span></a>
+          <a class="nav__link" href="#showcase"><span>Stems</span></a>
+          <a class="nav__link" href="#gallery"><span>Loops</span></a>
+          <a class="nav__link" href="#plans"><span>Plans</span></a>
+          <a class="nav__link" href="#faq"><span>Questions</span></a>
+        </nav>
+        <div class="nav__right">
+          <button class="btn btn--stem nav__cta" data-magnet="">
+            <span class="btn__label">
+              <span data-t="Open studio">Open studio</span>
             </span>
-          </div>
-          <div class="signal-track" aria-hidden="true"><span></span></div>
-          <ol class="signal-steps">
-            <li>
-              <span>01</span>
-              <div><strong>Lead arrives</strong><small>Website, ad, email, or referral</small></div>
-              <b>Captured</b>
-            </li>
-            <li>
-              <span>02</span>
-              <div><strong>Response goes out</strong><small>Fast, personal, and on brand</small></div>
-              <b>Sent</b>
-            </li>
-            <li>
-              <span>03</span>
-              <div><strong>Next step is handled</strong><small>Qualify, schedule, nurture, or alert</small></div>
-              <b>Routed</b>
-            </li>
-          </ol>
-          <div class="signal-result">
-            <small>Business outcome</small>
-            <strong>Every lead gets a clear next step.</strong>
-          </div>
+          </button>
+          <button class="nav__burger" id="burger" aria-label="Menu" aria-expanded="false">
+            <i></i>
+            <i></i>
+          </button>
         </div>
       </div>
-    </section>
+    </header>
 
-    <section class="section services" id="services" data-reveal>
-      <div class="shell">
-        <div class="section-heading split-heading">
-          <p class="section-marker">What we automate</p>
-          <div>
-            <h2>Automation that moves customers forward.</h2>
-            <p>We remove the repetitive work between a new opportunity and the next useful action.</p>
-          </div>
-        </div>
-
-        <div class="capability-list">
-          <article class="capability">
-            <h3>Lead capture and response</h3>
-            <p>Collect inquiries from your website, ads, inboxes, or forms and respond while the opportunity is still fresh.</p>
-            <span>Capture · reply · notify</span>
-          </article>
-          <article class="capability">
-            <h3>Follow-up and nurturing</h3>
-            <p>Keep conversations moving with useful, personalized follow-up instead of relying on memory and manual reminders.</p>
-            <span>Qualify · schedule · nurture</span>
-          </article>
-          <article class="capability">
-            <h3>Campaign operations</h3>
-            <p>Connect content, approvals, publishing, audience lists, and campaign handoffs into one dependable flow.</p>
-            <span>Plan · prepare · publish</span>
-          </article>
-          <article class="capability">
-            <h3>Customer communication</h3>
-            <p>Send confirmations, updates, reminders, review requests, and support routing at the right moment.</p>
-            <span>Confirm · update · retain</span>
-          </article>
-          <article class="capability">
-            <h3>Connected reporting</h3>
-            <p>Bring the important activity from your tools into a clear owner view without another manual spreadsheet routine.</p>
-            <span>Collect · organize · report</span>
-          </article>
-          <article class="capability capability-open">
-            <h3>Something specific to your business</h3>
-            <p>If you can describe the result you want, we can map the steps, choose the right tools, and design the automation.</p>
-            <a href="#start">Describe your idea</a>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section example" id="example" data-reveal>
-      <div class="shell example-layout">
-        <div class="example-copy">
-          <p class="section-marker">One idea, fully mapped</p>
-          <h2>“I don’t want another lead to slip through.”</h2>
-          <p>That one sentence is enough to start. We turn it into a practical workflow with clear decisions, useful handoffs, and human control where it matters.</p>
-          <p class="example-callout">The technology stays behind the scenes. Your team gets a process that simply works.</p>
-        </div>
-
-        <div class="workflow" aria-label="Example lead follow-up workflow">
-          <div class="workflow-rail" aria-hidden="true"></div>
-          <div class="workflow-step">
-            <span>1</span>
-            <div><strong>Lead received</strong><small>Website form or ad response</small></div>
-          </div>
-          <div class="workflow-step">
-            <span>2</span>
-            <div><strong>Personal reply</strong><small>Questions answered immediately</small></div>
-          </div>
-          <div class="workflow-step">
-            <span>3</span>
-            <div><strong>Lead qualified</strong><small>Need, timing, and fit organized</small></div>
-          </div>
-          <div class="workflow-step">
-            <span>4</span>
-            <div><strong>Tools updated</strong><small>CRM, calendar, and owner alert</small></div>
-          </div>
-          <div class="workflow-step workflow-outcome">
-            <span>✓</span>
-            <div><strong>Follow-up continues</strong><small>Until the customer acts or opts out</small></div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section process" id="process" data-reveal>
-      <div class="shell">
-        <div class="section-heading">
-          <p class="section-marker">How it works</p>
-          <h2>From a rough idea to a working system.</h2>
-          <p>You do not need to know which apps, models, or integrations are required. That is our job.</p>
-        </div>
-
-        <ol class="process-list">
-          <li>
-            <span>01</span>
-            <h3>Tell us the outcome</h3>
-            <p>Describe what is slow, repetitive, or getting missed in plain language.</p>
-          </li>
-          <li>
-            <span>02</span>
-            <h3>We map the workflow</h3>
-            <p>We identify the triggers, decisions, tools, information, and human checkpoints.</p>
-          </li>
-          <li>
-            <span>03</span>
-            <h3>We build and connect it</h3>
-            <p>We assemble the system around your current operation and test each path.</p>
-          </li>
-          <li>
-            <span>04</span>
-            <h3>We launch and improve it</h3>
-            <p>We put it into use, watch the real workflow, and refine what needs attention.</p>
-          </li>
-        </ol>
-      </div>
-    </section>
-
-    <section class="section why" id="why" data-reveal>
-      <div class="shell why-layout">
-        <div class="why-statement">
-          <p class="section-marker">Why Barrios A2I</p>
-          <h2>Built around your process—not someone else’s template.</h2>
-        </div>
-        <div class="why-points">
-          <article>
-            <h3>Start with the business problem</h3>
-            <p>We choose the technology after we understand what the workflow needs to accomplish.</p>
-          </article>
-          <article>
-            <h3>Connect what you already use</h3>
-            <p>Your forms, inboxes, calendar, CRM, spreadsheets, and internal tools can work as one system.</p>
-          </article>
-          <article>
-            <h3>Keep people in control</h3>
-            <p>Approvals, exceptions, and sensitive decisions stay visible and reviewable.</p>
-          </article>
-          <article>
-            <h3>Improve after launch</h3>
-            <p>Real usage shows where the workflow should become faster, clearer, or more useful.</p>
-          </article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section start" id="start" data-reveal>
-      <div class="shell start-layout">
-        <div class="start-copy">
-          <p class="section-marker">Start with your idea</p>
-          <h2>What should happen automatically?</h2>
-          <p>Tell us the outcome you want or the repetitive work you want gone. A rough description is enough.</p>
-          <div class="direct-contact">
-            <span>Prefer email?</span>
-            <a href="mailto:alienation2innovation@gmail.com">alienation2innovation@gmail.com</a>
-          </div>
-        </div>
-
-        <form class="idea-form" id="automation-form" action="https://formspree.io/f/mdanjawv" method="post">
-          <input type="hidden" name="_subject" value="New Barrios A2I automation idea">
-          <div class="form-grid">
-            <div class="field">
-              <label for="lead-name">Your name</label>
-              <input id="lead-name" name="name" type="text" autocomplete="name" required>
-            </div>
-            <div class="field">
-              <label for="lead-email">Work email</label>
-              <input id="lead-email" name="email" type="email" autocomplete="email" required>
-            </div>
-          </div>
-          <div class="field">
-            <label for="lead-company">Business name</label>
-            <input id="lead-company" name="company" type="text" autocomplete="organization" required>
-          </div>
-          <div class="field">
-            <label for="automation-idea">What do you want to happen automatically?</label>
-            <textarea id="automation-idea" name="automationIdea" rows="5" required placeholder="For example: Every new lead should receive a personal reply, answer a few questions, and book the right appointment."></textarea>
-          </div>
-          <button class="button form-button" type="submit">Send my automation idea</button>
-          <p class="form-note">Your information is used only to discuss this request.</p>
-          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-        </form>
-      </div>
-    </section>
-
-    <section class="section faq" id="faq" data-reveal>
-      <div class="shell faq-layout">
-        <div>
-          <p class="section-marker">Questions</p>
-          <h2>What business owners usually ask first.</h2>
-        </div>
-        <div class="faq-list">
-          <details>
-            <summary>What can you automate?</summary>
-            <p>Any repeatable computer-based workflow can be evaluated. We focus this service on marketing, lead handling, sales follow-up, customer communication, and the reporting around those activities.</p>
-          </details>
-          <details>
-            <summary>Do I need to know exactly what to build?</summary>
-            <p>No. Start with the result you want, the work that keeps repeating, or the place customers are getting stuck. We map the system from there.</p>
-          </details>
-          <details>
-            <summary>Will I need to replace my current software?</summary>
-            <p>Usually not. We first look for safe ways to connect and improve the tools your business already relies on.</p>
-          </details>
-          <details>
-            <summary>Can people approve important steps?</summary>
-            <p>Yes. Human review can remain anywhere a decision needs judgment, accountability, or personal attention.</p>
-          </details>
-          <details>
-            <summary>How is pricing determined?</summary>
-            <p>Pricing depends on the workflow, integrations, volume, and ongoing support required. We define the scope before recommending a build.</p>
-          </details>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="site-footer">
-    <div class="shell footer-inner">
-      <div>
-        <a class="footer-brand" href="#top">Barrios A2I</a>
-        <p>Custom automation for the way your business actually works.</p>
-      </div>
-      <div class="footer-links" aria-label="Footer navigation">
-        <a href="mailto:alienation2innovation@gmail.com">Contact</a>
-        <a href="/privacy-directive">Privacy</a>
-        <a href="/terms-of-service">Terms</a>
-        <a href="/data-sovereignty">Data</a>
-      </div>
-      <p class="copyright">© 2026 Barrios A2I Inc.</p>
+    <div id="sheet" aria-hidden="true">
+      <a href="#kit">The kit</a>
+      <a href="#showcase">Stems</a>
+      <a href="#gallery">Loops</a>
+      <a href="#plans">Plans</a>
+      <a href="#faq">Questions</a>
+      <div class="sheet__foot">Four stems. One loop. No install.</div>
     </div>
-  </footer>
-</body>
-</html>
+
+    <main>
+      <!-- ===================== HERO ===================== -->
+      <section id="hero" aria-label="Barrios A2I">
+        <h1 class="sr-only">
+          Echo Lantern — a browser studio for four-stem loops
+        </h1>
+        <!-- Layer 1 — abstract stem columns -->
+        <div class="hero__glyphs" aria-hidden="true">
+          <div>
+            <svg class="glyph" id="hg0" viewBox="0 0 283 745" preserveAspectRatio="xMidYMid meet" style="--glyph:var(--a-2)">
+              <use href="#g-sub"></use>
+            </svg>
+          </div>
+          <div>
+            <svg class="glyph" id="hg1" viewBox="0 0 283 745" preserveAspectRatio="xMidYMid meet" style="--glyph:var(--b-2)">
+              <use href="#g-kit"></use>
+            </svg>
+          </div>
+          <div>
+            <svg class="glyph" id="hg2" viewBox="0 0 283 745" preserveAspectRatio="xMidYMid meet" style="--glyph:var(--c-2)">
+              <use href="#g-air"></use>
+            </svg>
+          </div>
+          <div>
+            <svg class="glyph" id="hg3" viewBox="0 0 283 745" preserveAspectRatio="xMidYMid meet" style="--glyph:var(--d-2)">
+              <use href="#g-lead"></use>
+            </svg>
+          </div>
+        </div>
+
+        <!-- Layer 2 — the WebGL ring, wrapped in its CSS light rig -->
+        <div class="hero__stage" id="stage">
+          <div class="ring__glow" aria-hidden="true"></div>
+          <div class="ring__core" aria-hidden="true"></div>
+          <canvas id="gl-ring" aria-hidden="true"></canvas>
+          <div class="ring__bloom" aria-hidden="true"></div>
+        </div>
+
+        <!-- Layer 3 — type. The wordmark is carried by the nav; the document still
+       needs one h1, so it is present for assistive tech only. -->
+        <div class="hero__lede">
+          <p class="hero__sub">
+            A browser studio for four-stem loops. Choose a sub, a kit, an air
+            and a lead — then hit record before the idea cools off.
+          </p>
+          <div class="hero__acts">
+            <a class="btn btn--stem" href="#showcase" data-magnet="">
+              <span class="btn__label">
+                <span data-t="See the stems">See the stems</span>
+              </span>
+            </a>
+            <a class="btn btn--ghost" href="#kit" data-magnet="">
+              <span class="btn__label">
+                <span data-t="See what we can automate">
+                  See what we can automate
+                </span>
+              </span>
+            </a>
+            <button class="nexus-hero-trigger" type="button" data-nexus-open="" aria-controls="nexus-panel" aria-expanded="false">
+              Ask NEXUS what we can automate
+              <span aria-hidden="true">↗</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hero__foot">
+          <div class="hero__scroll">
+            <i></i>
+            <span>scroll</span>
+          </div>
+          <div class="hero__stems" id="heroStems" aria-hidden="true">
+            <b style="--sw:var(--a-1)" class="on"></b>
+            <b style="--sw:var(--b-1)"></b>
+            <b style="--sw:var(--c-1)"></b>
+            <b style="--sw:var(--d-1)"></b>
+          </div>
+          <div>no account · 12 kb of state</div>
+        </div>
+      </section>
+
+      <!-- ===================== TICKER ===================== -->
+      <div class="ticker" aria-hidden="true">
+        <div class="ticker__track" id="ticker"></div>
+      </div>
+      <section id="automation-network" class="sec" aria-labelledby="network-title">
+        <div class="shell-wide">
+          <div class="network-card">
+            <div class="network-viz" aria-label="Diagram of a connected marketing automation network">
+              <div class="network-viz__head">
+                <span class="tag">Visualization</span>
+                <h2 id="network-title">Your Automation Network</h2>
+                <i></i>
+              </div>
+              <svg viewBox="0 0 560 380" role="img" aria-label="New Lead connects to Qualification, Personal Reply, Appointment, CRM Update, Follow-Up, and Owner Alert">
+                <g class="network-lines">
+                  <path d="M82 190L185 105 282 190 390 90 480 160M282 190L385 285 480 245M185 105L385 285"></path>
+                </g>
+                <g class="network-particles">
+                  <circle cx="134" cy="147" r="4"></circle>
+                  <circle cx="235" cy="148" r="4"></circle>
+                  <circle cx="337" cy="140" r="4"></circle>
+                  <circle cx="438" cy="125" r="4"></circle>
+                  <circle cx="432" cy="265" r="4"></circle>
+                </g>
+                <g class="network-nodes">
+                  <g transform="translate(82 190)">
+                    <circle r="25"></circle>
+                    <text y="48">New Lead</text>
+                  </g>
+                  <g transform="translate(185 105)">
+                    <circle r="22"></circle>
+                    <text y="44">Qualification</text>
+                  </g>
+                  <g transform="translate(282 190)">
+                    <circle r="24"></circle>
+                    <text y="47">Personal Reply</text>
+                  </g>
+                  <g transform="translate(390 90)">
+                    <circle r="22"></circle>
+                    <text y="44">Appointment</text>
+                  </g>
+                  <g transform="translate(480 160)">
+                    <circle r="22"></circle>
+                    <text y="44">CRM Update</text>
+                  </g>
+                  <g transform="translate(385 285)">
+                    <circle r="22"></circle>
+                    <text y="44">Follow-Up</text>
+                  </g>
+                  <g transform="translate(480 245)">
+                    <circle r="22"></circle>
+                    <text y="44">Owner Alert</text>
+                  </g>
+                </g>
+              </svg>
+              <div class="network-key">
+                <span>
+                  <b></b>
+                  Connected steps
+                </span>
+                <span>
+                  <b></b>
+                  Automation paths
+                </span>
+              </div>
+            </div>
+            <div class="network-copy">
+              <span class="tag">Overview</span>
+              <h3>One idea becomes a connected system</h3>
+              <p>
+                Tell us what needs to happen. We map the handoffs between your
+                leads, messages, calendar, CRM, team, and follow-up.
+              </p>
+              <div class="network-meters">
+                <div>
+                  <header>
+                    <span>Lead response</span>
+                    <b>Automatic</b>
+                  </header>
+                  <i><em></em></i>
+                </div>
+                <div>
+                  <header>
+                    <span>CRM sync</span>
+                    <b>Connected</b>
+                  </header>
+                  <i><em></em></i>
+                </div>
+                <div>
+                  <header>
+                    <span>Follow-up</span>
+                    <b>Running</b>
+                  </header>
+                  <i><em></em></i>
+                </div>
+              </div>
+              <div class="network-actions">
+                <a class="btn btn--ghost" href="#how">
+                  <span class="btn__label">
+                    <span data-t="See how it works">See how it works</span>
+                  </span>
+                </a>
+                <a class="btn btn--stem" href="#cta">
+                  <span class="btn__label">
+                    <span data-t="Start with your idea">
+                      Start with your idea
+                    </span>
+                  </span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== FEATURES ===================== -->
+      <section id="kit" class="sec">
+        <div class="shell">
+          <div class="sec-head" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              The kit
+            </span>
+            <h2 class="split">
+              <i>
+                Everything a loop needs.
+                <br>
+                Nothing it doesn't.
+              </i>
+            </h2>
+            <p>
+              Six pieces of machinery under the hood, all of them tuned so that
+              the distance between a hum in your head and a bounced file is
+              about ninety seconds.
+            </p>
+          </div>
+          <div class="feat-grid mt-16" id="featGrid"></div>
+        </div>
+      </section>
+
+      <!-- ===================== SHOWCASE (pinned horizontal) ===================== -->
+      <section id="showcase">
+        <div class="show__pin">
+          <div class="show__head">
+            <div class="sec-head" style="max-width:26rem">
+              <span class="tag">
+                <i class="tag__dot"></i>
+                Four stems
+              </span>
+              <h2>Pick a lane, then break it.</h2>
+            </div>
+            <div class="show__count">
+              <b id="showN">01</b>
+              / 04
+            </div>
+          </div>
+          <div class="show__viewport">
+            <div class="show__track" id="showTrack"></div>
+          </div>
+          <div class="show__bar"><i id="showBar"></i></div>
+        </div>
+      </section>
+
+      <!-- ===================== GALLERY ===================== -->
+      <section id="gallery" class="sec">
+        <div class="shell-wide">
+          <div class="sec-head mb-12" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              Loops in the wild
+            </span>
+            <h2 class="split">
+              <i>
+                Made in a browser tab,
+                <br>
+                between other things.
+              </i>
+            </h2>
+            <p>
+              A rolling wall of sleeves from the public feed. Every one of them
+              started as four buttons and ended as a forty-second bounce.
+            </p>
+          </div>
+          <div class="gal" id="gal"></div>
+        </div>
+      </section>
+
+      <!-- ===================== TIMELINE ===================== -->
+      <section id="how" class="sec" style="background:var(--ink-2)">
+        <div class="shell">
+          <div class="sec-head" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              The run
+            </span>
+            <h2 class="split">
+              <i>
+                Ninety seconds,
+                <br>
+                start to bounce.
+              </i>
+            </h2>
+          </div>
+          <div class="tl" id="tl">
+            <div class="tl__spine" aria-hidden="true"><i id="tlFill"></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== PRICING ===================== -->
+      <section id="plans" class="sec">
+        <div class="shell">
+          <div class="sec-head" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              Plans
+            </span>
+            <h2 class="split"><i>Free forever for one room.</i></h2>
+            <p>
+              Upgrade only when you need more rooms, longer bounces, or somebody
+              else's ears in the session with you.
+            </p>
+          </div>
+          <div class="mt-8" data-rv="up">
+            <div class="price-toggle" role="group" aria-label="Billing period">
+              <button class="on" data-bill="mo">Monthly</button>
+              <button data-bill="yr">Yearly — save 22%</button>
+            </div>
+          </div>
+          <div class="price-grid mt-12" id="planGrid"></div>
+          <p class="mt-8 text-sm text-mute-2 text-center">
+            Prices in USD. Cancel from the studio, no email required.
+          </p>
+        </div>
+      </section>
+
+      <!-- ===================== TESTIMONIALS ===================== -->
+      <section id="voices" class="sec" style="background:var(--ink-2)">
+        <div class="shell mb-12">
+          <div class="sec-head" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              Voices
+            </span>
+            <h2 class="split"><i>What people do with it.</i></h2>
+          </div>
+        </div>
+        <div class="quotes">
+          <div class="quotes__row r1" id="q1"></div>
+          <div class="quotes__row r2" id="q2"></div>
+        </div>
+      </section>
+
+      <!-- ===================== FAQ ===================== -->
+      <section id="faq" class="sec">
+        <div class="shell">
+          <div class="sec-head" data-rv="up">
+            <span class="tag">
+              <i class="tag__dot"></i>
+              Questions
+            </span>
+            <h2 class="split"><i>The things people ask twice.</i></h2>
+          </div>
+          <div class="faq" id="faqList"></div>
+        </div>
+      </section>
+
+      <!-- ===================== CTA ===================== -->
+      <style>
+        .social-signal{position:relative;overflow:hidden;padding-block:clamp(3.5rem,7vw,5.5rem);background:var(--ink-2);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}.social-signal::before{content:"";position:absolute;left:50%;top:50%;width:min(70rem,100vw);aspect-ratio:2.6/1;translate:-50% -50%;border:1px solid color-mix(in srgb,var(--a-2) 18%,transparent);border-radius:50%;opacity:.55;pointer-events:none}.social-signal::after{content:"";position:absolute;left:12%;right:12%;top:50%;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a-2) 55%,transparent),color-mix(in srgb,var(--c-1) 38%,transparent),transparent);pointer-events:none}.social-signal__inner{position:relative;z-index:1}.social-signal__head{display:flex;align-items:end;justify-content:space-between;gap:2rem;margin-bottom:clamp(1.75rem,4vw,2.75rem)}.social-signal__head h2{font-size:var(--t-2xl);font-weight:500;line-height:1.02;letter-spacing:-.028em}.social-signal__head p{max-width:35rem;color:var(--mute);font-size:var(--t-md);line-height:1.6}.social-signal__links{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--hair);border-radius:1.25rem;background:rgba(20,21,24,.64);overflow:hidden}.social-signal__link{position:relative;display:flex;align-items:center;gap:.75rem;min-width:0;padding:1.35rem 1.15rem;color:rgba(255,255,255,.82);transition:color .3s ease,background-color .35s ease}.social-signal__link+.social-signal__link{border-left:1px solid var(--hair)}.social-signal__link::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 110%,color-mix(in srgb,var(--a-2) 24%,transparent),transparent 65%);opacity:0;transition:opacity .35s ease}.social-signal__link:hover,.social-signal__link:focus-visible{color:var(--a-1);background:rgba(35,191,193,.06)}.social-signal__link:hover::before,.social-signal__link:focus-visible::before{opacity:1}.social-signal__icon,.social-signal__name,.social-signal__out{position:relative;z-index:1}.social-signal__icon{display:grid;place-items:center;width:2.25rem;height:2.25rem;flex:none;border:1px solid color-mix(in srgb,var(--a-2) 36%,transparent);border-radius:50%;color:var(--c-1);background:rgba(35,191,193,.06)}.social-signal__icon svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.social-signal__name{font-size:var(--t-lg);font-weight:500;letter-spacing:-.015em}.social-signal__out{margin-left:auto;color:var(--mute);font-size:1rem;transition:transform .3s var(--ease-out)}.social-signal__link:hover .social-signal__out,.social-signal__link:focus-visible .social-signal__out{transform:translate(2px,-2px)}@media(max-width:760px){.social-signal__head{display:block}.social-signal__head p{margin-top:1rem}.social-signal__links{grid-template-columns:repeat(2,1fr)}.social-signal__link:nth-child(3){border-left:0;border-top:1px solid var(--hair)}.social-signal__link:nth-child(4){border-top:1px solid var(--hair)}}@media(prefers-reduced-motion:reduce){.social-signal__link,.social-signal__link::before,.social-signal__out{transition:none}}
+      </style>
+      <section class="social-signal" aria-labelledby="social-title">
+        <div class="shell-wide social-signal__inner">
+          <div class="social-signal__head">
+            <div>
+              <span class="tag">
+                <i class="tag__dot"></i>
+                Elsewhere
+              </span>
+              <h2 id="social-title" class="mt-4">Connect with Barrios A2I.</h2>
+            </div>
+            <p>
+              Follow the builds, ideas, and practical automation work taking
+              shape behind Barrios A2I.
+            </p>
+          </div>
+          <nav class="social-signal__links" aria-label="Barrios A2I social media">
+            <a class="social-signal__link" href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">
+              <span class="social-signal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M6 9v9M6 6v.01M10 18v-5a4 4 0 0 1 8 0v5M10 10v8"></path>
+                </svg>
+              </span>
+              <span class="social-signal__name">LinkedIn</span>
+              <span class="social-signal__out" aria-hidden="true">↗</span>
+            </a>
+            <a class="social-signal__link" href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">
+              <span class="social-signal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="m5 4 14 16M19 4 5 20"></path>
+                </svg>
+              </span>
+              <span class="social-signal__name">X</span>
+              <span class="social-signal__out" aria-hidden="true">↗</span>
+            </a>
+            <a class="social-signal__link" href="https://www.instagram.com/barrios.ai.gary/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">
+              <span class="social-signal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <rect x="3" y="3" width="18" height="18" rx="5"></rect>
+                  <circle cx="12" cy="12" r="4"></circle>
+                  <path d="M17.5 6.5h.01"></path>
+                </svg>
+              </span>
+              <span class="social-signal__name">Instagram</span>
+              <span class="social-signal__out" aria-hidden="true">↗</span>
+            </a>
+            <a class="social-signal__link" href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">
+              <span class="social-signal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M14 4v10.2a4 4 0 1 1-3-3.87M14 4c1.1 2.4 2.8 3.8 5 4"></path>
+                </svg>
+              </span>
+              <span class="social-signal__name">TikTok</span>
+              <span class="social-signal__out" aria-hidden="true">↗</span>
+            </a>
+            <a class="social-signal__link" href="https://www.reddit.com/user/BarriosA2I/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Reddit, opens in a new tab">
+              <span class="social-signal__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="8"></circle>
+                  <circle cx="9" cy="12" r="1"></circle>
+                  <circle cx="15" cy="12" r="1"></circle>
+                  <path d="M8.5 15c1.9 1.3 5.1 1.3 7 0M12 4l1.5-2M14.5 4.5l2-1M7 8.5 5 7"></path>
+                </svg>
+              </span>
+              <span class="social-signal__name">Reddit</span>
+              <span class="social-signal__out" aria-hidden="true">↗</span>
+            </a>
+          </nav>
+        </div>
+        <style>
+          .social-signal__links{grid-template-columns:repeat(5,1fr)}@media(max-width:760px){.social-signal__links{grid-template-columns:repeat(2,1fr)}.social-signal__link:nth-child(5){grid-column:1/-1;justify-content:center;border-left:0;border-top:1px solid var(--hair)}.social-signal__link:nth-child(5) .social-signal__out{margin-left:0}}
+        </style>
+      </section>
+      <section id="cta">
+        <canvas id="gl-dust" aria-hidden="true"></canvas>
+        <div class="shell cta__inner">
+          <h2 class="cta__mega" data-rv="zoom">
+            start a
+            <br>
+            <em>loop</em>
+            now
+          </h2>
+          <p class="cta__note" data-rv="up">
+            The studio opens in the tab you already have open. No install, no
+            sign-up, no plugin folder to reorganise first.
+          </p>
+          <div class="cta__acts" data-rv="up">
+            <button class="btn btn--stem" data-magnet="">
+              <span class="btn__label">
+                <span data-t="Open the studio">Open the studio</span>
+              </span>
+            </button>
+            <a class="btn btn--ghost" href="#gallery" data-magnet="">
+              <span class="btn__label">
+                <span data-t="Browse loops">Browse loops</span>
+              </span>
+            </a>
+          </div>
+          <p class="cta__fine" data-rv="fade">
+            Works in Chrome, Safari, Firefox and Edge
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <!-- ===================== FOOTER ===================== -->
+    <style>
+      .nexus-hero-trigger{display:inline-flex;align-items:center;gap:.4rem;min-height:2.2rem;padding:.45rem .15rem;color:var(--mute);font-size:var(--t-sm);cursor:pointer;transition:color .3s ease}.nexus-hero-trigger:hover,.nexus-hero-trigger:focus-visible{color:var(--stem-1)}.nexus-hero-trigger span{font-size:1rem;transition:transform .3s var(--ease-out)}.nexus-hero-trigger:hover span{transform:translate(2px,-2px)}
+      .nexus{position:fixed;right:max(1.25rem,env(safe-area-inset-right));bottom:max(4.75rem,calc(env(safe-area-inset-bottom) + 3.75rem));z-index:7500;font-family:"Noto Sans",system-ui,-apple-system,"Segoe UI",sans-serif}.nexus__launch{position:relative;display:grid;grid-template-columns:3.5rem 0fr;align-items:center;height:3.5rem;padding:0;border:1px solid rgba(145,169,181,.48);border-radius:9999px;background:linear-gradient(145deg,rgba(32,33,39,.96),rgba(15,18,22,.96));box-shadow:0 14px 35px -16px rgba(0,0,0,.95),inset 0 1px 0 rgba(255,255,255,.08);color:var(--paper);cursor:pointer;overflow:hidden;transition:grid-template-columns .45s var(--ease-flick),border-color .3s ease,box-shadow .4s ease}.nexus__launch:hover,.nexus__launch:focus-visible{grid-template-columns:3.5rem 6.85rem;border-color:var(--a-1);box-shadow:0 0 0 5px color-mix(in srgb,var(--a-2) 12%,transparent),0 16px 38px -16px #000}.nexus__orb{position:relative;display:grid;place-items:center;width:3.5rem;height:3.5rem}.nexus__orb svg{width:3.15rem;height:3.15rem;overflow:visible}.nexus__core{fill:var(--a-2);filter:drop-shadow(0 0 7px var(--a-1))}.nexus__orbit{fill:none;stroke:var(--c-1);stroke-width:1.2;stroke-dasharray:28 9;transform-origin:32px 32px;animation:nexus-orbit 9s linear infinite}.nexus__steel{fill:none;stroke:rgba(185,165,255,.6);stroke-width:1}.nexus__node{fill:var(--c-1)}.nexus__launch-label{overflow:hidden;white-space:nowrap;color:rgba(255,255,255,.82);font-size:var(--t-xs);letter-spacing:.12em;text-transform:uppercase}.nexus__panel{position:absolute;right:0;bottom:0;width:min(26.875rem,calc(100vw - 2.5rem));max-height:min(43rem,calc(100svh - 2rem));display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(145,169,181,.44);border-radius:1.25rem;background:linear-gradient(145deg,rgba(32,33,39,.985),rgba(20,21,24,.985));box-shadow:0 28px 80px -28px #000,-8px 0 45px -32px color-mix(in srgb,var(--a-2) 70%,transparent);opacity:0;visibility:hidden;transform:translateY(16px) scale(.97);pointer-events:none;transition:opacity .35s ease,visibility .35s,transform .5s var(--ease-flick)}.nexus.is-open .nexus__panel{opacity:1;visibility:visible;transform:none;pointer-events:auto}.nexus.is-open .nexus__launch{opacity:0;visibility:hidden;pointer-events:none}.nexus__head{display:flex;align-items:center;gap:.75rem;padding:1rem 1rem .875rem;border-bottom:1px solid var(--hair);background:linear-gradient(90deg,rgba(35,191,193,.08),transparent 56%)}.nexus__brand{width:4.4rem;height:1.75rem;object-fit:contain;object-position:left center}.nexus__name{font-size:var(--t-sm);font-weight:500;letter-spacing:.16em}.nexus__status{margin-left:auto;padding:.25rem .45rem;border:1px solid color-mix(in srgb,var(--c-1) 35%,transparent);border-radius:9999px;color:var(--c-1);font-size:9px;letter-spacing:.1em;white-space:nowrap}.nexus__close{display:grid;place-items:center;width:2rem;height:2rem;margin-left:.1rem;border:1px solid var(--hair);border-radius:50%;color:var(--mute);cursor:pointer;transition:color .25s ease,border-color .25s ease,background-color .25s ease}.nexus__close:hover,.nexus__close:focus-visible{color:var(--paper);border-color:var(--a-2);background:rgba(255,255,255,.06)}.nexus__body{overflow-y:auto;padding:1.4rem}.nexus__greeting{font-size:var(--t-xl);font-weight:500;line-height:1.16;letter-spacing:-.02em}.nexus__support{margin-top:.65rem;color:var(--mute);line-height:1.55}.nexus__prompts{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.2rem}.nexus__prompt{padding:.48rem .7rem;border:1px solid var(--hair);border-radius:9999px;color:rgba(255,255,255,.76);font-size:var(--t-xs);cursor:pointer;transition:border-color .25s ease,color .25s ease,background-color .25s ease}.nexus__prompt:hover,.nexus__prompt:focus-visible{border-color:var(--a-2);color:var(--a-1);background:rgba(35,191,193,.08)}.nexus__local{min-height:0;margin-top:1rem;color:var(--mute);font-size:var(--t-sm);line-height:1.55}.nexus__reply{margin-top:.75rem;padding:.75rem;border-left:2px solid var(--a-2);border-radius:0 .65rem .65rem 0;background:rgba(35,191,193,.06);color:rgba(255,255,255,.7)}.nexus__form{display:flex;gap:.55rem;margin-top:1.2rem;padding-top:1rem;border-top:1px solid var(--hair)}.nexus__input{min-width:0;flex:1;height:2.9rem;padding:0 .85rem;border:1px solid var(--hair-2);border-radius:.75rem;background:rgba(0,0,0,.18);color:var(--paper);font:inherit;font-size:var(--t-sm);outline:none;transition:border-color .25s ease,box-shadow .25s ease}.nexus__input::placeholder{color:var(--mute-2)}.nexus__input:focus{border-color:var(--a-2);box-shadow:0 0 0 3px color-mix(in srgb,var(--a-2) 14%,transparent)}.nexus__send{display:grid;place-items:center;width:2.9rem;height:2.9rem;flex:none;border-radius:.75rem;background:var(--a-2);color:var(--ink);cursor:pointer;transition:background-color .25s ease,transform .2s var(--ease-out)}.nexus__send:hover,.nexus__send:focus-visible{background:var(--a-1)}.nexus__send:active{transform:scale(.94)}.nexus__send svg{width:1.1rem;height:1.1rem;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}@keyframes nexus-orbit{to{transform:rotate(360deg)}}@media(max-width:699px){.nexus{right:max(.75rem,env(safe-area-inset-right));bottom:max(.9rem,calc(env(safe-area-inset-bottom) + .5rem));left:max(.75rem,env(safe-area-inset-left))}.nexus__launch{margin-left:auto}.nexus__panel{right:0;bottom:0;width:100%;max-height:min(78svh,42rem);border-radius:1.25rem 1.25rem 0 0;transform:translateY(100%)}.nexus.is-open .nexus__panel{transform:none}.nexus__body{padding:1.2rem}.nexus__status{font-size:8px}.nexus-hero-trigger{width:100%;justify-content:center}}@media(prefers-reduced-motion:reduce){.nexus__orbit{animation:none}.nexus__launch,.nexus__panel,.nexus__send,.nexus-hero-trigger,.nexus-hero-trigger span{transition:none}}
+    </style>
+    <div class="nexus" id="nexus">
+      <button class="nexus__launch" type="button" aria-label="Open NEXUS assistant" aria-expanded="false" aria-controls="nexus-panel" data-nexus-open="">
+        <span class="nexus__orb" aria-hidden="true">
+          <svg viewBox="0 0 64 64">
+            <circle class="nexus__steel" cx="32" cy="32" r="25"></circle>
+            <ellipse class="nexus__orbit" cx="32" cy="32" rx="27" ry="13"></ellipse>
+            <path class="nexus__steel" d="M16 32h32M32 16v32"></path>
+            <circle class="nexus__core" cx="32" cy="32" r="8"></circle>
+            <circle class="nexus__node" cx="52" cy="32" r="2.5"></circle>
+          </svg>
+        </span>
+        <span class="nexus__launch-label">Ask NEXUS</span>
+      </button>
+      <section class="nexus__panel" id="nexus-panel" role="dialog" aria-label="NEXUS assistant visual prototype" aria-hidden="true">
+        <header class="nexus__head">
+          <span style="display:block;position:relative;flex:none;width:5rem;height:1.75rem;overflow:hidden">
+            <img class="nexus__brand" src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" style="position:absolute;top:50%;left:50%;width:auto;height:3.5rem;max-width:none;object-fit:contain;transform:translate(-50%,-50%)">
+          </span>
+          <span class="nexus__name">NEXUS</span>
+          <span class="nexus__status">VISUAL PROTOTYPE</span>
+          <button class="nexus__close" type="button" aria-label="Close NEXUS assistant" data-nexus-close="">
+            ×
+          </button>
+        </header>
+        <div class="nexus__body">
+          <h2 class="nexus__greeting">Tell me what you want to automate.</h2>
+          <p class="nexus__support">
+            I’ll help you explore what Barrios A2I can build around your
+            business.
+          </p>
+          <div class="nexus__schedule" aria-label="Scheduling preferences">
+            <span class="nexus__schedule-label">Meeting preference</span>
+            <div class="nexus__prompts nexus__schedule-prompts">
+              <button class="nexus__prompt" type="button">This week</button>
+              <button class="nexus__prompt" type="button">Next week</button>
+              <button class="nexus__prompt" type="button">I’m flexible</button>
+            </div>
+          </div>
+          <div class="nexus__prompts">
+            <button class="nexus__prompt" type="button">
+              Capture more leads
+            </button>
+            <button class="nexus__prompt" type="button">
+              Automate customer follow-up
+            </button>
+            <button class="nexus__prompt" type="button">
+              Build a custom workflow
+            </button>
+          </div>
+          <div class="nexus__local" aria-live="polite"></div>
+          <form class="nexus__form">
+            <input class="nexus__input" aria-label="Describe what should happen automatically" placeholder="Describe what should happen automatically">
+            <button class="nexus__send" type="submit" aria-label="Send visual prototype prompt">
+              <svg viewBox="0 0 24 24">
+                <path d="m4 4 16 8-16 8 3-8-3-8Z"></path>
+                <path d="M7 12h13"></path>
+              </svg>
+            </button>
+          </form>
+        </div>
+      </section>
+    </div>
+    <style>
+      .brand-signal-link{display:block;position:relative}.brand-signal-art{isolation:isolate;will-change:transform;transform:translateZ(0);transition:transform .4s var(--ease-out),filter .4s ease}.brand-signal-art::before,.brand-signal-art::after{content:"";position:absolute;z-index:3;pointer-events:none;opacity:0}.brand-signal-art::before{left:-14%;top:36%;width:128%;height:28%;border-radius:50%;background:linear-gradient(90deg,transparent,rgba(85,223,220,.08) 22%,rgba(35,191,193,.68) 48%,rgba(217,187,103,.2) 60%,transparent 82%);mix-blend-mode:screen}.brand-signal-art::after{top:11%;right:8%;width:.42rem;height:.42rem;border:1px solid var(--c-1);border-radius:50%;box-shadow:0 0 0 2px rgba(217,187,103,.14),0 0 10px rgba(217,187,103,.45)}@keyframes brand-signal-warp{0%{opacity:0;transform:translate3d(-18%,0,0) skewX(-10deg) scaleX(.55)}20%{opacity:.72}72%{opacity:.38}100%{opacity:0;transform:translate3d(18%,0,0) skewX(8deg) scaleX(1.15)}}@keyframes brand-orbit-accent{0%{opacity:0;transform:translate3d(-.3rem,.3rem,0) scale(.55)}28%{opacity:1}100%{opacity:0;transform:translate3d(.38rem,-.38rem,0) scale(1)}}@media (hover:hover) and (pointer:fine){.brand-signal-link:hover .brand-signal-art,.brand-signal-link:focus-visible .brand-signal-art{overflow:visible!important;transform:translateZ(0) scale(1.18);filter:drop-shadow(0 0 8px rgba(35,191,193,.24))}.brand-signal-link:hover .brand-signal-art::before,.brand-signal-link:focus-visible .brand-signal-art::before{animation:brand-signal-warp .58s var(--ease-out) both}.brand-signal-link:hover .brand-signal-art::after,.brand-signal-link:focus-visible .brand-signal-art::after{animation:brand-orbit-accent .58s var(--ease-out) both}}@media (prefers-reduced-motion:reduce){.brand-signal-art{transition:transform .4s ease,filter .4s ease}.brand-signal-art::before,.brand-signal-art::after{display:none}@media (hover:hover) and (pointer:fine){.brand-signal-link:hover .brand-signal-art,.brand-signal-link:focus-visible .brand-signal-art{transform:translateZ(0) scale(1.04);filter:drop-shadow(0 0 7px rgba(85,223,220,.3))}}}
+    </style>
+    <footer id="foot">
+      <div class="shell">
+        <style>
+          .footer-booking{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-top:calc(clamp(3rem,6vw,5rem) * -1);margin-bottom:clamp(1.5rem,3vw,2.5rem);transform:translateY(-50%)}.footer-booking__note{color:var(--mute-2);font-size:var(--t-xs);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.footer-booking__button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:9.5rem;height:3.5rem;padding:0 1.5rem;overflow:hidden;border:1px solid rgba(145,169,181,.58);border-radius:9999px;background:linear-gradient(145deg,rgba(32,33,39,.98),rgba(12,15,18,.98));box-shadow:0 12px 30px -16px rgba(0,0,0,.95),0 0 22px -12px var(--a-1),inset 0 1px 0 rgba(255,255,255,.1);color:var(--paper);font-size:var(--t-sm);font-weight:500;letter-spacing:.01em;cursor:pointer;transition:border-color .3s ease,box-shadow .4s var(--ease-out),transform .35s var(--ease-flick),color .3s ease}.footer-booking__button::before{content:"";position:absolute;inset:-30% 52% -30% -15%;border:1px solid color-mix(in srgb,var(--c-1) 62%,transparent);border-radius:50%;opacity:.75;transform:rotate(-18deg);pointer-events:none}.footer-booking__button::after{content:"";position:absolute;width:.38rem;height:.38rem;right:1.05rem;top:.72rem;border-radius:50%;background:var(--c-1);box-shadow:0 0 0 3px color-mix(in srgb,var(--c-1) 14%,transparent);pointer-events:none}.footer-booking__button span{position:relative;z-index:1}.footer-booking__button:hover,.footer-booking__button:focus-visible{border-color:var(--a-1);box-shadow:0 0 0 5px color-mix(in srgb,var(--a-2) 12%,transparent),0 14px 32px -16px #000,0 0 28px -12px var(--a-1);color:var(--a-1)}.footer-booking__button:active{transform:scale(.97)}.nexus__schedule{display:none;margin-top:1rem;padding:.85rem;border:1px solid color-mix(in srgb,var(--c-1) 24%,transparent);border-radius:.8rem;background:linear-gradient(135deg,rgba(189,150,60,.08),rgba(35,191,193,.055))}.nexus.is-scheduling .nexus__schedule{display:block}.nexus__schedule-label{display:block;color:var(--c-1);font-size:9px;letter-spacing:.14em;text-transform:uppercase}.nexus__schedule-prompts{margin-top:.6rem}.nexus.is-scheduling .nexus__status{border-color:color-mix(in srgb,var(--c-1) 42%,transparent);color:var(--c-1)}@media(max-width:699px){.footer-booking{flex-direction:column-reverse;align-items:stretch;margin-top:-2rem;margin-bottom:1.5rem;transform:none}.footer-booking__note{text-align:center;white-space:normal}.footer-booking__button{width:100%;min-width:0}}@media(prefers-reduced-motion:reduce){.footer-booking__button{transition:none}}
+        </style>
+        <div class="footer-booking">
+          <span class="footer-booking__note">Schedule through NEXUS</span>
+          <button class="footer-booking__button" type="button" aria-label="Book Now through NEXUS" aria-controls="nexus-panel" aria-expanded="false" data-nexus-open="" data-nexus-book="">
+            <span>Book Now</span>
+          </button>
+        </div>
+        <div class="foot__top">
+          <div class="foot__brand">
+            <a href="#hero" class="brand-signal-link" aria-label="Barrios A2I, home">
+              <span class="brand-signal-art" style="display:block;position:relative;width:min(24rem,72vw);height:clamp(3.5rem,6vw,4rem);overflow:hidden">
+                <img src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" loading="lazy" style="position:absolute;top:50%;left:50%;width:auto;height:clamp(7rem,12vw,8rem);max-width:none;object-fit:contain;transform:translate(-50%,-50%)">
+              </span>
+            </a>
+            <p>
+              A four-stem loop studio that runs entirely in the tab. Built by
+              three people who kept losing ideas between opening a DAW and
+              finding a kick.
+            </p>
+          </div>
+          <div class="foot__col">
+            <h5>Product</h5>
+            <a href="#kit">The kit</a>
+            <a href="#showcase">Stems</a>
+            <a href="#plans">Plans</a>
+            <a href="#gallery">Loops</a>
+          </div>
+          <div class="foot__col">
+            <h5>Learn</h5>
+            <a href="#how">How it works</a>
+            <a href="#faq">Questions</a>
+            <a href="#voices">Voices</a>
+            <a href="#">Changelog</a>
+          </div>
+          <div class="foot__col">
+            <h5>Elsewhere</h5>
+            <a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">
+              LinkedIn
+            </a>
+            <a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">
+              X
+            </a>
+            <a href="https://www.instagram.com/barrios.ai.gary/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">
+              Instagram
+            </a>
+            <a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">
+              TikTok
+            </a>
+            <a href="https://www.reddit.com/user/BarriosA2I/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Reddit, opens in a new tab">
+              Reddit
+            </a>
+          </div>
+        </div>
+        <div class="foot__giant" aria-hidden="true">echo lantern</div>
+        <div class="foot__bar">
+          <span>© 2026 Echo Lantern Instruments</span>
+          <nav>
+            <a href="/privacy-directive.html">Privacy</a>
+            <a href="/terms-of-service.html">Terms</a>
+            <a href="#">Licences</a>
+          </nav>
+          <button class="to-top" id="toTop">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 19V5M5 12l7-7 7 7"></path>
+            </svg>
+            Back to top
+          </button>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      /* ============================================================================
+         ECHO LANTERN — runtime
+         ----------------------------------------------------------------------------
+         M0  utilities            M5  reveal system
+         M1  content model        M6  scroll controller
+         M2  DOM composition      M7  WebGL: ring (torus)
+         M3  boot sequence        M8  WebGL: dust (particles)
+         M4  cursor + chrome      M9  widgets (faq, pricing, top)
+         ========================================================================== */
+      (() => {
+      'use strict';
+
+      /* == M0 · UTILITIES ======================================================= */
+      const $  = (s, r = document) => r.querySelector(s);
+      const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+      const clamp = (v, a = 0, b = 1) => v < a ? a : v > b ? b : v;
+      const lerp  = (a, b, t) => a + (b - a) * t;
+      /* frame-rate independent damping — the spring behind every eased follow */
+      const damp  = (a, b, l, dt) => lerp(a, b, 1 - Math.exp(-l * dt));
+      const inv   = (v, a, b) => clamp((v - a) / (b - a));
+      const easeOutExpo = t => t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+      const REDUCED = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const COARSE  = matchMedia('(pointer: coarse)').matches;
+      const CAPTURE = document.documentElement.classList.contains('capture');
+
+      /* == M1 · CONTENT MODEL =================================================== */
+      const STEMS = [
+        { key:'sub',  label:'Sub',  glyph:'#g-sub',  v:'a',
+          title:'Ground floor',
+          copy:'Sine-heavy roots that sit under everything without ever asking for room. Tuned low, gated short.',
+          stats:[['42','samples'],['30–120','hertz']] },
+        { key:'kit',  label:'Kit',  glyph:'#g-kit',  v:'b',
+          title:'The engine room',
+          copy:'Dry kits with a stub of a tail, recorded on a wooden floor at conversation volume.',
+          stats:[['68','kits'],['8','bar loops']] },
+        { key:'air',  label:'Air',  glyph:'#g-air',  v:'c',
+          title:'Weather',
+          copy:'Pads, tape hiss and field beds. Slow-moving weather you place once and then forget about.',
+          stats:[['51','beds'],['24 s','tails']] },
+        { key:'lead', label:'Lead', glyph:'#g-lead', v:'d',
+          title:'The hook',
+          copy:'Plucks and blades with a bite at the front, voiced for the top four bars of a loop.',
+          stats:[['60','voices'],['5','octaves']] },
+      ];
+
+      const TICKER = ['four stems','one loop','record in the tab','44.1 kHz','no install',
+        'bounce to wav','browser native','eight bars','zero plugins','phones too','offline ready'];
+
+      const FEATURES = [
+        { v:'a', t:'Instant rooms',
+          d:'Open a URL and you are already in a session. Nothing to download, nothing to authorise, no sample folder to point at first.',
+          p:'M12 2v6M12 16v6M2 12h6M16 12h6M5 5l4 4M15 15l4 4M19 5l-4 4M9 15l-4 4' },
+        { v:'b', t:'Four locked lanes',
+          d:'Sub, kit, air and lead. Constraints you cannot argue with, which is exactly why the loops actually get finished.',
+          p:'M4 4v16M9.33 4v16M14.67 4v16M20 4v16' },
+        { v:'c', t:'Live capture',
+          d:'Arm a lane, take the count-in, then play it with the keyboard or a microphone. The take lands already on the grid.',
+          p:'M12 3a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3ZM5 11a7 7 0 0 0 14 0M12 18v3' },
+        { v:'d', t:'Bounce anywhere',
+          d:'Drop a 24-bit WAV, or a link that carries the entire arrangement in the URL. No upload step, no expiry.',
+          p:'M12 3v12M7 10l5 5 5-5M4 19h16' },
+        { v:'a', t:'Room-scale reverb',
+          d:'Convolution tails captured in seven real spaces, from a lift shaft to a chapel with a bad heating system.',
+          p:'M3 12a9 9 0 0 1 18 0M6.5 12a5.5 5.5 0 0 1 11 0M10 12a2 2 0 0 1 4 0M12 12v9' },
+        { v:'b', t:'Runs on a phone',
+          d:'The whole engine is 180 kB over the wire and behaves identically on a five-year-old handset.',
+          p:'M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2ZM11 18h2' },
+      ];
+
+      const STEPS = [
+        { v:'a', t:'Open a room',   d:'One click builds a room with an empty four-lane grid and a private link. It exists the moment you land.' },
+        { v:'b', t:'Load four stems', d:'Scroll each lane until something catches. Preview is instant and nothing ever streams twice.' },
+        { v:'c', t:'Play it in',    d:'Hold a key, tap a pad, or just sing it. Everything snaps to the nearest sixteenth on the way in.' },
+        { v:'d', t:'Shape the mix', d:'Two knobs per lane — how much room, how much bite. That is the entire mixer, on purpose.' },
+        { v:'a', t:'Bounce and send', d:'Forty seconds later you have a WAV on disk and a link that plays for anybody who opens it.' },
+      ];
+
+      const PLANS = [
+        { v:'a', name:'Bedroom', mo:0, yr:0, hot:false,
+          note:'One room, four lanes, and as many bounces as you have ideas.',
+          feats:['One private room','40-second bounces','16-bit WAV export','Core library — 220 stems','Offline mode'] },
+        { v:'d', name:'Workbench', mo:9, yr:84, hot:true,
+          note:'Six rooms, longer takes, and the library with everything in it.',
+          feats:['Six rooms','Three-minute bounces','24-bit WAV plus stems','Full library — 1,400 stems','Room reverb pack','Thirty-day version history'] },
+        { v:'b', name:'Floor', mo:24, yr:228, hot:false,
+          note:'Live sessions with up to five people breathing on the same grid.',
+          feats:['Everything in Workbench','Unlimited rooms','Five live collaborators','MIDI and audio input','Upload your own samples','Priority render queue'] },
+      ];
+
+      /* [quote, name, role, colour family, portrait slot] — the slot maps to
+         assets/portraits/voice-NN.jpg (see that folder's README for the crop spec). */
+      const QUOTES = [
+        ['I wrote the bones of an entire EP on a train with one earbud in. Nothing else on my machine lets me do that.','Marguerite Oyelaran','Producer · Lisbon','a','01'],
+        ['The four-lane limit annoyed me for about a day. Then I finished more music in a month than in the year before it.','Teodor Vance','Sound designer · Oslo','b','02'],
+        ['We keep it open as a scratchpad in writing sessions. Somebody hums a thing and thirty seconds later it is playing back.','Nadia Brackenridge','Songwriter · Manchester','c','03'],
+        ['It runs the same on my studio desktop and on my daughter’s hand-me-down tablet. That is the whole pitch for me.','Hollis Amadi','Engineer · Lagos','d','04'],
+        ['The link-in-a-URL thing is quietly the best feature here. I paste a loop into chat and people simply hear it.','Wren Castellanos','A&R · Mexico City','a','05'],
+        ['I teach a beginners class with it. Nobody spends the first hour of the term installing audio drivers any more.','Ibrahim Sørensen','Instructor · Copenhagen','b','06'],
+        ['Bounces come out clean enough that two of them ended up on the record completely untouched.','Petra Lindqvist','Mix engineer · Stockholm','c','07'],
+        ['It is the only tool I bother opening when I have eleven minutes and half an idea.','Desmond Achterberg','Beatmaker · Rotterdam','d','08'],
+      ];
+
+      const FAQS = [
+        ['Do I actually need an account?',
+         'No. A room lives in its own URL and in your browser’s local storage, so you can work for months without ever typing an email address. Make an account only if you want rooms to follow you between devices, or if you want somebody else to be able to edit one.'],
+        ['Where does the audio run?',
+         'Entirely on your own machine, inside an AudioWorklet. Nothing is uploaded unless you press share, and even then only the arrangement travels — a short description of which stems are where. A recording from your microphone never leaves the tab unless you explicitly export it.'],
+        ['Can I bring my own samples?',
+         'On the Floor plan, yes. Drop a WAV or AIFF onto any lane and it gets sliced to the grid automatically, with transient detection you can nudge by hand. Uploaded files are held in browser storage and are never sent to us.'],
+        ['What is latency like on a laptop?',
+         'We request a 128-frame buffer wherever the browser allows it, which lands around six milliseconds on most machines made in the last five years. If your setup needs more headroom there is a calibration slider that measures round-trip time and offsets recording automatically.'],
+        ['Is the stem library cleared for release?',
+         'Yes. Everything in the library is licensed for commercial use including sync, with no per-track reporting and no revenue share. The licence travels inside the bounce metadata, so a label can verify it without contacting us.'],
+        ['Does any of this work offline?',
+         'After your first visit, yes. The engine and the core library are cached, so a room opens on a plane exactly as it does at home. Sharing and the extended library wait politely until you have a connection again.'],
+      ];
+
+      const GAL = [
+        ['Lift Shaft','0:38','a',0],['Copper Wire','0:41','b',1],['Nine Volt','0:36','c',2],
+        ['Slow Weather','0:44','d',3],['Paper Radio','0:39','c',1],['Tin Chapel','0:42','a',2],
+        ['Blue Hour','0:37','d',0],['Long Corridor','0:40','b',3],
+        ['Wet Concrete','0:43','d',2],['Static Garden','0:35','a',1],
+      ];
+
+      /* Colour helper — every family exposes three steps */
+      const sw = (v, n = 1) => `var(--${v}-${n})`;
+      const swVars = v => `--sw:${sw(v,1)};--sw2:${sw(v,2)};--sw3:${sw(v,3)}`;
+
+      /* == M2 · DOM COMPOSITION ================================================= */
+
+      /* --- ticker: content is duplicated once so the -50% slide loops seamlessly */
+      {
+        const cell = TICKER.map(t => `<em>${t}</em><s>&#9679;</s>`).join('');
+        $('#ticker').innerHTML = `<div>${cell}</div><div>${cell}</div>`;
+      }
+
+      /* --- features */
+      $('#featGrid').innerHTML = FEATURES.map((f, i) => `
+        <article class="feat glass" style="${swVars(f.v)}" data-tilt data-rv="up" data-rv-i="${i}">
+          <div class="feat__spot"></div>
+          <span class="feat__n">${String(i + 1).padStart(2, '0')}</span>
+          <div class="feat__ico"><svg viewBox="0 0 24 24"><path d="${f.p}"/></svg></div>
+          <div class="feat__body"><h3>${f.t}</h3><p>${f.d}</p></div>
+        </article>`).join('');
+
+      /* --- showcase panels */
+      $('#showTrack').innerHTML = STEMS.map((s, i) => `
+        <article class="show__panel" style="${swVars(s.v)}" data-panel="${i}">
+          <div class="show__art">
+            <svg class="glyph is-filled" viewBox="0 0 283 745" preserveAspectRatio="xMidYMid slice"
+                 style="--glyph:${sw(s.v,1)};opacity:.16"><use href="${s.glyph}"/></svg>
+            <div class="show__ring"></div>
+          </div>
+          <div class="show__meta">
+            <span class="show__k">${String(i + 1).padStart(2,'0')} · ${s.label}</span>
+            <h3>${s.title}</h3>
+            <p>${s.copy}</p>
+            <div class="show__stats">
+              ${s.stats.map(([n, l]) => `<div><b>${n}</b>${l}</div>`).join('')}
+            </div>
+          </div>
+        </article>`).join('');
+
+      /* --- gallery: sleeves are generated, not photographed. Four recipes, each
+             seeded by index so a reload always produces the same wall. */
+      function sleeve(v, recipe, seed) {
+        const c1 = sw(v,1), c2 = sw(v,2), c3 = sw(v,3);
+        const id = `s${seed}${recipe}`;
+        const rnd = (n => () => (n = (n * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff)(seed * 977 + 13);
+        let art = '';
+        if (recipe === 0) {                                   /* concentric rings */
+          for (let i = 7; i >= 1; i--) {
+            art += `<circle cx="150" cy="150" r="${i * 19}" fill="none"
+              stroke="${i % 2 ? c1 : c2}" stroke-width="${(8 - i) * 1.6}" opacity="${.22 + i * .09}"/>`;
+          }
+          art += `<circle cx="150" cy="150" r="18" fill="${c1}"/>`;
+        } else if (recipe === 1) {                            /* stacked bars     */
+          for (let i = 0; i < 13; i++) {
+            const h = 8 + rnd() * 54;
+            art += `<rect x="${16 + i * 21}" y="${240 - h}" width="13" height="${h}"
+              rx="6" fill="${i % 3 ? c2 : c1}" opacity="${.4 + rnd() * .6}"/>`;
+          }
+          art += `<circle cx="150" cy="112" r="58" fill="none" stroke="${c1}" stroke-width="16" opacity=".9"/>`;
+        } else if (recipe === 2) {                            /* dot field        */
+          for (let y = 0; y < 9; y++) for (let x = 0; x < 9; x++) {
+            const d = Math.hypot(x - 4, y - 4);
+            art += `<circle cx="${28 + x * 30.5}" cy="${28 + y * 30.5}"
+              r="${Math.max(1.5, 13 - d * 2.4 + rnd() * 3)}" fill="${d < 2.4 ? c1 : c2}"
+              opacity="${clamp(1 - d * .12)}"/>`;
+          }
+        } else {                                              /* torn diagonals   */
+          for (let i = 0; i < 6; i++) {
+            const o = i * 52 - 60;
+            art += `<path d="M${o} 300 L${o + 96} 0 L${o + 132} 0 L${o + 36} 300 Z"
+              fill="${i % 2 ? c1 : c3}" opacity="${.3 + i * .1}"/>`;
+          }
+          art += `<circle cx="150" cy="150" r="52" fill="${c2}" opacity=".92"/>
+                  <circle cx="150" cy="150" r="24" fill="var(--ink)"/>`;
+        }
+        return `<svg viewBox="0 0 300 300" preserveAspectRatio="xMidYMid slice" role="img">
+          <defs>
+            <radialGradient id="${id}" cx="42%" cy="34%" r="78%">
+              <stop offset="0" stop-color="${c3}" stop-opacity=".55"/>
+              <stop offset="1" stop-color="#0d0e10"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="300" fill="url(#${id})"/>
+          <g>${art}</g>
+          <rect width="300" height="300" fill="url(#${id})" opacity=".18"/>
+        </svg>`;
+      }
+      $('#gal').innerHTML = GAL.map(([t, dur, v, r], i) => `
+        <figure class="gal__cell${i === 1 || i === 6 ? ' tall' : ''}" data-rv="mask" data-rv-i="${i}">
+          ${sleeve(v, r, i + 1)}
+          <figcaption class="gal__cap"><h4>${t}</h4><span>${dur}</span></figcaption>
+        </figure>`).join('');
+
+      /* --- timeline */
+      $('#tl').insertAdjacentHTML('beforeend', STEPS.map((s, i) => `
+        <div class="tl__row" style="${swVars(s.v)}" data-step>
+          <div class="tl__card">
+            <span class="tl__step">Step ${String(i + 1).padStart(2,'0')}</span>
+            <h3>${s.t}</h3><p>${s.d}</p>
+          </div>
+          <div class="tl__node"><b></b></div>
+          <div class="tl__spacer"></div>
+        </div>`).join(''));
+
+      /* --- pricing */
+      const tick = `<svg viewBox="0 0 24 24"><path d="M4 12.5 9 17.5 20 6.5"/></svg>`;
+      $('#planGrid').innerHTML = PLANS.map((p, i) => `
+        <article class="plan glass${p.hot ? ' plan--hot' : ''}" style="${swVars(p.v)}"
+                 data-rv="up" data-rv-i="${i}">
+          ${p.hot ? '<span class="tag plan__flag"><i class="tag__dot"></i>Most picked</span>' : ''}
+          <div>
+            <span class="plan__name">${p.name}</span>
+            <div class="plan__fig mt-4">
+              <b data-mo="${p.mo}" data-yr="${p.yr}">$${p.mo}</b>
+              <span data-unit>${p.mo ? 'per month' : 'forever'}</span>
+            </div>
+            <p class="plan__note mt-4">${p.note}</p>
+          </div>
+          <ul>${p.feats.map(f => `<li>${tick}<span>${f}</span></li>`).join('')}</ul>
+          <button class="btn ${p.hot ? 'btn--stem' : 'btn--ghost'}" data-magnet>
+            <span class="btn__label"><span data-t="${p.mo ? 'Start free trial' : 'Open a room'}">${p.mo ? 'Start free trial' : 'Open a room'}</span></span>
+          </button>
+        </article>`).join('');
+
+      /* --- testimonials: two rows, opposite directions, content duplicated */
+      const qCard = ([txt, who, role, v, slot]) => `
+        <blockquote class="quote glass" style="${swVars(v)}">
+          <p>“${txt}”</p>
+          <footer>
+            <span class="quote__av">
+              <i aria-hidden="true">${who.split(' ').map(w => w[0]).join('').slice(0, 2)}</i>
+              <img alt="" width="400" height="400" loading="lazy" decoding="async"
+                   data-portrait="assets/portraits/voice-${slot}.jpg">
+            </span>
+            <span class="quote__who"><b>${who}</b><span>${role}</span></span>
+          </footer>
+        </blockquote>`;
+      $('#q1').innerHTML = [...QUOTES.slice(0,4), ...QUOTES.slice(0,4)].map(qCard).join('');
+      $('#q2').innerHTML = [...QUOTES.slice(4),  ...QUOTES.slice(4)].map(qCard).join('');
+
+      /* Portraits are probed before they are attached, so a slot with no file yet
+         falls back to the monogram disc rather than rendering a broken image.
+         Drop head-and-shoulders JPEGs into assets/portraits/ and they appear with
+         no further code changes — the alt stays empty because the sitter's name is
+         already announced by the adjacent text. */
+      $$('.quote__av img[data-portrait]').forEach(img => {
+        const url = img.dataset.portrait;
+        const probe = new Image();
+        probe.onload  = () => { img.src = url; };
+        probe.onerror = () => { img.remove(); };
+        probe.src = url;
+      });
+
+      /* --- faq */
+      $('#faqList').innerHTML = FAQS.map(([q, a], i) => `
+        <div class="faq__item" data-rv="up" data-rv-i="${i}">
+          <button class="faq__q" aria-expanded="false" aria-controls="fa${i}">
+            <span>${q}</span><span class="faq__sign" aria-hidden="true"></span>
+          </button>
+          <div class="faq__a" id="fa${i}" role="region"><div>${a}</div></div>
+        </div>`).join('');
+
+      /* == M3 · BOOT SEQUENCE =================================================== */
+      /* The reference fills a capsule with liquid while it decodes audio. We fill it
+         against a synthetic progress curve that eases out, then hands off to the hero. */
+      const boot = $('#boot'), bootFill = $('#bootFill'), bootPct = $('#bootPct');
+      function runBoot() {
+        if (CAPTURE) { document.documentElement.classList.add('is-booted'); boot.remove(); return start(); }
+        let p = 0, t0 = performance.now();
+        const tick = now => {
+          const e = (now - t0) / 1000;
+          p = Math.min(100, easeOutExpo(clamp(e / 1.7)) * 100);
+          bootFill.style.setProperty('--p', p.toFixed(1) + '%');
+          bootPct.textContent = Math.round(p);
+          if (p < 100) requestAnimationFrame(tick);
+          else setTimeout(() => {
+            boot.classList.add('is-done');
+            document.documentElement.classList.add('is-booted');
+            setTimeout(() => boot.remove(), 800);
+            start();
+          }, 260);
+        };
+        requestAnimationFrame(tick);
+      }
+
+      /* == M4 · CURSOR + CHROME ================================================= */
+      /* Two elements: a dot that tracks 1:1 and a ring that lags on a spring. Both
+         are difference-blended so they invert whatever they sit on. */
+      const cursor = (() => {
+        if (COARSE || REDUCED || CAPTURE) return { pos:{x:0,y:0}, step(){} };
+        const dot = $('#curDot'), ring = $('#curRing');
+        const m = { x: innerWidth / 2, y: innerHeight / 2 };
+        const r = { x: m.x, y: m.y };
+        addEventListener('pointermove', e => {
+          m.x = e.clientX; m.y = e.clientY;
+          if (!dot.classList.contains('is-live')) {
+            r.x = m.x; r.y = m.y;
+            dot.classList.add('is-live'); ring.classList.add('is-live');
+          }
+        }, { passive:true });
+        addEventListener('pointerdown', () => ring.classList.add('is-down'));
+        addEventListener('pointerup',   () => ring.classList.remove('is-down'));
+        const HOT = 'a,button,[data-magnet],.gal__cell,.show__panel,.faq__q,input,summary';
+        addEventListener('pointerover', e => {
+          if (e.target.closest && e.target.closest(HOT)) ring.classList.add('is-hot');
+        }, { passive:true });
+        addEventListener('pointerout', e => {
+          if (e.target.closest && e.target.closest(HOT)) ring.classList.remove('is-hot');
+        }, { passive:true });
+        return {
+          pos: m,
+          step(dt) {
+            r.x = damp(r.x, m.x, 14, dt); r.y = damp(r.y, m.y, 14, dt);
+            dot.style.transform  = `translate3d(${m.x}px,${m.y}px,0)`;
+            ring.style.transform = `translate3d(${r.x}px,${r.y}px,0)`;
+          }
+        };
+      })();
+
+      /* Magnetic buttons — the element leans toward the pointer, then springs back */
+      if (!COARSE && !REDUCED && !CAPTURE) {
+        $$('[data-magnet]').forEach(el => {
+          let raf = 0, cx = 0, cy = 0, tx = 0, ty = 0;
+          const loop = () => {
+            cx = lerp(cx, tx, .16); cy = lerp(cy, ty, .16);
+            el.style.transform = `translate3d(${cx.toFixed(2)}px,${cy.toFixed(2)}px,0)`;
+            if (Math.abs(cx - tx) > .1 || Math.abs(cy - ty) > .1) raf = requestAnimationFrame(loop);
+            else { el.style.transform = `translate3d(${tx}px,${ty}px,0)`; raf = 0; }
+          };
+          const kick = () => { if (!raf) raf = requestAnimationFrame(loop); };
+          el.addEventListener('pointermove', e => {
+            const b = el.getBoundingClientRect();
+            tx = (e.clientX - b.left - b.width / 2) * .28;
+            ty = (e.clientY - b.top - b.height / 2) * .38;
+            kick();
+          });
+          el.addEventListener('pointerleave', () => { tx = ty = 0; kick(); });
+        });
+      }
+
+      /* Nav: hides on downward scroll, frosts once past the fold */
+      const nav = $('#nav'), burger = $('#burger'), sheet = $('#sheet');
+      let lastY = 0;
+      function navUpdate(y) {
+        nav.classList.toggle('is-stuck', y > 40);
+        const down = y > lastY && y > 260 && !sheet.classList.contains('is-open');
+        nav.classList.toggle('is-hidden', down);
+        lastY = y;
+      }
+      burger.addEventListener('click', () => {
+        const open = sheet.classList.toggle('is-open');
+        burger.classList.toggle('is-open', open);
+        burger.setAttribute('aria-expanded', String(open));
+        sheet.setAttribute('aria-hidden', String(!open));
+        document.body.style.overflow = open ? 'hidden' : '';
+        /* stagger the links in behind the clip-path wipe */
+        $$('#sheet a').forEach((a, i) => a.style.transitionDelay = open ? `${.18 + i * .06}s` : '0s');
+      });
+      $$('#sheet a').forEach(a => a.addEventListener('click', () => burger.click()));
+
+      /* Smooth in-page navigation that respects the fixed header */
+      $$('a[href^="#"]').forEach(a => a.addEventListener('click', e => {
+        const id = a.getAttribute('href');
+        if (id.length < 2) return;
+        const t = document.querySelector(id);
+        if (!t) return;
+        e.preventDefault();
+        scrollTo({ top: t.getBoundingClientRect().top + scrollY - 8,
+                   behavior: REDUCED ? 'auto' : 'smooth' });
+      }));
+
+      /* == M5 · REVEAL SYSTEM =================================================== */
+      /* One observer drives every scroll-in transition. data-rv picks the flavour,
+         data-rv-i adds a stagger inside a group. */
+      const revealables = $$('[data-rv],.split,[data-step]');
+      let pending = [];
+      function reveal(el, staggered = true) {
+        if (el.classList.contains('rv-in')) return;
+        const i = +(el.dataset.rvI || 0);
+        el.style.transitionDelay = staggered ? `${i * 0.075}s` : '0s';
+        el.classList.add('rv-in', 'is-in');
+      }
+      if (CAPTURE || REDUCED) {
+        revealables.forEach(el => reveal(el, false));
+      } else {
+        pending = revealables.slice();
+        const io = new IntersectionObserver(entries => {
+          entries.forEach(en => { if (en.isIntersecting) reveal(en.target); });
+        }, { rootMargin: '0px 0px -12% 0px', threshold: 0.12 });
+        revealables.forEach(el => io.observe(el));
+      }
+      /* Safety sweep: an instant jump (deep link, restored scroll position, a
+         programmatic scrollTo) can skip everything the observer would have caught
+         on the way past. Runs only while something is still unrevealed. */
+      let sweepTick = 0;
+      function sweepReveals() {
+        if (!pending.length || (sweepTick++ % 8)) return;
+        const fold = innerHeight * 0.9;
+        const still = [];
+        for (const el of pending) {
+          if (el.classList.contains('rv-in')) continue;
+          if (el.getBoundingClientRect().top < fold) reveal(el);
+          else still.push(el);
+        }
+        pending = still;
+      }
+
+      /* 3D hover parallax on the feature cards — rotation is derived from the
+         pointer's normalised offset inside the card, and the spotlight follows it. */
+      if (!COARSE && !REDUCED && !CAPTURE) {
+        $$('[data-tilt]').forEach(card => {
+          let raf = 0, rx = 0, ry = 0, trx = 0, try_ = 0;
+          const loop = () => {
+            rx = lerp(rx, trx, .12); ry = lerp(ry, try_, .12);
+            card.style.transform =
+              `perspective(900px) rotateX(${rx.toFixed(2)}deg) rotateY(${ry.toFixed(2)}deg) translateZ(0)`;
+            raf = (Math.abs(rx - trx) > .05 || Math.abs(ry - try_) > .05)
+              ? requestAnimationFrame(loop) : 0;
+          };
+          card.addEventListener('pointermove', e => {
+            const b = card.getBoundingClientRect();
+            const nx = (e.clientX - b.left) / b.width, ny = (e.clientY - b.top) / b.height;
+            trx = (0.5 - ny) * 11; try_ = (nx - 0.5) * 13;
+            card.style.setProperty('--mx', (nx * 100).toFixed(1) + '%');
+            card.style.setProperty('--my', (ny * 100).toFixed(1) + '%');
+            if (!raf) raf = requestAnimationFrame(loop);
+          });
+          card.addEventListener('pointerleave', () => {
+            trx = try_ = 0; if (!raf) raf = requestAnimationFrame(loop);
+          });
+        });
+      }
+
+      /* == M6 · SCROLL CONTROLLER =============================================== */
+      /* Every scroll-linked value is computed once per frame from a cached scrollY,
+         so there is exactly one layout read per frame and no listener thrash. */
+      const rail    = $('#rail');
+      const hero    = $('#hero');
+      const stage   = $('#stage');
+      const showSec = $('#showcase');
+      const showTrk = $('#showTrack');
+      const showBar = $('#showBar');
+      const showN   = $('#showN');
+      const tlSec   = $('#tl');
+      const tlFill  = $('#tlFill');
+      const heroGlyphs = [$('#hg0'), $('#hg1'), $('#hg2'), $('#hg3')];
+      const heroDots   = $$('#heroStems b');
+
+      /* The active stem family re-points --stem-* on :root, so the rail, links,
+         buttons and ring glow all change colour together. */
+      let activeStem = -1;
+      function setStem(i) {
+        if (i === activeStem) return;
+        activeStem = i;
+        const v = STEMS[i].v;
+        const rs = document.documentElement.style;
+        rs.setProperty('--stem-1', sw(v,1));
+        rs.setProperty('--stem-2', sw(v,2));
+        rs.setProperty('--stem-3', sw(v,3));
+        heroDots.forEach((d, k) => d.classList.toggle('on', k === i));
+        ring.setColour(v);
+      }
+
+      /* Cached geometry, refreshed on resize rather than every frame */
+      let geo = {};
+      function measure() {
+        const s = showSec.getBoundingClientRect();
+        geo.showTop    = s.top + scrollY;
+        geo.showHeight = showSec.offsetHeight;
+        const vp = showSec.querySelector('.show__viewport');
+        geo.trackOver  = Math.max(0, showTrk.getBoundingClientRect().width - vp.clientWidth);
+        const t = tlSec.getBoundingClientRect();
+        geo.tlTop = t.top + scrollY;
+        geo.tlH   = tlSec.offsetHeight;
+        geo.doc   = document.documentElement.scrollHeight - innerHeight;
+        geo.heroH = hero.offsetHeight;
+      }
+      /* The pinned showcase needs page height proportional to its horizontal travel */
+      function sizeShowcase() {
+        if (CAPTURE) { measure(); return; }
+        showSec.style.height =
+          `${innerHeight + Math.max(innerHeight * 0.4, geo.trackOver + innerHeight * 0.25)}px`;
+        measure();
+      }
+
+      let sy = scrollY, syTarget = scrollY, syVel = 0;
+      addEventListener('scroll', () => { syTarget = scrollY; }, { passive:true });
+      addEventListener('resize', () => { measure(); sizeShowcase(); ring.resize(); dust.resize(); });
+
+      let heroProgress = 0, showProgress = 0;
+      function scrollFrame(dt) {
+        const prev = sy;
+        sy = (REDUCED || CAPTURE) ? syTarget : damp(sy, syTarget, 18, dt);
+        syVel = (sy - prev) / Math.max(dt, .001);
+
+        /* progress rail */
+        rail.style.setProperty('--w', (clamp(sy / (geo.doc || 1)) * 100).toFixed(2) + '%');
+        navUpdate(syTarget);
+
+        /* hero: type drifts up and dissolves, the stage pushes back into depth */
+        heroProgress = clamp(sy / (geo.heroH || innerHeight));
+        if (heroProgress < 1.02) {
+          const p = heroProgress;
+          stage.style.transform    =
+            `translate3d(0,${(-p * 9).toFixed(2)}%,0) scale(${(1 - p * .2).toFixed(4)})`;
+          stage.style.opacity      = (1 - clamp((p - .35) * 1.7)).toFixed(3);
+          /* the four columns fill in one at a time as the hero scrolls away */
+          heroGlyphs.forEach((g, i) => g.classList.toggle('is-filled', p > .06 + i * 0.12));
+        }
+
+        /* showcase: sticky pin converts vertical distance into horizontal travel */
+        const raw = (sy - geo.showTop) / Math.max(1, geo.showHeight - innerHeight);
+        showProgress = clamp(raw);
+        if (raw > -0.35 && raw < 1.35) {
+          const x = -showProgress * geo.trackOver;
+          if (!CAPTURE) showTrk.style.transform = `translate3d(${x.toFixed(2)}px,0,0)`;
+          showBar.style.setProperty('--p', (showProgress * 100).toFixed(1) + '%');
+          const idx = clamp(Math.round(showProgress * (STEMS.length - 1)), 0, STEMS.length - 1);
+          showN.textContent = String(idx + 1).padStart(2, '0');
+          setStem(idx);
+        } else if (raw <= -0.35) {
+          setStem(0);
+        }
+
+        sweepReveals();
+
+        /* timeline: the spine draws itself against the viewport centre */
+        const tp = clamp((sy + innerHeight * 0.62 - geo.tlTop) / Math.max(1, geo.tlH));
+        tlFill.style.setProperty('--p', (tp * 100).toFixed(1) + '%');
+      }
+
+      /* == M7 · WEBGL — THE RING ================================================
+         A real torus mesh, shaded with a three-step diffuse ramp, a fresnel rim and
+         a tight specular, plus a lighter "progress wedge" sweeping the major angle.
+         Motion blur is genuine: when angular velocity is high the mesh is redrawn a
+         couple of times at trailing rotations with decaying alpha.
+         ======================================================================= */
+      const M4 = {
+        ident: () => new Float32Array([1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]),
+        mul(a, b, o = new Float32Array(16)) {
+          for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) {
+            o[c*4+r] = a[r]*b[c*4] + a[4+r]*b[c*4+1] + a[8+r]*b[c*4+2] + a[12+r]*b[c*4+3];
+          }
+          return o;
+        },
+        persp(fov, asp, n, f) {
+          const t = 1 / Math.tan(fov / 2);
+          return new Float32Array([t/asp,0,0,0, 0,t,0,0, 0,0,(f+n)/(n-f),-1, 0,0,2*f*n/(n-f),0]);
+        },
+        trans(x, y, z) {
+          const m = M4.ident(); m[12] = x; m[13] = y; m[14] = z; return m;
+        },
+        rotX(a) { const c = Math.cos(a), s = Math.sin(a); const m = M4.ident();
+          m[5] = c; m[6] = s; m[9] = -s; m[10] = c; return m; },
+        rotY(a) { const c = Math.cos(a), s = Math.sin(a); const m = M4.ident();
+          m[0] = c; m[2] = -s; m[8] = s; m[10] = c; return m; },
+        rotZ(a) { const c = Math.cos(a), s = Math.sin(a); const m = M4.ident();
+          m[0] = c; m[1] = s; m[4] = -s; m[5] = c; return m; },
+        /* upper-left 3x3 of a pure rotation is its own normal matrix */
+        nrm3(m) { return new Float32Array([m[0],m[1],m[2], m[4],m[5],m[6], m[8],m[9],m[10]]); }
+      };
+
+      function compile(gl, type, src) {
+        const s = gl.createShader(type);
+        gl.shaderSource(s, src); gl.compileShader(s);
+        if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+          console.warn(gl.getShaderInfoLog(s)); return null;
+        }
+        return s;
+      }
+      function program(gl, vs, fs) {
+        const v = compile(gl, gl.VERTEX_SHADER, vs), f = compile(gl, gl.FRAGMENT_SHADER, fs);
+        if (!v || !f) return null;
+        const p = gl.createProgram();
+        gl.attachShader(p, v); gl.attachShader(p, f); gl.linkProgram(p);
+        if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { console.warn(gl.getProgramInfoLog(p)); return null; }
+        return p;
+      }
+      /* resolves a css custom property to a normalised rgb triple */
+      const cssRGB = (() => {
+        const probe = document.createElement('span');
+        probe.style.cssText = 'position:absolute;opacity:0;pointer-events:none';
+        document.body.appendChild(probe);
+        const cache = new Map();
+        return name => {
+          if (cache.has(name)) return cache.get(name);
+          probe.style.color = `var(${name})`;
+          const m = getComputedStyle(probe).color.match(/[\d.]+/g) || [255,255,255];
+          const out = [m[0]/255, m[1]/255, m[2]/255];
+          cache.set(name, out);
+          return out;
+        };
+      })();
+
+      const ring = (() => {
+        const cv = $('#gl-ring');
+        const gl = cv.getContext('webgl2', { alpha:true, antialias:true, premultipliedAlpha:false,
+                                             powerPreference:'high-performance' });
+        const state = {
+          tiltX: -0.10, tiltY: 0.08, spin: 0,
+          tTiltX: -0.10, tTiltY: 0.08, spinVel: 0.55,
+          prog: 0.24, dpr: 1, drag: null, alive: !!gl
+        };
+        if (!gl) return { step(){}, resize(){}, setColour(){}, state };
+
+        const VS = `#version 300 es
+        in vec3 aPos; in vec3 aNor; in float aU; in float aCV;
+        uniform mat4 uMVP, uModel; uniform mat3 uNrm;
+        out vec3 vN, vW; out float vU, vCV;
+        void main(){
+          vW = (uModel * vec4(aPos,1.0)).xyz;
+          vN = normalize(uNrm * aNor);
+          vU = aU; vCV = aCV;
+          gl_Position = uMVP * vec4(aPos,1.0);
+        }`;
+
+        const FS = `#version 300 es
+        precision highp float;
+        in vec3 vN, vW; in float vU, vCV;
+        uniform vec3 uC1, uC2, uC3, uCam;
+        uniform float uProg, uAlpha, uTime;
+        out vec4 outColor;
+        void main(){
+          vec3 N = normalize(vN);
+          vec3 V = normalize(uCam - vW);
+          /* the key is deliberately grazing: it is what produces the diagonal
+             bright-to-dark sweep across the whole ring rather than a flat face */
+          vec3 L = normalize(vec3(-0.60, 0.64, 0.30));
+          float d = max(dot(N, L), 0.0);
+
+          vec3 col = uC3 * 0.34;
+          col = mix(col, uC3, smoothstep(0.00, 0.20, d));
+          col = mix(col, uC2, smoothstep(0.16, 0.54, d));
+          col = mix(col, uC1, smoothstep(0.60, 0.94, d));
+
+          /* tube occlusion — the inner face of the torus never sees the room */
+          float ao = mix(0.62, 1.0, smoothstep(-1.0, 0.35, vCV));
+          col *= ao;
+
+          /* rim light picks the silhouette out of the background */
+          float f = pow(1.0 - max(dot(N, V), 0.0), 3.6);
+          col += uC2 * f * 0.34;
+
+          /* one tight specular — the glossy line that reads as a rubber tube */
+          vec3 H = normalize(L + V);
+          col += vec3(1.0) * pow(max(dot(N, H), 0.0), 74.0) * 0.42;
+
+          /* cool bounce from below so the shadow side is not dead */
+          col += uC3 * max(dot(N, vec3(0.10, -1.0, 0.30)), 0.0) * 0.26;
+
+          /* progress wedge — a brighter arc sweeping the major angle, exactly the
+             device the reference uses to show how far the stem has loaded */
+          float w = step(fract(vU), uProg);
+          col = mix(col, col * 1.06 + uC1 * 0.16, w * 0.5);
+
+          col = pow(clamp(col, 0.0, 1.0), vec3(0.94));
+          outColor = vec4(col, uAlpha);
+        }`;
+
+        const prog = program(gl, VS, FS);
+        if (!prog) return { step(){}, resize(){}, setColour(){}, state:{ alive:false } };
+
+        /* --- torus geometry: R major, r minor, ring lying in the XY plane --- */
+        const NU = 220, NV = 52, R = 1.0, r = 0.395;
+        const verts = new Float32Array(NU * NV * 8);
+        let k = 0;
+        for (let i = 0; i < NU; i++) {
+          const u = i / (NU - 1) * Math.PI * 2, cu = Math.cos(u), su = Math.sin(u);
+          for (let j = 0; j < NV; j++) {
+            const v = j / (NV - 1) * Math.PI * 2, cv2 = Math.cos(v), sv = Math.sin(v);
+            verts[k++] = (R + r * cv2) * cu;
+            verts[k++] = (R + r * cv2) * su;
+            verts[k++] = r * sv;
+            verts[k++] = cv2 * cu; verts[k++] = cv2 * su; verts[k++] = sv;
+            verts[k++] = i / (NU - 1);
+            verts[k++] = cv2;                 /* -1 faces the hole, +1 faces out */
+          }
+        }
+        const idx = [];
+        for (let i = 0; i < NU - 1; i++) for (let j = 0; j < NV - 1; j++) {
+          const a = i * NV + j, b = a + NV;
+          idx.push(a, b, a + 1, b, b + 1, a + 1);
+        }
+        const indices = new Uint32Array(idx);
+
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        const vbo = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+        gl.bufferData(gl.ARRAY_BUFFER, verts, gl.STATIC_DRAW);
+        const stride = 32;
+        const aPos = gl.getAttribLocation(prog, 'aPos');
+        const aNor = gl.getAttribLocation(prog, 'aNor');
+        const aU   = gl.getAttribLocation(prog, 'aU');
+        const aCV  = gl.getAttribLocation(prog, 'aCV');
+        gl.enableVertexAttribArray(aPos); gl.vertexAttribPointer(aPos, 3, gl.FLOAT, false, stride, 0);
+        gl.enableVertexAttribArray(aNor); gl.vertexAttribPointer(aNor, 3, gl.FLOAT, false, stride, 12);
+        gl.enableVertexAttribArray(aU);   gl.vertexAttribPointer(aU,   1, gl.FLOAT, false, stride, 24);
+        gl.enableVertexAttribArray(aCV);  gl.vertexAttribPointer(aCV,  1, gl.FLOAT, false, stride, 28);
+        const ibo = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, ibo);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+        gl.bindVertexArray(null);
+
+        const U = n => gl.getUniformLocation(prog, n);
+        const uMVP = U('uMVP'), uModel = U('uModel'), uNrm = U('uNrm'), uCam = U('uCam');
+        const uC1 = U('uC1'), uC2 = U('uC2'), uC3 = U('uC3');
+        const uProg = U('uProg'), uAlpha = U('uAlpha'), uTime = U('uTime');
+
+        let cols = [cssRGB('--a-1'), cssRGB('--a-2'), cssRGB('--a-3')];
+        let target = cols.map(c => c.slice());
+
+        function resize() {
+          const dpr = Math.min(devicePixelRatio || 1, 2);
+          const w = Math.max(1, Math.round(cv.clientWidth  * dpr));
+          const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+          if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+          state.dpr = dpr;
+        }
+        resize();
+
+        gl.enable(gl.DEPTH_TEST);
+        gl.depthFunc(gl.LEQUAL);
+        gl.clearColor(0, 0, 0, 0);
+
+        /* pointer drag spins the ring and adds tilt, then it eases back to rest */
+        if (!COARSE) {
+          stage.style.pointerEvents = 'none';
+          hero.addEventListener('pointerdown', e => {
+            if (e.target.closest('a,button')) return;
+            state.drag = { x:e.clientX, y:e.clientY };
+          });
+          addEventListener('pointerup', () => { state.drag = null; });
+          addEventListener('pointermove', e => {
+            if (!state.drag) return;
+            state.spinVel += (e.clientX - state.drag.x) * 0.006;
+            state.tTiltX  += (e.clientY - state.drag.y) * 0.004;
+            state.drag = { x:e.clientX, y:e.clientY };
+          }, { passive:true });
+        }
+
+        function setColour(v) {
+          target = [cssRGB(`--${v}-1`), cssRGB(`--${v}-2`), cssRGB(`--${v}-3`)];
+        }
+
+        function step(dt, t) {
+          if (heroProgress > 1.05) return;          /* off screen — skip the draw */
+          resize();
+          gl.viewport(0, 0, cv.width, cv.height);
+          gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+          /* colour crossfade */
+          for (let i = 0; i < 3; i++) for (let c = 0; c < 3; c++)
+            cols[i][c] = damp(cols[i][c], target[i][c], 4.5, dt);
+
+          /* pointer parallax — a 3D lean toward the cursor */
+          if (!COARSE && !REDUCED && !state.drag) {
+            const nx = (cursor.pos.x / innerWidth  - .5);
+            const ny = (cursor.pos.y / innerHeight - .5);
+            state.tTiltY = nx * 0.55;
+            state.tTiltX = -0.10 + ny * 0.42;
+          }
+          state.tiltX = damp(state.tiltX, state.tTiltX, 5, dt);
+          state.tiltY = damp(state.tiltY, state.tTiltY, 5, dt);
+
+          /* spin: idle drift + scroll velocity + drag impulse, all damped */
+          const scrollPush = clamp(Math.abs(syVel) / 2400, 0, 1) * Math.sign(syVel || 1) * 2.2;
+          state.spinVel = damp(state.spinVel, 0.55 + scrollPush, 2.2, dt);
+          state.spin += state.spinVel * dt;
+          state.prog = (state.prog + dt * 0.085) % 1;
+
+          /* camera dollies in slightly as the hero scrolls away */
+          const camZ = 5.35 - heroProgress * 0.75;
+          const asp = cv.width / cv.height;
+          const P = M4.persp(0.62, asp, 0.1, 40);
+          const V = M4.trans(0, 0, -camZ);
+          const PV = M4.mul(P, V);
+
+          gl.useProgram(prog);
+          gl.bindVertexArray(vao);
+          gl.uniform3fv(uC1, cols[0]); gl.uniform3fv(uC2, cols[1]); gl.uniform3fv(uC3, cols[2]);
+          gl.uniform3f(uCam, 0, 0, camZ);
+          gl.uniform1f(uProg, state.prog);
+          gl.uniform1f(uTime, t);
+
+          const speed = Math.abs(state.spinVel);
+          const taps  = REDUCED ? 1 : (speed > 1.3 ? 3 : 1);   /* motion-blur samples */
+
+          for (let s = 0; s < taps; s++) {
+            const back = -s * dt * state.spinVel * 3.2;
+            const M = M4.mul(M4.mul(M4.rotY(state.tiltY), M4.rotX(state.tiltX)),
+                             M4.rotZ(state.spin + back));
+            gl.uniformMatrix4fv(uModel, false, M);
+            gl.uniformMatrix3fv(uNrm, false, M4.nrm3(M));
+            gl.uniformMatrix4fv(uMVP, false, M4.mul(PV, M));
+            if (s === 0) {
+              gl.disable(gl.BLEND); gl.depthMask(true);
+              gl.uniform1f(uAlpha, 1);
+            } else {
+              gl.enable(gl.BLEND);
+              gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+              gl.depthMask(false);
+              gl.uniform1f(uAlpha, 0.30 / s);
+            }
+            gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_INT, 0);
+          }
+          gl.depthMask(true); gl.disable(gl.BLEND);
+          gl.bindVertexArray(null);
+        }
+
+        return { step, resize, setColour, state };
+      })();
+
+      /* == M8 · WEBGL — DUST ====================================================
+         A particle field behind the closing call to action. Position is evaluated
+         analytically in the vertex shader from a per-particle seed, so there is no
+         per-frame CPU work and no buffer upload after init.
+         ======================================================================= */
+      const dust = (() => {
+        const cv = $('#gl-dust');
+        const gl = cv && cv.getContext('webgl2', { alpha:true, antialias:true, premultipliedAlpha:false });
+        if (!gl) return { step(){}, resize(){} };
+
+        const VS = `#version 300 es
+        in vec4 aSeed;        /* x0, y0, speed, size  */
+        in vec3 aCol;
+        uniform float uTime, uAspect;
+        uniform vec2 uMouse;
+        out vec3 vCol; out float vFade;
+        void main(){
+          float y = fract(aSeed.y + uTime * aSeed.z * 0.06);
+          float x = aSeed.x + sin(uTime * 0.35 + aSeed.y * 21.0) * 0.05;
+          vec2 p = vec2(x, y) * 2.0 - 1.0;
+
+          /* pointer pushes particles outward with an inverse-square falloff */
+          vec2 d = p - uMouse;
+          d.x *= uAspect;
+          float l = length(d);
+          p += normalize(d + 1e-5) * clamp(0.055 / (l * l + 0.06), 0.0, 0.22);
+
+          gl_Position = vec4(p, 0.0, 1.0);
+          gl_PointSize = aSeed.w * (1.0 + sin(uTime * 1.3 + aSeed.x * 30.0) * 0.28);
+          vCol = aCol;
+          /* fade at the top and bottom edges so nothing pops in or out */
+          vFade = smoothstep(0.0, 0.14, y) * (1.0 - smoothstep(0.84, 1.0, y));
+        }`;
+
+        const FS = `#version 300 es
+        precision mediump float;
+        in vec3 vCol; in float vFade;
+        out vec4 outColor;
+        void main(){
+          vec2 c = gl_PointCoord - 0.5;
+          float a = smoothstep(0.5, 0.04, length(c));
+          outColor = vec4(vCol * a, a * vFade * 0.85);
+        }`;
+
+        const prog = program(gl, VS, FS);
+        if (!prog) return { step(){}, resize(){} };
+
+        const N = 1400;
+        const seeds = new Float32Array(N * 4), colours = new Float32Array(N * 3);
+        const fam = ['--a-1','--b-1','--c-1','--d-1'].map(cssRGB);
+        for (let i = 0; i < N; i++) {
+          seeds[i*4]   = Math.random();
+          seeds[i*4+1] = Math.random();
+          seeds[i*4+2] = 0.35 + Math.random() * 1.5;
+          seeds[i*4+3] = 1 + Math.pow(Math.random(), 2.4) * 6.5;
+          const c = fam[(Math.random() * 4) | 0];
+          colours[i*3] = c[0]; colours[i*3+1] = c[1]; colours[i*3+2] = c[2];
+        }
+        const vao = gl.createVertexArray();
+        gl.bindVertexArray(vao);
+        for (const [data, name, size] of [[seeds,'aSeed',4], [colours,'aCol',3]]) {
+          const b = gl.createBuffer();
+          gl.bindBuffer(gl.ARRAY_BUFFER, b);
+          gl.bufferData(gl.ARRAY_BUFFER, data, gl.STATIC_DRAW);
+          const loc = gl.getAttribLocation(prog, name);
+          gl.enableVertexAttribArray(loc);
+          gl.vertexAttribPointer(loc, size, gl.FLOAT, false, 0, 0);
+        }
+        gl.bindVertexArray(null);
+
+        const uTime = gl.getUniformLocation(prog, 'uTime');
+        const uMouse = gl.getUniformLocation(prog, 'uMouse');
+        const uAspect = gl.getUniformLocation(prog, 'uAspect');
+        let visible = false;
+        new IntersectionObserver(e => visible = e[0].isIntersecting, { threshold:0 }).observe(cv);
+
+        function resize() {
+          const dpr = Math.min(devicePixelRatio || 1, 2);
+          const w = Math.max(1, Math.round(cv.clientWidth * dpr));
+          const h = Math.max(1, Math.round(cv.clientHeight * dpr));
+          if (cv.width !== w || cv.height !== h) { cv.width = w; cv.height = h; }
+        }
+        resize();
+
+        function step(dt, t) {
+          if (!visible) return;
+          resize();
+          gl.viewport(0, 0, cv.width, cv.height);
+          gl.clearColor(0, 0, 0, 0);
+          gl.clear(gl.COLOR_BUFFER_BIT);
+          gl.enable(gl.BLEND);
+          gl.blendFunc(gl.SRC_ALPHA, gl.ONE);            /* additive */
+          gl.useProgram(prog);
+          gl.bindVertexArray(vao);
+          const b = cv.getBoundingClientRect();
+          gl.uniform1f(uTime, t);
+          gl.uniform1f(uAspect, b.width / Math.max(1, b.height));
+          gl.uniform2f(uMouse,
+            (cursor.pos.x - b.left) / b.width * 2 - 1,
+            1 - (cursor.pos.y - b.top) / b.height * 2);
+          gl.drawArrays(gl.POINTS, 0, N);
+          gl.bindVertexArray(null);
+          gl.disable(gl.BLEND);
+        }
+        return { step, resize };
+      })();
+
+      /* == M9 · WIDGETS ========================================================= */
+
+      /* FAQ accordion — height is animated from a measured value so the easing is
+         real rather than a max-height approximation. One panel open at a time. */
+      $$('.faq__item').forEach(item => {
+        const btn = $('.faq__q', item), panel = $('.faq__a', item);
+        btn.addEventListener('click', () => {
+          const open = item.classList.contains('is-open');
+          $$('.faq__item.is-open').forEach(other => {
+            other.classList.remove('is-open');
+            $('.faq__a', other).style.height = '0px';
+            $('.faq__q', other).setAttribute('aria-expanded', 'false');
+          });
+          if (open) return;
+          item.classList.add('is-open');
+          btn.setAttribute('aria-expanded', 'true');
+          panel.style.height = panel.firstElementChild.offsetHeight + 'px';
+        });
+      });
+      addEventListener('resize', () => {
+        const open = $('.faq__item.is-open');
+        if (open) $('.faq__a', open).style.height = $('.faq__a > div', open).offsetHeight + 'px';
+      });
+
+      /* Pricing period toggle — the figure counts to its new value */
+      $$('.price-toggle button').forEach(b => b.addEventListener('click', () => {
+        $$('.price-toggle button').forEach(o => o.classList.toggle('on', o === b));
+        const yr = b.dataset.bill === 'yr';
+        $$('.plan__fig b').forEach(fig => {
+          const from = parseFloat(fig.textContent.replace(/[^0-9.]/g, '')) || 0;
+          const to = +(yr ? fig.dataset.yr : fig.dataset.mo);
+          const unit = fig.parentElement.querySelector('[data-unit]');
+          unit.textContent = to === 0 ? 'forever' : (yr ? 'per year' : 'per month');
+          if (REDUCED) { fig.textContent = '$' + to; return; }
+          const t0 = performance.now();
+          const run = now => {
+            const k = clamp((now - t0) / 420);
+            fig.textContent = '$' + Math.round(lerp(from, to, easeOutExpo(k)));
+            if (k < 1) requestAnimationFrame(run);
+          };
+          requestAnimationFrame(run);
+        });
+      }));
+
+      /* Back to top */
+      $('#toTop').addEventListener('click', () =>
+        scrollTo({ top: 0, behavior: REDUCED ? 'auto' : 'smooth' }));
+
+      /* Gallery cells announce themselves on keyboard focus too */
+      $$('.gal__cell').forEach(c => { c.tabIndex = 0; });
+
+      /* == MAIN LOOP ============================================================
+         One rAF drives cursor, scroll and both renderers, so everything shares a
+         single clock and a single layout pass.
+         ======================================================================= */
+      let last = performance.now(), running = false;
+      function frame(now) {
+        const dt = Math.min((now - last) / 1000, 1 / 20);   /* clamp long tab-outs */
+        last = now;
+        const t = now / 1000;
+        cursor.step(dt);
+        scrollFrame(dt);
+        ring.step(dt, t);
+        dust.step(dt, t);
+        if (running) requestAnimationFrame(frame);
+      }
+      function start() {
+        measure(); sizeShowcase();
+        setStem(0);
+        running = true; last = performance.now();
+        requestAnimationFrame(frame);
+        /* re-measure once webfonts have settled and layout is final */
+        document.fonts?.ready.then(() => { measure(); sizeShowcase(); });
+        addEventListener('load', () => { measure(); sizeShowcase(); });
+      }
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { running = false; }
+        else { running = true; last = performance.now(); requestAnimationFrame(frame); }
+      });
+
+      runBoot();
+      })();
+    </script>
+
+    <style>
+      :root{--a-1:#55dfdc;--a-2:#23bfc1;--a-3:#167c8a;--b-1:#91a9b5;--b-2:#668592;--b-3:#3d5967;--c-1:#d9bb67;--c-2:#bd963c;--c-3:#80641c;--d-1:#63d4d3;--d-2:#329fae;--d-3:#1e6879}.network-card{min-height:31rem;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;border:1px solid var(--hair);border-radius:1.25rem;background:var(--ink-2);box-shadow:0 20px 60px -38px #000}.network-viz{position:relative;min-height:31rem;overflow:hidden;background:radial-gradient(circle at 48% 45%,color-mix(in srgb,var(--a-2) 14%,transparent),transparent 57%),#101216}.network-viz__head{position:absolute;top:1.5rem;left:1.5rem;z-index:2}.network-viz__head h2{margin-top:.65rem;font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em}.network-viz__head i{display:block;width:3rem;height:3px;margin-top:.75rem;border-radius:9px;background:var(--a-1)}.network-viz svg{position:absolute;inset:0;width:100%;height:100%}.network-lines path{fill:none;stroke:color-mix(in srgb,var(--a-2) 52%,transparent);stroke-width:1.5;stroke-dasharray:5 7;animation:netdash 7s linear infinite}.network-particles circle{fill:var(--c-1);filter:drop-shadow(0 0 6px var(--c-1));animation:netpulse 2.8s ease-in-out infinite}.network-particles circle:nth-child(2){animation-delay:.5s}.network-particles circle:nth-child(3){animation-delay:1s}.network-particles circle:nth-child(4){animation-delay:1.5s}.network-particles circle:nth-child(5){animation-delay:2s}.network-nodes circle{fill:#15191d;stroke:var(--a-1);stroke-width:2;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--a-2) 48%,transparent))}.network-nodes text{fill:rgba(255,255,255,.72);font-family:'Noto Sans',sans-serif;font-size:12px;text-anchor:middle}.network-key{position:absolute;bottom:1.5rem;left:1.5rem;display:flex;gap:1rem;padding:.65rem .85rem;border-radius:.6rem;background:rgba(0,0,0,.45);font-size:var(--t-xs);color:var(--mute)}.network-key b{display:inline-block;width:.45rem;height:.45rem;margin-right:.35rem;border-radius:50%;background:var(--a-1)}.network-key span+span b{background:var(--c-1)}.network-copy{display:flex;flex-direction:column;padding:clamp(1.75rem,3vw,2.5rem);background:var(--ink-3)}.network-copy h3{margin:.9rem 0 1rem;font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em}.network-copy p{color:var(--mute);line-height:1.65}.network-meters{display:grid;gap:1.15rem;margin:2rem 0}.network-meters header{display:flex;justify-content:space-between;gap:1rem;margin-bottom:.45rem;text-transform:uppercase;font-size:var(--t-xs);letter-spacing:.1em;color:rgba(255,255,255,.72)}.network-meters b{font-weight:500;color:var(--a-1)}.network-meters i{display:block;height:3px;overflow:hidden;border-radius:9px;background:var(--hair)}.network-meters em{display:block;width:72%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--a-2),var(--c-1));animation:meter 3s var(--ease-in-out) infinite}.network-meters div:nth-child(2) em{width:88%;animation-delay:.4s}.network-meters div:nth-child(3) em{width:64%;animation-delay:.8s}.network-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:auto}.network-actions .btn{height:2.75rem;padding:0 1.25rem}@keyframes netdash{to{stroke-dashoffset:-96}}@keyframes netpulse{50%{opacity:.35;transform:scale(.55)}}@keyframes meter{50%{transform:translateX(12%)}}@media(max-width:760px){.network-card{grid-template-columns:1fr}.network-viz{min-height:25rem}.network-copy{min-height:0}}@media(prefers-reduced-motion:reduce){.network-lines path,.network-particles circle,.network-meters em{animation:none!important}}
+    </style>
+    <script>
+      (()=>{const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)],txt=(s,v,r=document)=>{const e=q(s,r);if(e)e.textContent=v},label=(s,v,r=document)=>{const e=q(s,r);if(e){e.textContent=v;e.dataset.t=v}};txt('.boot__word','connecting your workflow');txt('h1','Barrios A2I — connected marketing automation built around your business');txt('.hero__sub','From lead capture to customer follow-up, Barrios A2I turns your idea into one connected system built around the way your business already works.');label('.hero__acts a:first-child .btn__label span','Tell us what you want automated');label('.hero__acts a:last-child .btn__label span','See what we can automate');txt('.hero__foot>div:last-child','built around your business');qa('#nav .nav__link span').forEach((e,i)=>e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i]);qa('#nav .nav__link').forEach((e,i)=>e.href=['#kit','#gallery','#how','#plans','#faq'][i]);label('.nav__cta .btn__label span','Tell us what you want automated');qa('#sheet>a').forEach((e,i)=>{e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i];e.href=['#kit','#gallery','#how','#plans','#faq'][i]});txt('.sheet__foot','Built around your business, your process, and your tools.');q('#ticker').innerHTML='<div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div><div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div>';txt('#kit .tag','What We Automate');txt('#kit h2 i','Tell us what your business needs to do. We’ll automate it.');txt('#kit .sec-head p','Connected automations built around the way your business already captures leads, follows up, manages work, and keeps people informed.');const features=[['Lead capture & qualification','Collect every opportunity, ask the right first questions, and route it where it needs to go.'],['Instant email and SMS responses','Send useful, personal-feeling replies as soon as someone reaches out.'],['CRM and pipeline updates','Keep records, stages, ownership, and next steps aligned across the tools your team uses.'],['Campaign content, approvals & scheduling','Move campaigns from draft to review to delivery without chasing status updates.'],['Appointment booking & reminders','Help the right people book the right time, then send clear reminders and follow-up.'],['Follow-up, reviews, reporting & owner alerts','Keep conversations moving, ask at the right moment, and flag work that needs a human.']];qa('#featGrid .feat').forEach((c,i)=>{txt('h3',features[i][0],c);txt('p',features[i][1],c)});txt('#showcase .tag','Four Connected Layers');txt('#showcase h2','One idea, connected all the way through.');const layers=[['Capture','Every opportunity enters one system','Entry points','Forms · calls'],['Respond','Each person receives the right message','Email · SMS','Context-aware'],['Organize','CRM, calendar, and team stay aligned','Shared records','Clear handoffs'],['Continue','Follow-up runs until the next human decision','Useful nudges','Human control']];qa('#showTrack .show__panel').forEach((c,i)=>{txt('.show__k',String(i+1).padStart(2,'0')+' · '+layers[i][0],c);txt('h3',layers[i][1],c);txt('p','A connected layer designed around your existing process.',c);const stats=qa('.show__stats div',c);stats[0].innerHTML='<b>'+layers[i][2]+'</b>capability';stats[1].innerHTML='<b>'+layers[i][3]+'</b>workflow'});txt('#gallery .tag','Automations in Motion');txt('#gallery h2 i','See the work move from trigger to next step.');txt('#gallery .sec-head p','Concrete examples of the connected workflows we can map, build, and refine around your business.');const gallery=[['New Lead Response','Lead capture'],['Missed-Call Follow-Up','Customer follow-up'],['Appointment Journey','Scheduling'],['Review Request','Customer care'],['Campaign Approval','Marketing'],['CRM Cleanup','Operations'],['Quote Follow-Up','Sales'],['Client Onboarding','Client experience'],['Owner Alert','Team visibility'],['Custom Workflow','Built for you']];qa('#gal .gal__cell').forEach((c,i)=>{txt('h4',gallery[i][0],c);txt('.gal__cap span',gallery[i][1],c)});txt('#how .tag','How It Works');txt('#how h2 i','From idea to working system.');const steps=[['Understand the outcome','We start with what you want to happen and who needs to be involved.'],['Map the workflow','Together, we trace the current process, decisions, tools, and handoffs.'],['Build and connect','We create the automation and connect it to the systems you already use.'],['Test and launch','We test real scenarios with you, make adjustments, and put the workflow into use.'],['Improve over time','As your process changes, we can refine what runs automatically and what stays human.']];qa('#tl [data-step]').forEach((c,i)=>{txt('.tl__step','Step '+String(i+1).padStart(2,'0'),c);txt('h3',steps[i][0],c);txt('p',steps[i][1],c)});txt('#plans .tag','Ways We Can Work Together');txt('#plans h2 i','Build what your business needs next.');txt('#plans .sec-head p','Every engagement is scoped around your process, goals, and current tools — not a preset package.');qa('.price-toggle button').forEach((b,i)=>{b.textContent=i?'Improve Existing':'Build New';b.dataset.bill=i?'existing':'new'});const plans=[['Focused Automation','A clear first workflow for one outcome that matters now.',['One focused workflow','Workflow mapping','Tool connection review','Launch support']],['Connected Workflow','Multiple steps and systems working together around one customer journey.',['Connected handoffs','CRM and messaging alignment','Approval points where needed','Testing and launch support']],['Custom Operations System','A wider automation system shaped around how your team actually works.',['Multi-workflow planning','Custom connections','Team visibility and alerts','Ongoing improvement options']]];qa('#planGrid .plan').forEach((c,i)=>{txt('.plan__name',plans[i][0],c);q('.plan__fig',c).innerHTML='<b>Custom scope</b>';txt('.plan__note',i===0?'Start with one high-value process and make it easier to run.':i===1?'Connect the work between lead, message, calendar, CRM, and team.':'Build a tailored operating system for repeatable work.',c);q('ul',c).innerHTML=plans[i][2].map(x=>'<li><span>✓</span><span>'+x+'</span></li>').join('');label('.btn__label span','Tell us what you want automated',c)});txt('#plans .mt-8.text-sm','We will discuss scope, tools, and the right next step before any work begins.');txt('#voices .tag','What Can Run Automatically');txt('#voices h2 i','The useful work that can keep moving.');const scenarios=[['A lead receives a personal reply','Lead response'],['Qualified prospects book the right appointment','Scheduling'],['CRM records stay current','Operations'],['Campaigns wait for approval','Marketing'],['Customers receive useful follow-up','Customer care'],['Review requests arrive at the right moment','Reputation'],['Owners are alerted when human attention is needed','Team visibility'],['A workflow follows the process you already use','Custom operations']];const card=([a,b],i)=>'<blockquote class="quote glass" style="--sw:var(--'+['a','b','c','d'][i%4]+'-1);--sw2:var(--'+['a','b','c','d'][i%4]+'-2);--sw3:var(--'+['a','b','c','d'][i%4]+'-3)"><p>'+a+'</p><footer><span class="quote__av"><i aria-hidden="true">→</i></span><span class="quote__who"><b>'+b+'</b><span>Connected workflow</span></span></footer></blockquote>';q('#q1').innerHTML=[...scenarios.slice(0,4),...scenarios.slice(0,4)].map(card).join('');q('#q2').innerHTML=[...scenarios.slice(4),...scenarios.slice(4)].map(card).join('');txt('#faq .tag','Questions');txt('#faq h2 i','The things worth talking through.');const faqs=[['What tools can you connect?','We can work with many common CRM, email, calendar, form, messaging, scheduling, and project tools. We will review your current setup before recommending a connection.'],['Can you build around our current process?','Yes. The goal is to support the process your team already understands, then improve the parts that create unnecessary manual work.'],['Do we need to know exactly what to automate?','No. Bring the outcome or pain point. We can help identify the steps that are repeatable, useful to connect, and appropriate to automate.'],['How long does a build take?','It depends on the workflow, the tools involved, and the review process. After mapping the work, we can give you a clear scope and timeline.'],['Can humans approve important decisions?','Yes. Important decisions can pause for review, approval, or assignment to a person before the workflow continues.'],['What happens after launch?','We test the workflow with you, document how it works, and can help refine it as your business and process change.']];q('#faqList').innerHTML=faqs.map(([a,b],i)=>'<div class="faq__item"><button class="faq__q" aria-expanded="false" aria-controls="barfaq'+i+'"><span>'+a+'</span><span class="faq__sign" aria-hidden="true"></span></button><div class="faq__a" id="barfaq'+i+'" role="region"><div>'+b+'</div></div></div>').join('');qa('#faqList .faq__item').forEach(item=>q('.faq__q',item).onclick=()=>{const open=item.classList.contains('is-open');qa('#faqList .faq__item').forEach(x=>{x.classList.remove('is-open');q('.faq__a',x).style.height='0px';q('.faq__q',x).setAttribute('aria-expanded','false')});if(!open){item.classList.add('is-open');q('.faq__q',item).setAttribute('aria-expanded','true');q('.faq__a',item).style.height=q('.faq__a>div',item).offsetHeight+'px'}});q('.cta__mega').innerHTML='Tell us what<br><em>should happen</em> automatically.';txt('.cta__note','Bring the idea. We’ll map the workflow and show you what can be connected.');label('.cta__acts button .btn__label span','Tell us what you want automated');label('.cta__acts a .btn__label span','See automation examples');txt('.cta__fine','Built around your process and existing tools');txt('.foot__brand p','Barrios A2I builds connected marketing automations around your ideas, workflows, and the tools your business already uses.');txt('.foot__giant','barrios a2i');const cols=qa('.foot__col');txt('h5','Explore',cols[0]);qa('a',cols[0]).forEach((a,i)=>{a.textContent=['What We Automate','Examples','How It Works','Ways to Work Together'][i];a.href=['#kit','#gallery','#how','#plans'][i]});txt('h5','Contact',cols[1]);qa('a',cols[1]).forEach((a,i)=>{a.textContent=['Questions','barriosa2i.com','Privacy','Terms'][i];a.href=[ '#faq','https://barriosa2i.com','#','#'][i]});txt('h5','Elsewhere',cols[2]);qa('a',cols[2]).forEach((a,i)=>{a.textContent=['barriosa2i.com','What We Automate','Examples','Questions'][i];a.href=['https://barriosa2i.com','#kit','#gallery','#faq'][i]});txt('.foot__bar>span','© 2026 Barrios A2I');qa('.foot__bar nav a').forEach((a,i)=>{a.textContent=['Privacy','Terms','barriosa2i.com'][i];a.href=i===2?'https://barriosa2i.com':'#'});txt('#toTop','Back to top');})();
+    </script>
+
+    <script>
+      (()=>{const root=document.getElementById('nexus');if(!root)return;const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),local=root.querySelector('.nexus__local');let returnTo=launcher;const syncExpanded=expanded=>opens.forEach(element=>element.setAttribute('aria-expanded',String(expanded)));const focusInput=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>input.focus({preventScroll:true})));const open=source=>{returnTo=source||launcher;root.classList.add('is-open');panel.setAttribute('aria-hidden','false');syncExpanded(true);focusInput()};const shut=()=>{root.classList.remove('is-open');panel.setAttribute('aria-hidden','true');syncExpanded(false);returnTo.focus({preventScroll:true})};opens.forEach(el=>el.addEventListener('click',()=>open(el)));close.addEventListener('click',shut);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('is-open'))shut()});root.querySelectorAll('.nexus__prompt').forEach(button=>button.addEventListener('click',()=>{input.value=button.textContent;input.focus()}));form.addEventListener('submit',e=>{e.preventDefault();const value=input.value.trim();if(!value)return;local.innerHTML='<div class="nexus__reply"><strong>Local visual response</strong><br>This prototype would use “'+value.replace(/[<>]/g,'')+'” as a starting point for a conversation. No request has been sent.</div>';input.value=''})})();
+    </script>
+
+    <script>
+      (()=>{const col=document.querySelector('.foot__col:last-child');if(!col)return;col.innerHTML='<h5>Elsewhere</h5><a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">LinkedIn</a><a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">X</a><a href="https://www.instagram.com/barrios.ai.gary/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">Instagram</a><a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">TikTok</a>';})();
+    </script>
+
+    <script>
+      (()=>{const root=document.getElementById('nexus'),book=document.querySelector('[data-nexus-book]');if(!root||!book)return;const heading=root.querySelector('.nexus__greeting'),support=root.querySelector('.nexus__support'),status=root.querySelector('.nexus__status');const normal={heading:heading.textContent,support:support.textContent,status:status.textContent};const scheduling=()=>{root.classList.add('is-scheduling');heading.textContent='Let’s schedule a conversation.';support.textContent='Tell me what you’d like to automate and when you’d prefer to meet.';status.textContent='SCHEDULING PREVIEW'};const standard=()=>{root.classList.remove('is-scheduling');heading.textContent=normal.heading;support.textContent=normal.support;status.textContent=normal.status};book.addEventListener('click',scheduling);document.querySelectorAll('[data-nexus-open]:not([data-nexus-book])').forEach(trigger=>trigger.addEventListener('click',standard));new MutationObserver(()=>book.setAttribute('aria-expanded',String(root.classList.contains('is-open')))).observe(root,{attributes:true,attributeFilter:['class']});})();
+    </script>
+    <script>
+      (()=>{const col=document.querySelector('.foot__col:last-child');if(col&&!col.querySelector('a[href="https://www.reddit.com/user/BarriosA2I/"]')){const a=document.createElement('a');a.href='https://www.reddit.com/user/BarriosA2I/';a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Follow Barrios A2I on Reddit, opens in a new tab');a.textContent='Reddit';col.appendChild(a)}document.querySelectorAll('.foot__col a,.foot__bar a').forEach(a=>{const label=a.textContent.trim();if(label==='Privacy')a.href='/privacy-directive.html';if(label==='Terms')a.href='/terms-of-service.html'});})();
+    </script>
+
+</body></html>

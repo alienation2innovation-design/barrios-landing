@@ -1,0 +1,8 @@
+/*
+ * The approved Aura export includes its complete utility layer inline.
+ * Keep this production-only file intentionally small so the page does not
+ * download a second CSS framework while retaining a stable local stylesheet.
+ */
+:root {
+  color-scheme: dark;
+}
