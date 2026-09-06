@@ -13,6 +13,7 @@
     <!-- meet-gary:styles:start -->
     <link rel="stylesheet" href="/meet-gary.css">
     <!-- meet-gary:styles:end -->
+    <link rel="stylesheet" href="/aura-footer.css">
 
     <style>
       /* ============================================================================
@@ -784,57 +785,6 @@
       .faq__a{overflow:hidden;height:0;transition:height .55s var(--ease-flick)}
       .faq__a>div{padding-bottom:clamp(1.25rem,2.4vw,2rem);color:var(--mute);
       max-width:44rem;line-height:1.7}
-      /* 6j. CTA */
-      #cta{position:relative;overflow:hidden;isolation:isolate;
-      padding-block:clamp(6rem,15vw,12rem)}
-      /* canvas is a replaced element: inset:0 alone leaves it at its 300x150
-      intrinsic size, so the box has to be stated explicitly */
-      #gl-dust{position:absolute;inset:0;width:100%;height:100%;z-index:0;opacity:.85}
-      #cta::before{
-      content:"";position:absolute;inset:0;z-index:1;pointer-events:none;
-      background:radial-gradient(ellipse 70% 60% at 50% 52%,
-      color-mix(in srgb,var(--d-3) 34%,transparent),transparent 72%);
-      }
-      .cta__inner{position:relative;z-index:2;text-align:center}
-      .cta__mega{
-      font-size:var(--t-mega);line-height:.88;letter-spacing:-.04em;font-weight:500;
-      color:transparent;
-      -webkit-text-stroke:1.5px var(--stem-1);
-      animation:hue 14s linear infinite;
-      }
-      .cta__mega em{font-style:normal;color:var(--stem-1);-webkit-text-stroke:0}
-      .cta__note{margin:clamp(1.5rem,3vw,2.25rem) auto 0;max-width:34rem;
-      color:rgba(255,255,255,.68);font-size:var(--t-lg)}
-      .cta__acts{margin-top:clamp(1.75rem,3.5vw,2.75rem);display:flex;gap:.75rem;
-      flex-wrap:wrap;justify-content:center}
-      .cta__fine{margin-top:1.5rem;color:var(--mute-2);font-size:var(--t-xs);
-      letter-spacing:.14em;text-transform:uppercase}
-      /* 6k. FOOTER */
-      #foot{border-top:1px solid var(--hair);background:var(--ink-2);
-      padding-block:clamp(3rem,6vw,5rem) 2rem}
-      .foot__top{display:grid;gap:clamp(2rem,4vw,3rem);
-      grid-template-columns:repeat(auto-fit,minmax(min(100%,11rem),1fr))}
-      .foot__brand{grid-column:1/-1}
-      @media (min-width:820px){.foot__brand{grid-column:span 2}}
-      .foot__brand .wordmark{font-size:clamp(2rem,4.5vw,3.25rem);color:var(--paper)}
-      .foot__brand p{margin-top:1rem;color:var(--mute);max-width:22rem;line-height:1.6}
-      .foot__col h5{font-size:var(--t-xs);letter-spacing:.2em;text-transform:uppercase;
-      color:var(--mute-2);margin-bottom:1rem;font-weight:500}
-      .foot__col a{display:block;padding:.3125rem 0;color:rgba(255,255,255,.72);
-      font-size:var(--t-base);transition:color .3s ease,transform .4s var(--ease-out)}
-      .foot__col a:hover{color:var(--stem-1);transform:translateX(4px)}
-      .foot__giant{
-      margin-top:clamp(3rem,7vw,5rem);
-      font-size:clamp(2.25rem,12.8vw,11.5rem);line-height:.82;letter-spacing:-.05em;
-      white-space:nowrap;overflow:hidden;
-      color:transparent;-webkit-text-stroke:1px var(--hair-2);
-      user-select:none;pointer-events:none;text-align:center;
-      }
-      .foot__bar{margin-top:clamp(2rem,4vw,3rem);padding-top:1.5rem;border-top:1px solid var(--hair);
-      display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between;
-      color:var(--mute-2);font-size:var(--t-xs)}
-      .foot__bar nav{display:flex;gap:1.25rem;flex-wrap:wrap}
-      .foot__bar a:hover{color:var(--paper)}
       .to-top{display:inline-flex;align-items:center;gap:.5rem;cursor:pointer;
       transition:color .3s ease}
       .to-top:hover{color:var(--paper)}
@@ -1534,112 +1484,6 @@
         </div>
       </section>
 
-      <!-- ===================== CTA ===================== -->
-      <style>
-        .social-signal{position:relative;overflow:hidden;padding-block:clamp(3.5rem,7vw,5.5rem);background:var(--ink-2);border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}.social-signal::before{content:"";position:absolute;left:50%;top:50%;width:min(70rem,100vw);aspect-ratio:2.6/1;translate:-50% -50%;border:1px solid color-mix(in srgb,var(--a-2) 18%,transparent);border-radius:50%;opacity:.55;pointer-events:none}.social-signal::after{content:"";position:absolute;left:12%;right:12%;top:50%;height:1px;background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--a-2) 55%,transparent),color-mix(in srgb,var(--c-1) 38%,transparent),transparent);pointer-events:none}.social-signal__inner{position:relative;z-index:1}.social-signal__head{display:flex;align-items:end;justify-content:space-between;gap:2rem;margin-bottom:clamp(1.75rem,4vw,2.75rem)}.social-signal__head h2{font-size:var(--t-2xl);font-weight:500;line-height:1.02;letter-spacing:-.028em}.social-signal__head p{max-width:35rem;color:var(--mute);font-size:var(--t-md);line-height:1.6}.social-signal__links{display:grid;grid-template-columns:repeat(4,1fr);border:1px solid var(--hair);border-radius:1.25rem;background:rgba(20,21,24,.64);overflow:hidden}.social-signal__link{position:relative;display:flex;align-items:center;gap:.75rem;min-width:0;padding:1.35rem 1.15rem;color:rgba(255,255,255,.82);transition:color .3s ease,background-color .35s ease}.social-signal__link+.social-signal__link{border-left:1px solid var(--hair)}.social-signal__link::before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 110%,color-mix(in srgb,var(--a-2) 24%,transparent),transparent 65%);opacity:0;transition:opacity .35s ease}.social-signal__link:hover,.social-signal__link:focus-visible{color:var(--a-1);background:rgba(35,191,193,.06)}.social-signal__link:hover::before,.social-signal__link:focus-visible::before{opacity:1}.social-signal__icon,.social-signal__name,.social-signal__out{position:relative;z-index:1}.social-signal__icon{display:grid;place-items:center;width:2.25rem;height:2.25rem;flex:none;border:1px solid color-mix(in srgb,var(--a-2) 36%,transparent);border-radius:50%;color:var(--c-1);background:rgba(35,191,193,.06)}.social-signal__icon svg{width:1rem;height:1rem;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}.social-signal__name{font-size:var(--t-lg);font-weight:500;letter-spacing:-.015em}.social-signal__out{margin-left:auto;color:var(--mute);font-size:1rem;transition:transform .3s var(--ease-out)}.social-signal__link:hover .social-signal__out,.social-signal__link:focus-visible .social-signal__out{transform:translate(2px,-2px)}@media(max-width:760px){.social-signal__head{display:block}.social-signal__head p{margin-top:1rem}.social-signal__links{grid-template-columns:repeat(2,1fr)}.social-signal__link:nth-child(3){border-left:0;border-top:1px solid var(--hair)}.social-signal__link:nth-child(4){border-top:1px solid var(--hair)}}@media(prefers-reduced-motion:reduce){.social-signal__link,.social-signal__link::before,.social-signal__out{transition:none}}
-      </style>
-      <section class="social-signal" aria-labelledby="social-title">
-        <div class="shell-wide social-signal__inner">
-          <div class="social-signal__head">
-            <div>
-              <span class="tag">
-                <i class="tag__dot"></i>
-                Elsewhere
-              </span>
-              <h2 id="social-title" class="mt-4">Connect with Barrios A2I.</h2>
-            </div>
-            <p>
-              Follow the builds, ideas, and practical automation work taking
-              shape behind Barrios A2I.
-            </p>
-          </div>
-          <nav class="social-signal__links" aria-label="Barrios A2I social media">
-            <a class="social-signal__link" href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">
-              <span class="social-signal__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M6 9v9M6 6v.01M10 18v-5a4 4 0 0 1 8 0v5M10 10v8"></path>
-                </svg>
-              </span>
-              <span class="social-signal__name">LinkedIn</span>
-              <span class="social-signal__out" aria-hidden="true">↗</span>
-            </a>
-            <a class="social-signal__link" href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">
-              <span class="social-signal__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="m5 4 14 16M19 4 5 20"></path>
-                </svg>
-              </span>
-              <span class="social-signal__name">X</span>
-              <span class="social-signal__out" aria-hidden="true">↗</span>
-            </a>
-            <a class="social-signal__link" href="https://www.instagram.com/barriosa2i/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">
-              <span class="social-signal__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <rect x="3" y="3" width="18" height="18" rx="5"></rect>
-                  <circle cx="12" cy="12" r="4"></circle>
-                  <path d="M17.5 6.5h.01"></path>
-                </svg>
-              </span>
-              <span class="social-signal__name">Instagram</span>
-              <span class="social-signal__out" aria-hidden="true">↗</span>
-            </a>
-            <a class="social-signal__link" href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">
-              <span class="social-signal__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <path d="M14 4v10.2a4 4 0 1 1-3-3.87M14 4c1.1 2.4 2.8 3.8 5 4"></path>
-                </svg>
-              </span>
-              <span class="social-signal__name">TikTok</span>
-              <span class="social-signal__out" aria-hidden="true">↗</span>
-            </a>
-            <a class="social-signal__link" href="https://www.reddit.com/user/BarriosA2I/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Reddit, opens in a new tab">
-              <span class="social-signal__icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="8"></circle>
-                  <circle cx="9" cy="12" r="1"></circle>
-                  <circle cx="15" cy="12" r="1"></circle>
-                  <path d="M8.5 15c1.9 1.3 5.1 1.3 7 0M12 4l1.5-2M14.5 4.5l2-1M7 8.5 5 7"></path>
-                </svg>
-              </span>
-              <span class="social-signal__name">Reddit</span>
-              <span class="social-signal__out" aria-hidden="true">↗</span>
-            </a>
-          </nav>
-        </div>
-        <style>
-          .social-signal__links{grid-template-columns:repeat(5,1fr)}@media(max-width:760px){.social-signal__links{grid-template-columns:repeat(2,1fr)}.social-signal__link:nth-child(5){grid-column:1/-1;justify-content:center;border-left:0;border-top:1px solid var(--hair)}.social-signal__link:nth-child(5) .social-signal__out{margin-left:0}}
-        </style>
-      </section>
-      <section id="cta">
-        <canvas id="gl-dust" aria-hidden="true"></canvas>
-        <div class="shell cta__inner">
-          <h2 class="cta__mega" data-rv="zoom">
-            start a
-            <br>
-            <em>loop</em>
-            now
-          </h2>
-          <p class="cta__note" data-rv="up">
-            The studio opens in the tab you already have open. No install, no
-            sign-up, no plugin folder to reorganise first.
-          </p>
-          <div class="cta__acts" data-rv="up">
-            <button class="btn btn--stem" data-magnet="">
-              <span class="btn__label">
-                <span data-t="Open the studio">Open the studio</span>
-              </span>
-            </button>
-            <a class="btn btn--ghost" href="#gallery" data-magnet="">
-              <span class="btn__label">
-                <span data-t="Browse loops">Browse loops</span>
-              </span>
-            </a>
-          </div>
-          <p class="cta__fine" data-rv="fade">
-            Works in Chrome, Safari, Firefox and Edge
-          </p>
-        </div>
-      </section>
     </main>
 
     <!-- ===================== FOOTER ===================== -->
@@ -1712,76 +1556,52 @@
     <style>
       .brand-signal-link{display:block;position:relative}.brand-signal-art{isolation:isolate;will-change:transform;transform:translateZ(0);transition:transform .4s var(--ease-out),filter .4s ease}.brand-signal-art::before,.brand-signal-art::after{content:"";position:absolute;z-index:3;pointer-events:none;opacity:0}.brand-signal-art::before{left:-14%;top:36%;width:128%;height:28%;border-radius:50%;background:linear-gradient(90deg,transparent,rgba(85,223,220,.08) 22%,rgba(35,191,193,.68) 48%,rgba(217,187,103,.2) 60%,transparent 82%);mix-blend-mode:screen}.brand-signal-art::after{top:11%;right:8%;width:.42rem;height:.42rem;border:1px solid var(--c-1);border-radius:50%;box-shadow:0 0 0 2px rgba(217,187,103,.14),0 0 10px rgba(217,187,103,.45)}@keyframes brand-signal-warp{0%{opacity:0;transform:translate3d(-18%,0,0) skewX(-10deg) scaleX(.55)}20%{opacity:.72}72%{opacity:.38}100%{opacity:0;transform:translate3d(18%,0,0) skewX(8deg) scaleX(1.15)}}@keyframes brand-orbit-accent{0%{opacity:0;transform:translate3d(-.3rem,.3rem,0) scale(.55)}28%{opacity:1}100%{opacity:0;transform:translate3d(.38rem,-.38rem,0) scale(1)}}@media (hover:hover) and (pointer:fine){.brand-signal-link:hover .brand-signal-art,.brand-signal-link:focus-visible .brand-signal-art{overflow:visible!important;transform:translateZ(0) scale(1.18);filter:drop-shadow(0 0 8px rgba(35,191,193,.24))}.brand-signal-link:hover .brand-signal-art::before,.brand-signal-link:focus-visible .brand-signal-art::before{animation:brand-signal-warp .58s var(--ease-out) both}.brand-signal-link:hover .brand-signal-art::after,.brand-signal-link:focus-visible .brand-signal-art::after{animation:brand-orbit-accent .58s var(--ease-out) both}}@media (prefers-reduced-motion:reduce){.brand-signal-art{transition:transform .4s ease,filter .4s ease}.brand-signal-art::before,.brand-signal-art::after{display:none}@media (hover:hover) and (pointer:fine){.brand-signal-link:hover .brand-signal-art,.brand-signal-link:focus-visible .brand-signal-art{transform:translateZ(0) scale(1.04);filter:drop-shadow(0 0 7px rgba(85,223,220,.3))}}}
     </style>
-    <footer id="foot">
-      <div class="shell">
-        <style>
-          .footer-booking{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-top:calc(clamp(3rem,6vw,5rem) * -1);margin-bottom:clamp(1.5rem,3vw,2.5rem);transform:translateY(-50%)}.footer-booking__note{color:var(--mute-2);font-size:var(--t-xs);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.footer-booking__button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:9.5rem;height:3.5rem;padding:0 1.5rem;overflow:hidden;border:1px solid rgba(145,169,181,.58);border-radius:9999px;background:linear-gradient(145deg,rgba(32,33,39,.98),rgba(12,15,18,.98));box-shadow:0 12px 30px -16px rgba(0,0,0,.95),0 0 22px -12px var(--a-1),inset 0 1px 0 rgba(255,255,255,.1);color:var(--paper);font-size:var(--t-sm);font-weight:500;letter-spacing:.01em;cursor:pointer;transition:border-color .3s ease,box-shadow .4s var(--ease-out),transform .35s var(--ease-flick),color .3s ease}.footer-booking__button::before{content:"";position:absolute;inset:-30% 52% -30% -15%;border:1px solid color-mix(in srgb,var(--c-1) 62%,transparent);border-radius:50%;opacity:.75;transform:rotate(-18deg);pointer-events:none}.footer-booking__button::after{content:"";position:absolute;width:.38rem;height:.38rem;right:1.05rem;top:.72rem;border-radius:50%;background:var(--c-1);box-shadow:0 0 0 3px color-mix(in srgb,var(--c-1) 14%,transparent);pointer-events:none}.footer-booking__button span{position:relative;z-index:1}.footer-booking__button:hover,.footer-booking__button:focus-visible{border-color:var(--a-1);box-shadow:0 0 0 5px color-mix(in srgb,var(--a-2) 12%,transparent),0 14px 32px -16px #000,0 0 28px -12px var(--a-1);color:var(--a-1)}.footer-booking__button:active{transform:scale(.97)}.nexus__schedule{display:none;margin-top:1rem;padding:.85rem;border:1px solid color-mix(in srgb,var(--c-1) 24%,transparent);border-radius:.8rem;background:linear-gradient(135deg,rgba(189,150,60,.08),rgba(35,191,193,.055))}.nexus.is-scheduling .nexus__schedule{display:block}.nexus__schedule-label{display:block;color:var(--c-1);font-size:9px;letter-spacing:.14em;text-transform:uppercase}.nexus__schedule-prompts{margin-top:.6rem}.nexus.is-scheduling .nexus__status{border-color:color-mix(in srgb,var(--c-1) 42%,transparent);color:var(--c-1)}@media(max-width:699px){.footer-booking{flex-direction:column-reverse;align-items:stretch;margin-top:-2rem;margin-bottom:1.5rem;transform:none}.footer-booking__note{text-align:center;white-space:normal}.footer-booking__button{width:100%;min-width:0}}@media(prefers-reduced-motion:reduce){.footer-booking__button{transition:none}}
-        </style>
-        <div class="footer-booking">
-          <span class="footer-booking__note">Schedule through NEXUS</span>
-          <button class="footer-booking__button" type="button" aria-label="Book Now through NEXUS" aria-controls="nexus-panel" aria-expanded="false" data-nexus-open="" data-nexus-book="">
-            <span>Book Now</span>
-          </button>
-        </div>
-        <div class="foot__top">
-          <div class="foot__brand">
-            <a href="#hero" class="brand-signal-link" aria-label="Barrios A2I, home">
-              <span class="brand-signal-art" style="display:block;position:relative;width:min(24rem,72vw);height:clamp(3.5rem,6vw,4rem);overflow:hidden">
-                <img src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" loading="lazy" style="position:absolute;top:50%;left:50%;width:auto;height:clamp(7rem,12vw,8rem);max-width:none;object-fit:contain;transform:translate(-50%,-50%)">
-              </span>
-            </a>
-            <p>
-              A four-stem loop studio that runs entirely in the tab. Built by
-              three people who kept losing ideas between opening a DAW and
-              finding a kick.
-            </p>
-          </div>
-          <div class="foot__col">
-            <h5>Product</h5>
-            <a href="#kit">The kit</a>
-            <a href="#showcase">Stems</a>
-            <a href="#plans">Plans</a>
-            <a href="#gallery">Loops</a>
-          </div>
-          <div class="foot__col">
-            <h5>Learn</h5>
-            <a href="#how">How it works</a>
-            <a href="#faq">Questions</a>
-            <a href="#voices">Voices</a>
-            <a href="#">Changelog</a>
-          </div>
-          <div class="foot__col">
-            <h5>Elsewhere</h5>
-            <a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">
-              LinkedIn
-            </a>
-            <a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">
-              X
-            </a>
-            <a href="https://www.instagram.com/barriosa2i/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">
-              Instagram
-            </a>
-            <a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">
-              TikTok
-            </a>
-            <a href="https://www.reddit.com/user/BarriosA2I/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Reddit, opens in a new tab">
-              Reddit
-            </a>
-          </div>
-        </div>
-        <div class="foot__giant" aria-hidden="true">echo lantern</div>
-        <div class="foot__bar">
-          <span>© 2026 Echo Lantern Instruments</span>
-          <nav>
+    <footer class="aura-footer" id="foot">
+      <section class="aura-footer__cta shell" id="cta" aria-labelledby="footer-cta-title">
+        <span class="aura-footer__signal">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14 4 6 6-8 8-7 1 1-7 8-8Z"></path><path d="m12 6 6 6M6 18l-2 2"></path></svg>
+          Start your automation
+        </span>
+        <h2 class="aura-footer__title" id="footer-cta-title">Ready to automate the work slowing <span>your business down?</span></h2>
+        <p class="aura-footer__support">Tell us what should happen. Barrios A2I will map the workflow and show you how the right systems can work together.</p>
+        <button class="aura-footer__book" type="button" aria-label="Book with NEXUS" aria-controls="nexus-panel" aria-expanded="false" data-nexus-open="" data-nexus-book="">
+          Book with NEXUS
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+        </button>
+        <a class="aura-footer__email" href="mailto:alienation2innovation@gmail.com">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"></rect><path d="m4 7 8 6 8-6"></path></svg>
+          alienation2innovation@gmail.com
+        </a>
+      </section>
+      <div class="aura-footer__lower shell">
+        <div class="aura-footer__separator" aria-hidden="true"></div>
+        <div class="aura-footer__identity">
+          <a class="aura-footer__logo" href="#hero" aria-label="Barrios A2I, back to the top">
+            <img src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" loading="lazy">
+          </a>
+          <nav class="aura-footer__nav" aria-label="Footer navigation">
+            <a href="#kit">What We Automate</a>
+            <a href="#how">How It Works</a>
+            <a href="#gallery">Example</a>
+            <a href="#meet-gary">Meet Gary</a>
+            <a href="#faq">FAQ</a>
             <a href="/privacy-directive.html">Privacy</a>
             <a href="/terms-of-service.html">Terms</a>
-            <a href="#">Licences</a>
           </nav>
-          <button class="to-top" id="toTop">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 19V5M5 12l7-7 7 7"></path>
-            </svg>
+          <nav class="aura-footer__socials" aria-label="Barrios A2I social media">
+            <a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9v9M6 6v.01M10 18v-5a4 4 0 0 1 8 0v5M10 10v8"></path></svg></a>
+            <a href="https://github.com/alienation2innovation-design" target="_blank" rel="noopener noreferrer" aria-label="View Barrios A2I on GitHub, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 19c-4 1.2-4-2-5-2.5M15 22v-3.2c0-.9.1-1.5-.4-2.1 3.1-.3 6.4-1.5 6.4-7A5.4 5.4 0 0 0 19.5 6 5 5 0 0 0 19.4 2S18.2 1.6 15 3.5a13.4 13.4 0 0 0-6 0C5.8 1.6 4.6 2 4.6 2A5 5 0 0 0 4.5 6 5.4 5.4 0 0 0 3 9.7c0 5.5 3.3 6.7 6.4 7-.4.5-.5 1-.5 2.1V22"></path></svg></a>
+            <a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 4 14 16M19 4 5 20"></path></svg></a>
+            <a href="https://www.instagram.com/barriosa2i/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"></rect><circle cx="12" cy="12" r="4"></circle><path d="M17.5 6.5h.01"></path></svg></a>
+            <a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 4v10.2a4 4 0 1 1-3-3.87M14 4c1.1 2.4 2.8 3.8 5 4"></path></svg></a>
+            <a href="https://www.reddit.com/user/BarriosA2I/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Reddit, opens in a new tab"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><circle cx="9" cy="12" r="1"></circle><circle cx="15" cy="12" r="1"></circle><path d="M8.5 15c1.9 1.3 5.1 1.3 7 0M12 4l1.5-2M14.5 4.5l2-1M7 8.5 5 7"></path></svg></a>
+          </nav>
+        </div>
+        <div class="aura-footer__legal">
+          <span>© 2026 Barrios A2I. Custom marketing automation built around your business.</span>
+          <button class="aura-footer__top" id="toTop" type="button">
             Back to top
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
           </button>
         </div>
       </div>
@@ -2804,7 +2624,7 @@
       :root{--a-1:#55dfdc;--a-2:#23bfc1;--a-3:#167c8a;--b-1:#91a9b5;--b-2:#668592;--b-3:#3d5967;--c-1:#d9bb67;--c-2:#bd963c;--c-3:#80641c;--d-1:#63d4d3;--d-2:#329fae;--d-3:#1e6879}.network-card{min-height:31rem;display:grid;grid-template-columns:1fr 1fr;overflow:hidden;border:1px solid var(--hair);border-radius:1.25rem;background:var(--ink-2);box-shadow:0 20px 60px -38px #000}.network-viz{position:relative;min-height:31rem;overflow:hidden;background:radial-gradient(circle at 48% 45%,color-mix(in srgb,var(--a-2) 14%,transparent),transparent 57%),#101216}.network-viz__head{position:absolute;top:1.5rem;left:1.5rem;z-index:2}.network-viz__head h2{margin-top:.65rem;font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em}.network-viz__head i{display:block;width:3rem;height:3px;margin-top:.75rem;border-radius:9px;background:var(--a-1)}.network-viz svg{position:absolute;inset:0;width:100%;height:100%}.network-lines path{fill:none;stroke:color-mix(in srgb,var(--a-2) 52%,transparent);stroke-width:1.5;stroke-dasharray:5 7;animation:netdash 7s linear infinite}.network-particles circle{fill:var(--c-1);filter:drop-shadow(0 0 6px var(--c-1));animation:netpulse 2.8s ease-in-out infinite}.network-particles circle:nth-child(2){animation-delay:.5s}.network-particles circle:nth-child(3){animation-delay:1s}.network-particles circle:nth-child(4){animation-delay:1.5s}.network-particles circle:nth-child(5){animation-delay:2s}.network-nodes circle{fill:#15191d;stroke:var(--a-1);stroke-width:2;filter:drop-shadow(0 0 10px color-mix(in srgb,var(--a-2) 48%,transparent))}.network-nodes text{fill:rgba(255,255,255,.72);font-family:'Noto Sans',sans-serif;font-size:12px;text-anchor:middle}.network-key{position:absolute;bottom:1.5rem;left:1.5rem;display:flex;gap:1rem;padding:.65rem .85rem;border-radius:.6rem;background:rgba(0,0,0,.45);font-size:var(--t-xs);color:var(--mute)}.network-key b{display:inline-block;width:.45rem;height:.45rem;margin-right:.35rem;border-radius:50%;background:var(--a-1)}.network-key span+span b{background:var(--c-1)}.network-copy{display:flex;flex-direction:column;padding:clamp(1.75rem,3vw,2.5rem);background:var(--ink-3)}.network-copy h3{margin:.9rem 0 1rem;font-size:var(--t-xl);font-weight:500;letter-spacing:-.02em}.network-copy p{color:var(--mute);line-height:1.65}.network-meters{display:grid;gap:1.15rem;margin:2rem 0}.network-meters header{display:flex;justify-content:space-between;gap:1rem;margin-bottom:.45rem;text-transform:uppercase;font-size:var(--t-xs);letter-spacing:.1em;color:rgba(255,255,255,.72)}.network-meters b{font-weight:500;color:var(--a-1)}.network-meters i{display:block;height:3px;overflow:hidden;border-radius:9px;background:var(--hair)}.network-meters em{display:block;width:72%;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--a-2),var(--c-1));animation:meter 3s var(--ease-in-out) infinite}.network-meters div:nth-child(2) em{width:88%;animation-delay:.4s}.network-meters div:nth-child(3) em{width:64%;animation-delay:.8s}.network-actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:auto}.network-actions .btn{height:2.75rem;padding:0 1.25rem}@keyframes netdash{to{stroke-dashoffset:-96}}@keyframes netpulse{50%{opacity:.35;transform:scale(.55)}}@keyframes meter{50%{transform:translateX(12%)}}@media(max-width:760px){.network-card{grid-template-columns:1fr}.network-viz{min-height:25rem}.network-copy{min-height:0}}@media(prefers-reduced-motion:reduce){.network-lines path,.network-particles circle,.network-meters em{animation:none!important}}
     </style>
     <script>
-      (()=>{const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)],txt=(s,v,r=document)=>{const e=q(s,r);if(e)e.textContent=v},label=(s,v,r=document)=>{const e=q(s,r);if(e){e.textContent=v;e.dataset.t=v}};txt('.boot__word','connecting your workflow');txt('h1','Barrios A2I — connected marketing automation built around your business');txt('.hero__sub','From lead capture to customer follow-up, Barrios A2I turns your idea into one connected system built around the way your business already works.');label('.hero__acts a:first-child .btn__label span','Tell us what you want automated');label('.hero__acts a:last-child .btn__label span','See what we can automate');txt('.hero__foot>div:last-child','built around your business');qa('#nav .nav__link span').forEach((e,i)=>e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i]);qa('#nav .nav__link').forEach((e,i)=>e.href=['#kit','#gallery','#how','#plans','#faq'][i]);label('.nav__cta .btn__label span','Tell us what you want automated');qa('#sheet>a').forEach((e,i)=>{e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i];e.href=['#kit','#gallery','#how','#plans','#faq'][i]});txt('.sheet__foot','Built around your business, your process, and your tools.');q('#ticker').innerHTML='<div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div><div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div>';txt('#kit .tag','What We Automate');txt('#kit h2 i','Tell us what your business needs to do. We’ll automate it.');txt('#kit .sec-head p','Connected automations built around the way your business already captures leads, follows up, manages work, and keeps people informed.');const features=[['Lead capture & qualification','Collect every opportunity, ask the right first questions, and route it where it needs to go.'],['Instant email and SMS responses','Send useful, personal-feeling replies as soon as someone reaches out.'],['CRM and pipeline updates','Keep records, stages, ownership, and next steps aligned across the tools your team uses.'],['Campaign content, approvals & scheduling','Move campaigns from draft to review to delivery without chasing status updates.'],['Appointment booking & reminders','Help the right people book the right time, then send clear reminders and follow-up.'],['Follow-up, reviews, reporting & owner alerts','Keep conversations moving, ask at the right moment, and flag work that needs a human.']];qa('#featGrid .feat').forEach((c,i)=>{txt('h3',features[i][0],c);txt('p',features[i][1],c)});txt('#showcase .tag','Four Connected Layers');txt('#showcase h2','One idea, connected all the way through.');const layers=[['Capture','Every opportunity enters one system','Entry points','Forms · calls'],['Respond','Each person receives the right message','Email · SMS','Context-aware'],['Organize','CRM, calendar, and team stay aligned','Shared records','Clear handoffs'],['Continue','Follow-up runs until the next human decision','Useful nudges','Human control']];qa('#showTrack .show__panel').forEach((c,i)=>{txt('.show__k',String(i+1).padStart(2,'0')+' · '+layers[i][0],c);txt('h3',layers[i][1],c);txt('p','A connected layer designed around your existing process.',c);const stats=qa('.show__stats div',c);stats[0].innerHTML='<b>'+layers[i][2]+'</b>capability';stats[1].innerHTML='<b>'+layers[i][3]+'</b>workflow'});txt('#gallery .tag','Automations in Motion');txt('#gallery h2 i','See the work move from trigger to next step.');txt('#gallery .sec-head p','Concrete examples of the connected workflows we can map, build, and refine around your business.');const gallery=[['New Lead Response','Lead capture'],['Missed-Call Follow-Up','Customer follow-up'],['Appointment Journey','Scheduling'],['Review Request','Customer care'],['Campaign Approval','Marketing'],['CRM Cleanup','Operations'],['Quote Follow-Up','Sales'],['Client Onboarding','Client experience'],['Owner Alert','Team visibility'],['Custom Workflow','Built for you']];qa('#gal .gal__cell').forEach((c,i)=>{txt('h4',gallery[i][0],c);txt('.gal__cap span',gallery[i][1],c)});txt('#how .tag','How It Works');txt('#how h2 i','From idea to working system.');const steps=[['Understand the outcome','We start with what you want to happen and who needs to be involved.'],['Map the workflow','Together, we trace the current process, decisions, tools, and handoffs.'],['Build and connect','We create the automation and connect it to the systems you already use.'],['Test and launch','We test real scenarios with you, make adjustments, and put the workflow into use.'],['Improve over time','As your process changes, we can refine what runs automatically and what stays human.']];qa('#tl [data-step]').forEach((c,i)=>{txt('.tl__step','Step '+String(i+1).padStart(2,'0'),c);txt('h3',steps[i][0],c);txt('p',steps[i][1],c)});txt('#plans .tag','Ways We Can Work Together');txt('#plans h2 i','Build what your business needs next.');txt('#plans .sec-head p','Every engagement is scoped around your process, goals, and current tools — not a preset package.');qa('.price-toggle button').forEach((b,i)=>{b.textContent=i?'Improve Existing':'Build New';b.dataset.bill=i?'existing':'new'});const plans=[['Focused Automation','A clear first workflow for one outcome that matters now.',['One focused workflow','Workflow mapping','Tool connection review','Launch support']],['Connected Workflow','Multiple steps and systems working together around one customer journey.',['Connected handoffs','CRM and messaging alignment','Approval points where needed','Testing and launch support']],['Custom Operations System','A wider automation system shaped around how your team actually works.',['Multi-workflow planning','Custom connections','Team visibility and alerts','Ongoing improvement options']]];qa('#planGrid .plan').forEach((c,i)=>{txt('.plan__name',plans[i][0],c);q('.plan__fig',c).innerHTML='<b>Custom scope</b>';txt('.plan__note',i===0?'Start with one high-value process and make it easier to run.':i===1?'Connect the work between lead, message, calendar, CRM, and team.':'Build a tailored operating system for repeatable work.',c);q('ul',c).innerHTML=plans[i][2].map(x=>'<li><span>✓</span><span>'+x+'</span></li>').join('');label('.btn__label span','Tell us what you want automated',c)});txt('#plans .mt-8.text-sm','We will discuss scope, tools, and the right next step before any work begins.');txt('#voices .tag','What Can Run Automatically');txt('#voices h2 i','The useful work that can keep moving.');const scenarios=[['A lead receives a personal reply','Lead response'],['Qualified prospects book the right appointment','Scheduling'],['CRM records stay current','Operations'],['Campaigns wait for approval','Marketing'],['Customers receive useful follow-up','Customer care'],['Review requests arrive at the right moment','Reputation'],['Owners are alerted when human attention is needed','Team visibility'],['A workflow follows the process you already use','Custom operations']];const card=([a,b],i)=>'<blockquote class="quote glass" style="--sw:var(--'+['a','b','c','d'][i%4]+'-1);--sw2:var(--'+['a','b','c','d'][i%4]+'-2);--sw3:var(--'+['a','b','c','d'][i%4]+'-3)"><p>'+a+'</p><footer><span class="quote__av"><i aria-hidden="true">→</i></span><span class="quote__who"><b>'+b+'</b><span>Connected workflow</span></span></footer></blockquote>';q('#q1').innerHTML=[...scenarios.slice(0,4),...scenarios.slice(0,4)].map(card).join('');q('#q2').innerHTML=[...scenarios.slice(4),...scenarios.slice(4)].map(card).join('');txt('#faq .tag','Questions');txt('#faq h2 i','The things worth talking through.');const faqs=[['What tools can you connect?','We can work with many common CRM, email, calendar, form, messaging, scheduling, and project tools. We will review your current setup before recommending a connection.'],['Can you build around our current process?','Yes. The goal is to support the process your team already understands, then improve the parts that create unnecessary manual work.'],['Do we need to know exactly what to automate?','No. Bring the outcome or pain point. We can help identify the steps that are repeatable, useful to connect, and appropriate to automate.'],['How long does a build take?','It depends on the workflow, the tools involved, and the review process. After mapping the work, we can give you a clear scope and timeline.'],['Can humans approve important decisions?','Yes. Important decisions can pause for review, approval, or assignment to a person before the workflow continues.'],['What happens after launch?','We test the workflow with you, document how it works, and can help refine it as your business and process change.']];q('#faqList').innerHTML=faqs.map(([a,b],i)=>'<div class="faq__item"><button class="faq__q" aria-expanded="false" aria-controls="barfaq'+i+'"><span>'+a+'</span><span class="faq__sign" aria-hidden="true"></span></button><div class="faq__a" id="barfaq'+i+'" role="region"><div>'+b+'</div></div></div>').join('');qa('#faqList .faq__item').forEach(item=>q('.faq__q',item).onclick=()=>{const open=item.classList.contains('is-open');qa('#faqList .faq__item').forEach(x=>{x.classList.remove('is-open');q('.faq__a',x).style.height='0px';q('.faq__q',x).setAttribute('aria-expanded','false')});if(!open){item.classList.add('is-open');q('.faq__q',item).setAttribute('aria-expanded','true');q('.faq__a',item).style.height=q('.faq__a>div',item).offsetHeight+'px'}});q('.cta__mega').innerHTML='Tell us what<br><em>should happen</em> automatically.';txt('.cta__note','Bring the idea. We’ll map the workflow and show you what can be connected.');label('.cta__acts button .btn__label span','Tell us what you want automated');label('.cta__acts a .btn__label span','See automation examples');txt('.cta__fine','Built around your process and existing tools');txt('.foot__brand p','Barrios A2I builds connected marketing automations around your ideas, workflows, and the tools your business already uses.');txt('.foot__giant','barrios a2i');const cols=qa('.foot__col');txt('h5','Explore',cols[0]);qa('a',cols[0]).forEach((a,i)=>{a.textContent=['What We Automate','Examples','How It Works','Ways to Work Together'][i];a.href=['#kit','#gallery','#how','#plans'][i]});txt('h5','Contact',cols[1]);qa('a',cols[1]).forEach((a,i)=>{a.textContent=['Questions','barriosa2i.com','Privacy','Terms'][i];a.href=[ '#faq','https://barriosa2i.com','#','#'][i]});txt('h5','Elsewhere',cols[2]);qa('a',cols[2]).forEach((a,i)=>{a.textContent=['barriosa2i.com','What We Automate','Examples','Questions'][i];a.href=['https://barriosa2i.com','#kit','#gallery','#faq'][i]});txt('.foot__bar>span','© 2026 Barrios A2I');qa('.foot__bar nav a').forEach((a,i)=>{a.textContent=['Privacy','Terms','barriosa2i.com'][i];a.href=i===2?'https://barriosa2i.com':'#'});txt('#toTop','Back to top');})();
+      (()=>{const q=(s,r=document)=>r.querySelector(s),qa=(s,r=document)=>[...r.querySelectorAll(s)],txt=(s,v,r=document)=>{const e=q(s,r);if(e)e.textContent=v},label=(s,v,r=document)=>{const e=q(s,r);if(e){e.textContent=v;e.dataset.t=v}};txt('.boot__word','connecting your workflow');txt('h1','Barrios A2I — connected marketing automation built around your business');txt('.hero__sub','From lead capture to customer follow-up, Barrios A2I turns your idea into one connected system built around the way your business already works.');label('.hero__acts a:first-child .btn__label span','Tell us what you want automated');label('.hero__acts a:last-child .btn__label span','See what we can automate');txt('.hero__foot>div:last-child','built around your business');qa('#nav .nav__link span').forEach((e,i)=>e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i]);qa('#nav .nav__link').forEach((e,i)=>e.href=['#kit','#gallery','#how','#plans','#faq'][i]);label('.nav__cta .btn__label span','Tell us what you want automated');qa('#sheet>a').forEach((e,i)=>{e.textContent=['What We Automate','Examples','How It Works','Ways to Work Together','Questions'][i];e.href=['#kit','#gallery','#how','#plans','#faq'][i]});txt('.sheet__foot','Built around your business, your process, and your tools.');q('#ticker').innerHTML='<div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div><div><em>your idea</em><s>●</s><em>connected workflow</em><s>●</s><em>lead response</em><s>●</s><em>human approval</em><s>●</s><em>CRM alignment</em><s>●</s><em>follow-up</em><s>●</s></div>';txt('#kit .tag','What We Automate');txt('#kit h2 i','Tell us what your business needs to do. We’ll automate it.');txt('#kit .sec-head p','Connected automations built around the way your business already captures leads, follows up, manages work, and keeps people informed.');const features=[['Lead capture & qualification','Collect every opportunity, ask the right first questions, and route it where it needs to go.'],['Instant email and SMS responses','Send useful, personal-feeling replies as soon as someone reaches out.'],['CRM and pipeline updates','Keep records, stages, ownership, and next steps aligned across the tools your team uses.'],['Campaign content, approvals & scheduling','Move campaigns from draft to review to delivery without chasing status updates.'],['Appointment booking & reminders','Help the right people book the right time, then send clear reminders and follow-up.'],['Follow-up, reviews, reporting & owner alerts','Keep conversations moving, ask at the right moment, and flag work that needs a human.']];qa('#featGrid .feat').forEach((c,i)=>{txt('h3',features[i][0],c);txt('p',features[i][1],c)});txt('#showcase .tag','Four Connected Layers');txt('#showcase h2','One idea, connected all the way through.');const layers=[['Capture','Every opportunity enters one system','Entry points','Forms · calls'],['Respond','Each person receives the right message','Email · SMS','Context-aware'],['Organize','CRM, calendar, and team stay aligned','Shared records','Clear handoffs'],['Continue','Follow-up runs until the next human decision','Useful nudges','Human control']];qa('#showTrack .show__panel').forEach((c,i)=>{txt('.show__k',String(i+1).padStart(2,'0')+' · '+layers[i][0],c);txt('h3',layers[i][1],c);txt('p','A connected layer designed around your existing process.',c);const stats=qa('.show__stats div',c);stats[0].innerHTML='<b>'+layers[i][2]+'</b>capability';stats[1].innerHTML='<b>'+layers[i][3]+'</b>workflow'});txt('#gallery .tag','Automations in Motion');txt('#gallery h2 i','See the work move from trigger to next step.');txt('#gallery .sec-head p','Concrete examples of the connected workflows we can map, build, and refine around your business.');const gallery=[['New Lead Response','Lead capture'],['Missed-Call Follow-Up','Customer follow-up'],['Appointment Journey','Scheduling'],['Review Request','Customer care'],['Campaign Approval','Marketing'],['CRM Cleanup','Operations'],['Quote Follow-Up','Sales'],['Client Onboarding','Client experience'],['Owner Alert','Team visibility'],['Custom Workflow','Built for you']];qa('#gal .gal__cell').forEach((c,i)=>{txt('h4',gallery[i][0],c);txt('.gal__cap span',gallery[i][1],c)});txt('#how .tag','How It Works');txt('#how h2 i','From idea to working system.');const steps=[['Understand the outcome','We start with what you want to happen and who needs to be involved.'],['Map the workflow','Together, we trace the current process, decisions, tools, and handoffs.'],['Build and connect','We create the automation and connect it to the systems you already use.'],['Test and launch','We test real scenarios with you, make adjustments, and put the workflow into use.'],['Improve over time','As your process changes, we can refine what runs automatically and what stays human.']];qa('#tl [data-step]').forEach((c,i)=>{txt('.tl__step','Step '+String(i+1).padStart(2,'0'),c);txt('h3',steps[i][0],c);txt('p',steps[i][1],c)});txt('#plans .tag','Ways We Can Work Together');txt('#plans h2 i','Build what your business needs next.');txt('#plans .sec-head p','Every engagement is scoped around your process, goals, and current tools — not a preset package.');qa('.price-toggle button').forEach((b,i)=>{b.textContent=i?'Improve Existing':'Build New';b.dataset.bill=i?'existing':'new'});const plans=[['Focused Automation','A clear first workflow for one outcome that matters now.',['One focused workflow','Workflow mapping','Tool connection review','Launch support']],['Connected Workflow','Multiple steps and systems working together around one customer journey.',['Connected handoffs','CRM and messaging alignment','Approval points where needed','Testing and launch support']],['Custom Operations System','A wider automation system shaped around how your team actually works.',['Multi-workflow planning','Custom connections','Team visibility and alerts','Ongoing improvement options']]];qa('#planGrid .plan').forEach((c,i)=>{txt('.plan__name',plans[i][0],c);q('.plan__fig',c).innerHTML='<b>Custom scope</b>';txt('.plan__note',i===0?'Start with one high-value process and make it easier to run.':i===1?'Connect the work between lead, message, calendar, CRM, and team.':'Build a tailored operating system for repeatable work.',c);q('ul',c).innerHTML=plans[i][2].map(x=>'<li><span>✓</span><span>'+x+'</span></li>').join('');label('.btn__label span','Tell us what you want automated',c)});txt('#plans .mt-8.text-sm','We will discuss scope, tools, and the right next step before any work begins.');txt('#voices .tag','What Can Run Automatically');txt('#voices h2 i','The useful work that can keep moving.');const scenarios=[['A lead receives a personal reply','Lead response'],['Qualified prospects book the right appointment','Scheduling'],['CRM records stay current','Operations'],['Campaigns wait for approval','Marketing'],['Customers receive useful follow-up','Customer care'],['Review requests arrive at the right moment','Reputation'],['Owners are alerted when human attention is needed','Team visibility'],['A workflow follows the process you already use','Custom operations']];const card=([a,b],i)=>'<blockquote class="quote glass" style="--sw:var(--'+['a','b','c','d'][i%4]+'-1);--sw2:var(--'+['a','b','c','d'][i%4]+'-2);--sw3:var(--'+['a','b','c','d'][i%4]+'-3)"><p>'+a+'</p><footer><span class="quote__av"><i aria-hidden="true">→</i></span><span class="quote__who"><b>'+b+'</b><span>Connected workflow</span></span></footer></blockquote>';q('#q1').innerHTML=[...scenarios.slice(0,4),...scenarios.slice(0,4)].map(card).join('');q('#q2').innerHTML=[...scenarios.slice(4),...scenarios.slice(4)].map(card).join('');txt('#faq .tag','Questions');txt('#faq h2 i','The things worth talking through.');const faqs=[['What tools can you connect?','We can work with many common CRM, email, calendar, form, messaging, scheduling, and project tools. We will review your current setup before recommending a connection.'],['Can you build around our current process?','Yes. The goal is to support the process your team already understands, then improve the parts that create unnecessary manual work.'],['Do we need to know exactly what to automate?','No. Bring the outcome or pain point. We can help identify the steps that are repeatable, useful to connect, and appropriate to automate.'],['How long does a build take?','It depends on the workflow, the tools involved, and the review process. After mapping the work, we can give you a clear scope and timeline.'],['Can humans approve important decisions?','Yes. Important decisions can pause for review, approval, or assignment to a person before the workflow continues.'],['What happens after launch?','We test the workflow with you, document how it works, and can help refine it as your business and process change.']];q('#faqList').innerHTML=faqs.map(([a,b],i)=>'<div class="faq__item"><button class="faq__q" aria-expanded="false" aria-controls="barfaq'+i+'"><span>'+a+'</span><span class="faq__sign" aria-hidden="true"></span></button><div class="faq__a" id="barfaq'+i+'" role="region"><div>'+b+'</div></div></div>').join('');qa('#faqList .faq__item').forEach(item=>q('.faq__q',item).onclick=()=>{const open=item.classList.contains('is-open');qa('#faqList .faq__item').forEach(x=>{x.classList.remove('is-open');q('.faq__a',x).style.height='0px';q('.faq__q',x).setAttribute('aria-expanded','false')});if(!open){item.classList.add('is-open');q('.faq__q',item).setAttribute('aria-expanded','true');q('.faq__a',item).style.height=q('.faq__a>div',item).offsetHeight+'px'}});})();
     </script>
 
     <script>
@@ -2812,14 +2632,7 @@
     </script>
 
     <script>
-      (()=>{const col=document.querySelector('.foot__col:last-child');if(!col)return;col.innerHTML='<h5>Elsewhere</h5><a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">LinkedIn</a><a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">X</a><a href="https://www.instagram.com/barriosa2i/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">Instagram</a><a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">TikTok</a>';})();
-    </script>
-
-    <script>
       (()=>{const root=document.getElementById('nexus'),book=document.querySelector('[data-nexus-book]');if(!root||!book)return;const heading=root.querySelector('.nexus__greeting'),support=root.querySelector('.nexus__support'),status=root.querySelector('.nexus__status');const normal={heading:heading.textContent,support:support.textContent,status:status.textContent};const scheduling=()=>{root.classList.add('is-scheduling');heading.textContent='Let’s schedule a conversation.';support.textContent='Tell me what you’d like to automate and when you’d prefer to meet.';status.textContent='SCHEDULING PREVIEW'};const standard=()=>{root.classList.remove('is-scheduling');heading.textContent=normal.heading;support.textContent=normal.support;status.textContent=normal.status};book.addEventListener('click',scheduling);document.querySelectorAll('[data-nexus-open]:not([data-nexus-book])').forEach(trigger=>trigger.addEventListener('click',standard));new MutationObserver(()=>book.setAttribute('aria-expanded',String(root.classList.contains('is-open')))).observe(root,{attributes:true,attributeFilter:['class']});})();
-    </script>
-    <script>
-      (()=>{const col=document.querySelector('.foot__col:last-child');if(col&&!col.querySelector('a[href="https://www.reddit.com/user/BarriosA2I/"]')){const a=document.createElement('a');a.href='https://www.reddit.com/user/BarriosA2I/';a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Follow Barrios A2I on Reddit, opens in a new tab');a.textContent='Reddit';col.appendChild(a)}document.querySelectorAll('.foot__col a,.foot__bar a').forEach(a=>{const label=a.textContent.trim();if(label==='Privacy')a.href='/privacy-directive.html';if(label==='Terms')a.href='/terms-of-service.html'});})();
     </script>
     <!-- meet-gary:script:start -->
     <script src="/js/meet-gary.js"></script>

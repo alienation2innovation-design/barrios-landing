@@ -3,9 +3,8 @@ import { createHash } from 'node:crypto';
 import { before, test } from 'node:test';
 
 const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
-const originalHomepageHash = '5DA7234C3E40556FC08EC2459408EB32E4DA4D006FAB817D52852797F5DE46F1';
 const originalHeaderHash = '36FF16482263F806E93AAA09D5D0252CC4DDBBFD3310D6AE4AF697949DFB7137';
-const originalFooterHash = '1C887B176B07257E984FE37D17FEBA38A6DD34D4CDB395E75E61CA78ED023AE4';
+const approvedMeetGaryHash = '1EF82D0F3563E73FB13DFDA5D112BAF4F10841F41D675741CE1271550E9EE43B';
 const oldInstagramUrl = 'https://www.instagram.com/barrios.ai.gary/';
 const newInstagramUrl = 'https://www.instagram.com/barriosa2i/';
 
@@ -24,14 +23,6 @@ function sha256(value) {
 function getAttribute(tag, name) {
   const match = tag.match(new RegExp(`\\s${name}=(?:"([^"]*)"|'([^']*)')`, 'i'));
   return match?.[1] ?? match?.[2] ?? null;
-}
-
-function normalizeApprovedAdditions(documentText) {
-  return documentText
-    .replace(/\n    <!-- meet-gary:styles:start -->[\s\S]*?<!-- meet-gary:styles:end -->\n/, '\n')
-    .replace(/\n      <!-- meet-gary:section:start -->[\s\S]*?<!-- meet-gary:section:end -->\n/, '')
-    .replace(/\n    <!-- meet-gary:script:start -->[\s\S]*?<!-- meet-gary:script:end -->\n/, '\n')
-    .replaceAll(newInstagramUrl, oldInstagramUrl);
 }
 
 before(async () => {
@@ -54,11 +45,12 @@ test('Meet Gary is a static section placed before the existing FAQ', () => {
   const voicesPosition = html.indexOf('id="voices"');
   const meetPosition = html.indexOf('id="meet-gary"');
   const faqPosition = html.indexOf('id="faq"');
-  const socialPosition = html.indexOf('class="social-signal"');
+  const footerPosition = html.indexOf('class="aura-footer"');
 
   assert.ok(voicesPosition >= 0 && voicesPosition < meetPosition, 'Meet Gary must follow the existing proof section');
   assert.ok(meetPosition < faqPosition, 'Meet Gary must precede the existing FAQ');
-  assert.ok(faqPosition < socialPosition, 'FAQ and social signal order must stay intact');
+  assert.ok(faqPosition < footerPosition, 'the compact footer must follow the FAQ');
+  assert.doesNotMatch(html, /class="social-signal/i);
   assert.equal((html.match(/id="meet-gary"/g) ?? []).length, 1);
   assert.match(section, /<section\b[^>]*id="meet-gary"[^>]*aria-labelledby="meet-gary-title"/i);
   assert.match(section, /<h2\b[^>]*id="meet-gary-title"[^>]*>\s*I build what doesn’t exist yet\./i);
@@ -134,12 +126,9 @@ test('the Meet Gary links use the approved profiles and the new Instagram replac
   assert.doesNotMatch(section, /facebook/i);
 });
 
-test('the approved addition leaves the original landing page byte-identical apart from its scoped blocks and Instagram URL', () => {
+test('the footer redesign leaves the approved header and Meet Gary section byte-identical', () => {
   const header = html.match(/<header id="nav">[\s\S]*?<\/header>/)?.[0] ?? '';
-  const footer = html.match(/<footer id="foot">[\s\S]*?<\/footer>/)?.[0] ?? '';
-  const normalizedFooter = footer.replaceAll(newInstagramUrl, oldInstagramUrl);
 
   assert.equal(sha256(header), originalHeaderHash, 'the existing header must remain byte-identical');
-  assert.equal(sha256(normalizedFooter), originalFooterHash, 'the footer may change only its approved Instagram URL');
-  assert.equal(sha256(normalizeApprovedAdditions(html)), originalHomepageHash, 'no unrelated landing-page source may change');
+  assert.equal(sha256(section), approvedMeetGaryHash, 'the approved Meet Gary section must remain byte-identical');
 });

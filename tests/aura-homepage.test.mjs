@@ -3,12 +3,12 @@ import { before, test } from 'node:test';
 
 const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
 const requiredSocialCounts = new Map([
-  ['https://www.linkedin.com/in/gary-barrios-3953b2390/', 3],
-  ['https://x.com/BarriosA2I', 2],
-  ['https://www.instagram.com/barriosa2i/', 2],
-  ['https://www.tiktok.com/@garyjbarrios', 2],
-  ['https://www.reddit.com/user/BarriosA2I/', 3],
-  ['https://github.com/alienation2innovation-design', 1]
+  ['https://www.linkedin.com/in/gary-barrios-3953b2390/', 2],
+  ['https://x.com/BarriosA2I', 1],
+  ['https://www.instagram.com/barriosa2i/', 1],
+  ['https://www.tiktok.com/@garyjbarrios', 1],
+  ['https://www.reddit.com/user/BarriosA2I/', 2],
+  ['https://github.com/alienation2innovation-design', 2]
 ]);
 
 let response;
@@ -57,7 +57,7 @@ test('the served document keeps the Barrios message readable without JavaScript'
   assert.match(fallback, /href="#no-js-automate"/i);
 });
 
-test('the social signal, Meet Gary panel, and footer expose the approved profiles without Facebook', () => {
+test('the Meet Gary panel and compact footer expose the approved profiles without Facebook', () => {
   const anchors = [...markup.matchAll(/<a\b[^>]*>/gi)].map((match) => match[0]);
 
   for (const [socialUrl, expectedCount] of requiredSocialCounts) {
@@ -112,15 +112,16 @@ test('the visible legal links point to the existing site pages', () => {
   assert.match(markup, /<a\b[^>]*href="\/terms-of-service\.html"[^>]*>Terms<\/a>/i);
 });
 
-test('Book Now is in footer flow and every NEXUS opener controls the shared dialog', () => {
-  const finalCtaPosition = markup.indexOf('class="cta');
-  const bookingPosition = markup.indexOf('class="footer-booking"');
-  const footerColumnsPosition = markup.indexOf('class="foot__top"');
-  assert.ok(finalCtaPosition >= 0 && finalCtaPosition < bookingPosition, 'Book Now must follow the final CTA');
-  assert.ok(bookingPosition < footerColumnsPosition, 'Book Now must precede the footer columns');
+test('Book with NEXUS stays inside the compact footer and every opener controls the shared dialog', () => {
+  const footerPosition = markup.indexOf('class="aura-footer"');
+  const finalCtaPosition = markup.indexOf('class="aura-footer__cta');
+  const bookingPosition = markup.indexOf('class="aura-footer__book"');
+  assert.ok(footerPosition >= 0 && footerPosition < finalCtaPosition, 'the closing CTA must be inside the footer');
+  assert.ok(finalCtaPosition < bookingPosition, 'Book with NEXUS must follow the footer CTA copy');
+  assert.doesNotMatch(markup, /class="footer-booking|class="foot__top/i);
 
   const openers = openingTagsWith('data-nexus-open');
-  assert.ok(openers.length >= 3, 'hero, launcher, and Book Now controls must all open NEXUS');
+  assert.ok(openers.length >= 4, 'hero, launcher, Meet Gary, and footer controls must all open NEXUS');
   for (const opener of openers) {
     assert.equal(getAttribute(opener, 'aria-controls'), 'nexus-panel');
     assert.equal(getAttribute(opener, 'aria-expanded'), 'false');
