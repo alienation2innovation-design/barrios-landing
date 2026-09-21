@@ -2,3 +2,17 @@
 # These conflict with Next.js App Router API routes
 # Use explicit path to avoid matching app/api/
 /api/
+
+# Deployment-only packaging exclusions. Runtime assets are served from
+# public/, so the repository-root copies and local project artifacts must not
+# be uploaded to Vercel.
+/assets/
+/brand/
+/js/
+/dist/
+/docs/
+/.claude/
+*.bak
+*.backup
+/verify-dark-theme.png
+/lighthouse-audit-proof.png

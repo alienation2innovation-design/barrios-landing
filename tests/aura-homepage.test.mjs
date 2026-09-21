@@ -2,13 +2,14 @@ import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 
 const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
-const requiredSocials = [
-  'https://www.linkedin.com/in/gary-barrios-3953b2390/',
-  'https://x.com/BarriosA2I',
-  'https://www.instagram.com/barrios.ai.gary/',
-  'https://www.tiktok.com/@garyjbarrios',
-  'https://www.reddit.com/user/BarriosA2I/'
-];
+const requiredSocialCounts = new Map([
+  ['https://www.linkedin.com/in/gary-barrios-3953b2390/', 2],
+  ['https://x.com/BarriosA2I', 1],
+  ['https://www.instagram.com/barriosa2i/', 1],
+  ['https://www.tiktok.com/@garyjbarrios', 1],
+  ['https://www.reddit.com/user/BarriosA2I/', 2],
+  ['https://github.com/alienation2innovation-design', 2]
+]);
 
 let response;
 let html;
@@ -49,6 +50,18 @@ test('the served root is the approved Barrios A2I Aura experience', () => {
   assert.match(markup, /Start a consultation request/i);
 });
 
+test('the first viewport has a visible marketing headline without depending on WebGL', () => {
+  const hero = markup.match(/<section\b[^>]*id="hero"[^>]*>[\s\S]*?<\/section>/i)?.[0] ?? '';
+  const heading = hero.match(/<h1\b[^>]*>[\s\S]*?<\/h1>/i)?.[0] ?? '';
+
+  assert.match(heading, /class="hero__title"/i);
+  assert.doesNotMatch(heading, /\bsr-only\b/i);
+  assert.match(heading.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' '), /Marketing automation built around your business\./i);
+  assert.match(hero, /class="hero__eyebrow"[^>]*>\s*Barrios A2I/i);
+  assert.match(hero, /From lead capture to customer follow-up/i);
+  assert.match(html, /\.hero__title\s*\{[^}]*color:\s*var\(--paper\)/i);
+});
+
 test('the served document keeps the Barrios message readable without JavaScript', () => {
   const fallback = markup.match(/<noscript>[\s\S]*?<\/noscript>/i)?.[0] ?? '';
   assert.match(fallback, /Barrios A2I/i);
@@ -57,12 +70,12 @@ test('the served document keeps the Barrios message readable without JavaScript'
   assert.doesNotMatch(fallback, /preview|prototype/i, 'the no-JS copy must describe the public pilot honestly');
 });
 
-test('the social signal and footer expose all five approved profiles without Facebook', () => {
+test('the Meet Gary panel and compact footer expose the approved profiles without Facebook', () => {
   const anchors = [...markup.matchAll(/<a\b[^>]*>/gi)].map((match) => match[0]);
 
-  for (const socialUrl of requiredSocials) {
+  for (const [socialUrl, expectedCount] of requiredSocialCounts) {
     const matching = anchors.filter((tag) => getAttribute(tag, 'href') === socialUrl);
-    assert.equal(matching.length, 2, `${socialUrl} must appear once in the signal strip and once in the footer`);
+    assert.equal(matching.length, expectedCount, `${socialUrl} must appear in every approved location`);
     for (const tag of matching) {
       assert.equal(getAttribute(tag, 'target'), '_blank');
       assert.equal(getAttribute(tag, 'rel'), 'noopener noreferrer');
@@ -70,6 +83,7 @@ test('the social signal and footer expose all five approved profiles without Fac
     }
   }
 
+  assert.doesNotMatch(markup, /https:\/\/www\.instagram\.com\/barrios\.ai\.gary\//i);
   assert.doesNotMatch(markup, /(?:href|aria-label)=["'][^"']*facebook/i);
 });
 
@@ -111,15 +125,17 @@ test('the visible legal links point to the existing site pages', () => {
   assert.match(markup, /<a\b[^>]*href="\/terms-of-service\.html"[^>]*>Terms<\/a>/i);
 });
 
-test('the consultation CTA is in footer flow and every NEXUS opener controls the shared dialog', () => {
-  const finalCtaPosition = markup.indexOf('class="cta');
-  const bookingPosition = markup.indexOf('class="footer-booking"');
-  const footerColumnsPosition = markup.indexOf('class="foot__top"');
-  assert.ok(finalCtaPosition >= 0 && finalCtaPosition < bookingPosition, 'the footer CTA must follow the final CTA');
-  assert.ok(bookingPosition < footerColumnsPosition, 'the footer CTA must precede the footer columns');
+test('the consultation CTA stays inside the compact footer and every NEXUS opener controls the shared dialog', () => {
+  const footerPosition = markup.indexOf('class="aura-footer"');
+  const finalCtaPosition = markup.indexOf('class="aura-footer__cta');
+  const consultationPosition = markup.indexOf('class="aura-footer__book"');
+  assert.ok(footerPosition >= 0 && footerPosition < finalCtaPosition, 'the closing CTA must be inside the footer');
+  assert.ok(finalCtaPosition < consultationPosition, 'the consultation CTA must follow the footer CTA copy');
+  assert.doesNotMatch(markup, /class="footer-booking|class="foot__top/i);
+  assert.doesNotMatch(markup, /data-nexus-book|data-nexus-schedule|Book with NEXUS/i, 'no opener may claim booking or scheduling');
 
   const openers = openingTagsWith('data-nexus-open');
-  assert.ok(openers.length >= 3, 'hero, launcher, and footer controls must all open NEXUS');
+  assert.ok(openers.length >= 4, 'hero, launcher, Meet Gary, and footer controls must all open NEXUS');
   for (const opener of openers) {
     assert.equal(getAttribute(opener, 'aria-controls'), 'nexus-panel');
     assert.equal(getAttribute(opener, 'aria-expanded'), 'false');
