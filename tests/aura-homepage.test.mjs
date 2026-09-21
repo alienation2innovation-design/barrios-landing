@@ -54,6 +54,7 @@ test('the served document keeps the Barrios message readable without JavaScript'
   assert.match(fallback, /Barrios A2I/i);
   assert.match(fallback, /connected marketing automation built around your business/i);
   assert.match(fallback, /href="#no-js-automate"/i);
+  assert.doesNotMatch(fallback, /preview|prototype/i, 'the no-JS copy must describe the public pilot honestly');
 });
 
 test('the social signal and footer expose all five approved profiles without Facebook', () => {
