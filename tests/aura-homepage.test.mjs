@@ -130,6 +130,26 @@ test('the NEXUS panel is honestly labeled as a public pilot with a real consulta
   assert.match(html, /Start a consultation request/);
   assert.doesNotMatch(html, /ASSISTANT PREVIEW|Book Now|BOOKING NOT LIVE|data-nexus-book|Meeting preference/);
   assert.match(html, /Contact Gary/);
+
+  // RD-I1: the accessible names inside the panel must say what the visible
+  // badge says. A screen reader announces the dialog's aria-label the moment
+  // focus enters it, and "preview"/"prototype" contradicts PUBLIC PILOT.
+  const panelStart = markup.search(/<section\b[^>]*id="nexus-panel"/i);
+  assert.ok(panelStart >= 0, 'the NEXUS panel section must exist');
+  const panelEnd = markup.indexOf('</section>', panelStart);
+  assert.ok(panelEnd > panelStart, 'the NEXUS panel section must close');
+  const panel = markup.slice(panelStart, panelEnd);
+  const panelTags = [...panel.matchAll(/<[a-z][^>]*>/gi)].map((m) => m[0]);
+  const labels = panelTags.map((tag) => getAttribute(tag, 'aria-label')).filter((label) => label !== null);
+  assert.ok(labels.length >= 3, 'the dialog, the close button and the send button carry accessible names');
+  for (const label of labels) {
+    assert.doesNotMatch(label, /preview|prototype/i, `aria-label "${label}" must not diminish the public pilot`);
+  }
+  const dialogTag = panelTags[0];
+  assert.match(getAttribute(dialogTag, 'aria-label') ?? '', /public pilot/i, 'the dialog is named as the public pilot');
+  const sendTag = panelTags.find((tag) => /class="nexus__send"/i.test(tag));
+  assert.ok(sendTag, 'the send button must exist');
+  assert.equal(getAttribute(sendTag, 'aria-label'), 'Send message');
 });
 
 test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
@@ -154,5 +174,11 @@ test('the Privacy page keeps the full AI assistant provider disclosure and the n
   assert.match(privacy, /consent/i);
   assert.match(privacy, /OneDrive/i);
   assert.match(privacy, /email notification/i);
+  // RE: the prospect confirmation is disclosed too - one truthful sentence,
+  // and still no retention duration asserted for Barrios A2I.
+  assert.match(privacy, /If you provide an email address, a confirmation of your request is also sent to that address\./);
+  const nexusSection = privacy.match(/AI Assistant \(NEXUS\)[\s\S]*?<\/p>/)?.[0] ?? '';
+  assert.ok(nexusSection, 'the NEXUS section paragraph must exist');
+  assert.doesNotMatch(nexusSection, /we (?:retain|keep|store)[^.]*\b(?:days|months|years)\b/i, 'no Barrios A2I retention duration');
   assert.match(privacy, /Last updated: September 2026/);
 });
