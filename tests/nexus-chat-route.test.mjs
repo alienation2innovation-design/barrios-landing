@@ -19,8 +19,13 @@
 // =============================================================================
 
 import assert from 'node:assert/strict';
+import fs from 'node:fs';
 import { register } from 'node:module';
 import { after, afterEach, before, beforeEach, test } from 'node:test';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 register(
   'data:text/javascript,' +
@@ -517,4 +522,40 @@ test('logging: exactly one console.log per request with route/status/ms and noth
   assert.equal(typeof entry.ms, 'number');
   assert.deepEqual(Object.keys(entry).sort(), ['ms', 'route', 'status']);
   assert.doesNotMatch(logLines[0], /SENSITIVE|198\.51\.100\.7|a{32}/);
+});
+
+// ---------------------------------------------------------------------------
+// 11. persisted proof that only the App Router NEXUS route ever deploys
+//
+// A one-time manual filesystem check does not catch a future regression
+// (someone re-adding api/nexus/chat.js, or a stray pages/api/nexus route).
+// These assertions are committed so `node --test` catches that regression.
+// ---------------------------------------------------------------------------
+test('legacy Vercel Serverless Function handlers are deleted from the repo', () => {
+  assert.equal(fs.existsSync(path.join(ROOT, 'api/nexus/chat.js')), false, 'api/nexus/chat.js must not exist');
+  assert.equal(fs.existsSync(path.join(ROOT, 'api/nexus/health.js')), false, 'api/nexus/health.js must not exist');
+});
+
+test('.vercelignore still excludes /api/, so even a re-added legacy handler would never deploy', () => {
+  const vercelignore = fs.readFileSync(path.join(ROOT, '.vercelignore'), 'utf8');
+  assert.match(vercelignore, /^\/api\/\s*$/m, '.vercelignore must contain a line excluding /api/');
+});
+
+test('the App Router NEXUS route file exists on disk (companion to the before() export-surface check)', () => {
+  assert.equal(fs.existsSync(path.join(ROOT, 'app/api/nexus/chat/route.ts')), true, 'app/api/nexus/chat/route.ts must exist');
+  // The before() hook above already imports this file and asserts its export
+  // surface is exactly ['POST', 'dynamic', 'maxDuration', 'runtime']; this
+  // test only pins the file's persisted existence at the expected path.
+});
+
+test('build output, when present, proves only the App Router NEXUS route deploys, never a legacy pages/api/nexus', (t) => {
+  const nextDir = path.join(ROOT, '.next');
+  if (!fs.existsSync(nextDir)) {
+    t.skip('no build output (.next absent) - run `npm run build` first to exercise this check');
+    return;
+  }
+  const builtAppRoute = path.join(ROOT, '.next/server/app/api/nexus/chat/route.js');
+  const legacyPagesRoute = path.join(ROOT, '.next/server/pages/api/nexus');
+  assert.equal(fs.existsSync(builtAppRoute), true, '.next/server/app/api/nexus/chat/route.js must exist after a build');
+  assert.equal(fs.existsSync(legacyPagesRoute), false, '.next/server/pages/api/nexus must not exist');
 });
