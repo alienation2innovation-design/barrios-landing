@@ -46,7 +46,7 @@ test('the served root is the approved Barrios A2I Aura experience', () => {
   assert.match(response.headers.get('content-type') ?? '', /text\/html/i);
   assert.match(markup, /Barrios A2I — connected marketing automation built around your business/i);
   assert.match(markup, /id="nexus-panel"[^>]*role="dialog"/i);
-  assert.match(markup, /Tell me what you want to automate\./i);
+  assert.match(markup, /Start a consultation request/i);
 });
 
 test('the served document keeps the Barrios message readable without JavaScript', () => {
@@ -110,17 +110,49 @@ test('the visible legal links point to the existing site pages', () => {
   assert.match(markup, /<a\b[^>]*href="\/terms-of-service\.html"[^>]*>Terms<\/a>/i);
 });
 
-test('Book Now is in footer flow and every NEXUS opener controls the shared dialog', () => {
+test('the consultation CTA is in footer flow and every NEXUS opener controls the shared dialog', () => {
   const finalCtaPosition = markup.indexOf('class="cta');
   const bookingPosition = markup.indexOf('class="footer-booking"');
   const footerColumnsPosition = markup.indexOf('class="foot__top"');
-  assert.ok(finalCtaPosition >= 0 && finalCtaPosition < bookingPosition, 'Book Now must follow the final CTA');
-  assert.ok(bookingPosition < footerColumnsPosition, 'Book Now must precede the footer columns');
+  assert.ok(finalCtaPosition >= 0 && finalCtaPosition < bookingPosition, 'the footer CTA must follow the final CTA');
+  assert.ok(bookingPosition < footerColumnsPosition, 'the footer CTA must precede the footer columns');
 
   const openers = openingTagsWith('data-nexus-open');
-  assert.ok(openers.length >= 3, 'hero, launcher, and Book Now controls must all open NEXUS');
+  assert.ok(openers.length >= 3, 'hero, launcher, and footer controls must all open NEXUS');
   for (const opener of openers) {
     assert.equal(getAttribute(opener, 'aria-controls'), 'nexus-panel');
     assert.equal(getAttribute(opener, 'aria-expanded'), 'false');
   }
+});
+
+test('the NEXUS panel is honestly labeled as a public pilot with a real consultation CTA and no booking claims', () => {
+  assert.match(html, /PUBLIC PILOT/);
+  assert.match(html, /Start a consultation request/);
+  assert.doesNotMatch(html, /ASSISTANT PREVIEW|Book Now|BOOKING NOT LIVE|data-nexus-book|Meeting preference/);
+  assert.match(html, /Contact Gary/);
+});
+
+test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
+  const disclosure = markup.match(/<p\b[^>]*class="nexus__disclosure"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? '';
+  assert.ok(disclosure, 'the nexus__disclosure paragraph must exist');
+  const text = disclosure.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
+  assert.equal(text, 'AI-powered chat. Contact details are requested only with your consent. Privacy');
+  assert.match(disclosure, /<a\b[^>]*href="\/privacy-directive\.html"[^>]*>Privacy<\/a>/i);
+  assert.doesNotMatch(disclosure, /anthropic|microsoft|openai|claude|vercel|n8n|zapier|make\.com|hosting|api/i);
+  assert.doesNotMatch(disclosure, /does not book|schedule|send email|issue quotes|30 days/i);
+});
+
+test('the Privacy page keeps the full AI assistant provider disclosure and the new consent/OneDrive/notification terms', async () => {
+  const privacyResponse = await fetch(new URL('/privacy-directive.html', homepageUrl));
+  assert.equal(privacyResponse.status, 200);
+  const privacy = stripExecutableContent(await privacyResponse.text());
+  assert.match(privacy, /AI Assistant \(NEXUS\)/);
+  assert.match(privacy, /as written to Anthropic’s API to generate replies/);
+  assert.match(privacy, /deletes API inputs and outputs within 30 days/);
+  assert.match(privacy, /does not use commercial API data to train its models by default/);
+  assert.match(privacy, /do not share sensitive, personal or confidential information/i);
+  assert.match(privacy, /consent/i);
+  assert.match(privacy, /OneDrive/i);
+  assert.match(privacy, /email notification/i);
+  assert.match(privacy, /Last updated: September 2026/);
 });

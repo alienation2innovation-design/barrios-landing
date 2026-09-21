@@ -1546,31 +1546,22 @@
         </span>
         <span class="nexus__launch-label">Ask NEXUS</span>
       </button>
-      <section class="nexus__panel" id="nexus-panel" role="dialog" aria-label="NEXUS assistant visual prototype" aria-hidden="true">
+      <section class="nexus__panel" id="nexus-panel" role="dialog" aria-label="NEXUS assistant preview" aria-hidden="true">
         <header class="nexus__head">
           <span style="display:block;position:relative;flex:none;width:5rem;height:1.75rem;overflow:hidden">
             <img class="nexus__brand" src="/brand/barrios-a2i-logo.png" alt="Barrios A2I" width="2048" height="2048" style="position:absolute;top:50%;left:50%;width:auto;height:3.5rem;max-width:none;object-fit:contain;transform:translate(-50%,-50%)">
           </span>
           <span class="nexus__name">NEXUS</span>
-          <span class="nexus__status">VISUAL PROTOTYPE</span>
+          <span class="nexus__status">PUBLIC PILOT</span>
           <button class="nexus__close" type="button" aria-label="Close NEXUS assistant" data-nexus-close="">
             ×
           </button>
         </header>
         <div class="nexus__body">
-          <h2 class="nexus__greeting">Tell me what you want to automate.</h2>
+          <h2 class="nexus__greeting">Start a consultation request</h2>
           <p class="nexus__support">
-            I’ll help you explore what Barrios A2I can build around your
-            business.
+            Tell NEXUS what you want to automate
           </p>
-          <div class="nexus__schedule" aria-label="Scheduling preferences">
-            <span class="nexus__schedule-label">Meeting preference</span>
-            <div class="nexus__prompts nexus__schedule-prompts">
-              <button class="nexus__prompt" type="button">This week</button>
-              <button class="nexus__prompt" type="button">Next week</button>
-              <button class="nexus__prompt" type="button">I’m flexible</button>
-            </div>
-          </div>
           <div class="nexus__prompts">
             <button class="nexus__prompt" type="button">
               Capture more leads
@@ -1583,9 +1574,13 @@
             </button>
           </div>
           <div class="nexus__local" aria-live="polite"></div>
+          <p class="nexus__disclosure" style="margin-top:.65rem;color:var(--mute);font-size:var(--t-xs);line-height:1.55">
+            AI-powered chat. Contact details are requested only with your consent.
+            <a href="/privacy-directive.html" style="color:inherit;text-decoration:underline">Privacy</a>
+          </p>
           <form class="nexus__form">
-            <input class="nexus__input" aria-label="Describe what should happen automatically" placeholder="Describe what should happen automatically">
-            <button class="nexus__send" type="submit" aria-label="Send visual prototype prompt">
+            <input class="nexus__input" aria-label="Describe what should happen automatically" placeholder="Describe what should happen automatically" maxlength="2000">
+            <button class="nexus__send" type="submit" aria-label="Send message">
               <svg viewBox="0 0 24 24">
                 <path d="m4 4 16 8-16 8 3-8-3-8Z"></path>
                 <path d="M7 12h13"></path>
@@ -1601,12 +1596,12 @@
     <footer id="foot">
       <div class="shell">
         <style>
-          .footer-booking{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-top:calc(clamp(3rem,6vw,5rem) * -1);margin-bottom:clamp(1.5rem,3vw,2.5rem);transform:translateY(-50%)}.footer-booking__note{color:var(--mute-2);font-size:var(--t-xs);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.footer-booking__button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:9.5rem;height:3.5rem;padding:0 1.5rem;overflow:hidden;border:1px solid rgba(145,169,181,.58);border-radius:9999px;background:linear-gradient(145deg,rgba(32,33,39,.98),rgba(12,15,18,.98));box-shadow:0 12px 30px -16px rgba(0,0,0,.95),0 0 22px -12px var(--a-1),inset 0 1px 0 rgba(255,255,255,.1);color:var(--paper);font-size:var(--t-sm);font-weight:500;letter-spacing:.01em;cursor:pointer;transition:border-color .3s ease,box-shadow .4s var(--ease-out),transform .35s var(--ease-flick),color .3s ease}.footer-booking__button::before{content:"";position:absolute;inset:-30% 52% -30% -15%;border:1px solid color-mix(in srgb,var(--c-1) 62%,transparent);border-radius:50%;opacity:.75;transform:rotate(-18deg);pointer-events:none}.footer-booking__button::after{content:"";position:absolute;width:.38rem;height:.38rem;right:1.05rem;top:.72rem;border-radius:50%;background:var(--c-1);box-shadow:0 0 0 3px color-mix(in srgb,var(--c-1) 14%,transparent);pointer-events:none}.footer-booking__button span{position:relative;z-index:1}.footer-booking__button:hover,.footer-booking__button:focus-visible{border-color:var(--a-1);box-shadow:0 0 0 5px color-mix(in srgb,var(--a-2) 12%,transparent),0 14px 32px -16px #000,0 0 28px -12px var(--a-1);color:var(--a-1)}.footer-booking__button:active{transform:scale(.97)}.nexus__schedule{display:none;margin-top:1rem;padding:.85rem;border:1px solid color-mix(in srgb,var(--c-1) 24%,transparent);border-radius:.8rem;background:linear-gradient(135deg,rgba(189,150,60,.08),rgba(35,191,193,.055))}.nexus.is-scheduling .nexus__schedule{display:block}.nexus__schedule-label{display:block;color:var(--c-1);font-size:9px;letter-spacing:.14em;text-transform:uppercase}.nexus__schedule-prompts{margin-top:.6rem}.nexus.is-scheduling .nexus__status{border-color:color-mix(in srgb,var(--c-1) 42%,transparent);color:var(--c-1)}@media(max-width:699px){.footer-booking{flex-direction:column-reverse;align-items:stretch;margin-top:-2rem;margin-bottom:1.5rem;transform:none}.footer-booking__note{text-align:center;white-space:normal}.footer-booking__button{width:100%;min-width:0}}@media(prefers-reduced-motion:reduce){.footer-booking__button{transition:none}}
+          .footer-booking{display:flex;align-items:center;justify-content:flex-end;gap:.9rem;margin-top:calc(clamp(3rem,6vw,5rem) * -1);margin-bottom:clamp(1.5rem,3vw,2.5rem);transform:translateY(-50%)}.footer-booking__note{color:var(--mute-2);font-size:var(--t-xs);letter-spacing:.14em;text-transform:uppercase;white-space:nowrap}.footer-booking__button{position:relative;display:inline-flex;align-items:center;justify-content:center;min-width:9.5rem;height:3.5rem;padding:0 1.5rem;overflow:hidden;border:1px solid rgba(145,169,181,.58);border-radius:9999px;background:linear-gradient(145deg,rgba(32,33,39,.98),rgba(12,15,18,.98));box-shadow:0 12px 30px -16px rgba(0,0,0,.95),0 0 22px -12px var(--a-1),inset 0 1px 0 rgba(255,255,255,.1);color:var(--paper);font-size:var(--t-sm);font-weight:500;letter-spacing:.01em;cursor:pointer;transition:border-color .3s ease,box-shadow .4s var(--ease-out),transform .35s var(--ease-flick),color .3s ease}.footer-booking__button::before{content:"";position:absolute;inset:-30% 52% -30% -15%;border:1px solid color-mix(in srgb,var(--c-1) 62%,transparent);border-radius:50%;opacity:.75;transform:rotate(-18deg);pointer-events:none}.footer-booking__button::after{content:"";position:absolute;width:.38rem;height:.38rem;right:1.05rem;top:.72rem;border-radius:50%;background:var(--c-1);box-shadow:0 0 0 3px color-mix(in srgb,var(--c-1) 14%,transparent);pointer-events:none}.footer-booking__button span{position:relative;z-index:1}.footer-booking__button:hover,.footer-booking__button:focus-visible{border-color:var(--a-1);box-shadow:0 0 0 5px color-mix(in srgb,var(--a-2) 12%,transparent),0 14px 32px -16px #000,0 0 28px -12px var(--a-1);color:var(--a-1)}.footer-booking__button:active{transform:scale(.97)}@media(max-width:699px){.footer-booking{flex-direction:column-reverse;align-items:stretch;margin-top:-2rem;margin-bottom:1.5rem;transform:none}.footer-booking__note{text-align:center;white-space:normal}.footer-booking__button{width:100%;min-width:0}}@media(prefers-reduced-motion:reduce){.footer-booking__button{transition:none}}
         </style>
         <div class="footer-booking">
-          <span class="footer-booking__note">Schedule through NEXUS</span>
-          <button class="footer-booking__button" type="button" aria-label="Book Now through NEXUS" aria-controls="nexus-panel" aria-expanded="false" data-nexus-open="" data-nexus-book="">
-            <span>Book Now</span>
+          <span class="footer-booking__note">Talk to NEXUS</span>
+          <button class="footer-booking__button" type="button" aria-label="Start a consultation request" aria-controls="nexus-panel" aria-expanded="false" data-nexus-open="">
+            <span>Start a consultation request</span>
           </button>
         </div>
         <div class="foot__top">
@@ -2694,16 +2689,65 @@
     </script>
 
     <script>
-      (()=>{const root=document.getElementById('nexus');if(!root)return;const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),local=root.querySelector('.nexus__local');let returnTo=launcher;const syncExpanded=expanded=>opens.forEach(element=>element.setAttribute('aria-expanded',String(expanded)));const focusInput=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>input.focus({preventScroll:true})));const open=source=>{returnTo=source||launcher;root.classList.add('is-open');panel.setAttribute('aria-hidden','false');syncExpanded(true);focusInput()};const shut=()=>{root.classList.remove('is-open');panel.setAttribute('aria-hidden','true');syncExpanded(false);returnTo.focus({preventScroll:true})};opens.forEach(el=>el.addEventListener('click',()=>open(el)));close.addEventListener('click',shut);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&root.classList.contains('is-open'))shut()});root.querySelectorAll('.nexus__prompt').forEach(button=>button.addEventListener('click',()=>{input.value=button.textContent;input.focus()}));form.addEventListener('submit',e=>{e.preventDefault();const value=input.value.trim();if(!value)return;local.innerHTML='<div class="nexus__reply"><strong>Local visual response</strong><br>This prototype would use “'+value.replace(/[<>]/g,'')+'” as a starting point for a conversation. No request has been sent.</div>';input.value=''})})();
+      (()=>{
+        const root=document.getElementById('nexus');if(!root)return;
+        const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body');
+        const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.'};
+        let returnTo=launcher,controller=null,lastMessage='';
+        const syncExpanded=expanded=>opens.forEach(element=>element.setAttribute('aria-expanded',String(expanded)));
+        const focusInput=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>input.focus({preventScroll:true})));
+        const cancel=()=>{if(controller)controller.abort()};
+        const open=source=>{returnTo=source||launcher;root.classList.add('is-open');panel.setAttribute('aria-hidden','false');syncExpanded(true);focusInput()};
+        const shut=()=>{cancel();root.classList.remove('is-open');panel.setAttribute('aria-hidden','true');syncExpanded(false);returnTo.focus({preventScroll:true})};
+        opens.forEach(el=>el.addEventListener('click',()=>open(el)));
+        close.addEventListener('click',shut);
+        document.addEventListener('keydown',e=>{if(e.key!=='Escape')return;if(controller){cancel();return}if(root.classList.contains('is-open'))shut()});
+        window.addEventListener('pagehide',cancel);
+        root.querySelectorAll('.nexus__prompt').forEach(button=>button.addEventListener('click',()=>{input.value=button.textContent;input.focus()}));
+        /* Every visitor, assistant and status string is a text node. Nothing dynamic is ever parsed as HTML. */
+        const line=(label,text)=>{const el=document.createElement('div');el.className='nexus__reply';const b=document.createElement('strong');b.textContent=label;el.appendChild(b);el.appendChild(document.createElement('br'));const t=document.createTextNode(text);el.appendChild(t);local.appendChild(el);body.scrollTop=body.scrollHeight;return {el,t}};
+        const retryPill=()=>{const b=document.createElement('button');b.type='button';b.className='nexus__prompt';b.textContent='Retry';b.addEventListener('click',()=>{b.remove();input.value=lastMessage;input.focus()});local.appendChild(b);body.scrollTop=body.scrollHeight};
+        const status=(text,retry)=>{line('Status',text);if(retry)retryPill()};
+        /* Fully static, hardcoded fallback: href and text are never built from a variable or response data. */
+        const offlineNotice=()=>{line('Status','The assistant is offline right now.');const a=document.createElement('a');a.href='/contact.html';a.style.textDecoration='underline';a.textContent='Contact Gary';local.appendChild(a);body.scrollTop=body.scrollHeight};
+        const busy=on=>{input.disabled=on;send.disabled=on};
+        const finish=()=>{controller=null;busy(false);if(root.classList.contains('is-open'))input.focus({preventScroll:true})};
+        const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;status(TEXT.limited(n),false);setTimeout(()=>{busy(false);retryPill()},n*1000)};
+        const parse=frame=>{const ev=/^event: (.+)$/m.exec(frame),data=/^data: (.+)$/m.exec(frame);if(!ev||!data)return null;try{return {event:ev[1],data:JSON.parse(data[1])}}catch(err){return {event:'malformed',data:{}}}};
+        const httpFailure=async res=>{let code='';try{code=(await res.json()).code||''}catch(err){}
+          if(res.status===409){status(TEXT.busy,false);return}
+          if(res.status===429){limited(Number(res.headers.get('retry-after'))||60);return 'hold'}
+          if(res.status===403){status(TEXT.origin,false);return}
+          if(res.status===503||code==='disabled'||code==='provider_unavailable'){offlineNotice();return}
+          status(TEXT.error,true)};
+        async function ask(message){
+          lastMessage=message;controller=new AbortController();busy(true);
+          line('You',message);
+          const reply=line('NEXUS',TEXT.sending);let gotText=false,terminal=false,res;
+          const dropPending=()=>{if(!gotText)reply.el.remove()};
+          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream'},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
+          catch(err){dropPending();status(controller.signal.aborted?TEXT.cancelled:TEXT.error,!controller.signal.aborted);finish();return}
+          if(res.status!==200||!(res.headers.get('content-type')||'').startsWith('text/event-stream')){dropPending();if(await httpFailure(res)!=='hold')finish();return}
+          const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='',hold=false;
+          const handle=frame=>{const f=parse(frame);if(!f||terminal)return;
+            if(f.event==='delta'&&typeof f.data.text==='string'){if(!gotText){reply.t.data='';gotText=true}reply.t.data+=f.data.text;body.scrollTop=body.scrollHeight;return}
+            if(f.event==='done'){terminal=true;return}
+            if(f.event==='error'||f.event==='malformed'){terminal=true;dropPending();const code=f.data.code||'';
+              if(code==='rate_limited'||code==='budget_exhausted'){hold=true;limited(Number(f.data.retry_after_s)||60);return}
+              if(code==='provider_unavailable'||code==='disabled'){offlineNotice();return}
+              status(TEXT.error,true)}};
+          try{while(!terminal){const chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});let cut;while((cut=buffer.indexOf('\n\n'))>=0){handle(buffer.slice(0,cut));buffer=buffer.slice(cut+2);if(terminal)break}}}
+          catch(err){if(controller.signal.aborted){dropPending();status(TEXT.cancelled,false);terminal=true}}
+          if(!terminal){dropPending();status(TEXT.eof,true)}
+          if(!hold)finish()}
+        form.addEventListener('submit',e=>{e.preventDefault();if(controller)return;const value=input.value.trim();if(!value)return;input.value='';ask(value)});
+      })();
     </script>
 
     <script>
       (()=>{const col=document.querySelector('.foot__col:last-child');if(!col)return;col.innerHTML='<h5>Elsewhere</h5><a href="https://www.linkedin.com/in/gary-barrios-3953b2390/" target="_blank" rel="noopener noreferrer" aria-label="Connect with Barrios A2I on LinkedIn, opens in a new tab">LinkedIn</a><a href="https://x.com/BarriosA2I" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on X, opens in a new tab">X</a><a href="https://www.instagram.com/barrios.ai.gary/" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on Instagram, opens in a new tab">Instagram</a><a href="https://www.tiktok.com/@garyjbarrios" target="_blank" rel="noopener noreferrer" aria-label="Follow Barrios A2I on TikTok, opens in a new tab">TikTok</a>';})();
     </script>
 
-    <script>
-      (()=>{const root=document.getElementById('nexus'),book=document.querySelector('[data-nexus-book]');if(!root||!book)return;const heading=root.querySelector('.nexus__greeting'),support=root.querySelector('.nexus__support'),status=root.querySelector('.nexus__status');const normal={heading:heading.textContent,support:support.textContent,status:status.textContent};const scheduling=()=>{root.classList.add('is-scheduling');heading.textContent='Let’s schedule a conversation.';support.textContent='Tell me what you’d like to automate and when you’d prefer to meet.';status.textContent='SCHEDULING PREVIEW'};const standard=()=>{root.classList.remove('is-scheduling');heading.textContent=normal.heading;support.textContent=normal.support;status.textContent=normal.status};book.addEventListener('click',scheduling);document.querySelectorAll('[data-nexus-open]:not([data-nexus-book])').forEach(trigger=>trigger.addEventListener('click',standard));new MutationObserver(()=>book.setAttribute('aria-expanded',String(root.classList.contains('is-open')))).observe(root,{attributes:true,attributeFilter:['class']});})();
-    </script>
     <script>
       (()=>{const col=document.querySelector('.foot__col:last-child');if(col&&!col.querySelector('a[href="https://www.reddit.com/user/BarriosA2I/"]')){const a=document.createElement('a');a.href='https://www.reddit.com/user/BarriosA2I/';a.target='_blank';a.rel='noopener noreferrer';a.setAttribute('aria-label','Follow Barrios A2I on Reddit, opens in a new tab');a.textContent='Reddit';col.appendChild(a)}document.querySelectorAll('.foot__col a,.foot__bar a').forEach(a=>{const label=a.textContent.trim();if(label==='Privacy')a.href='/privacy-directive.html';if(label==='Terms')a.href='/terms-of-service.html'});})();
     </script>

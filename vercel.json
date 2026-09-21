@@ -2,9 +2,12 @@
   "framework": "nextjs",
   "buildCommand": "prisma generate && next build",
   "installCommand": "npm install",
+  "functions": {
+    "app/api/nexus/chat/route.ts": { "supportsCancellation": true }
+  },
   "headers": [
     {
-      "source": "/api/(.*)",
+      "source": "/api/:path((?!nexus/).*)",
       "headers": [
         { "key": "Access-Control-Allow-Credentials", "value": "true" },
         { "key": "Access-Control-Allow-Origin", "value": "*" },
