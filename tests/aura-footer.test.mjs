@@ -41,7 +41,7 @@ test('the consultation request control remains the single footer NEXUS opener', 
   assert.notEqual(getAttribute(button, 'data-nexus-open'), null);
   assert.equal(getAttribute(button, 'aria-label'), 'Start a consultation request');
   assert.equal((footer.match(/data-nexus-open=/g) ?? []).length, 1);
-  // NEXUS public pilot: no control anywhere may claim booking or scheduling.
+  // NEXUS AI beta: no control anywhere may claim booking or scheduling.
   assert.doesNotMatch(html, /data-nexus-book=|data-nexus-schedule=|Book with NEXUS/i);
   assert.match(footer, />\s*Start a consultation request\s*</i);
 });

@@ -364,6 +364,100 @@ test('no nexus_sid cookie -> no cookie header sent upstream', async () => {
   assert.equal('cookie' in fetchCalls[0].init.headers, false);
 });
 
+// ---------------------------------------------------------------------------
+// 8b. conversation token passthrough (x-nexus-conversation)
+//
+// The token is minted, MAC-signed and validated by the core. The proxy is a
+// dumb conduit in both directions: it forwards whatever the browser sent and
+// copies back whatever the core answered with. It must not parse, validate,
+// truncate, normalise or invent the value, and it must never log it.
+// ---------------------------------------------------------------------------
+const CONVERSATION = 'x-nexus-conversation';
+const upstreamJson = (extraHeaders = {}) =>
+  new Response('{"code":"sentinel","message":"reached upstream"}', {
+    status: 200,
+    headers: { 'content-type': 'application/json', ...extraHeaders },
+  });
+
+test('a client-supplied x-nexus-conversation request header is forwarded upstream verbatim', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  const token = 'v1.AbC-_123.1758700000000.ZmFrZS1tYWM';
+  await POST(makeRequest({ headers: { [CONVERSATION]: token } }));
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].init.headers[CONVERSATION], token);
+});
+
+test('no x-nexus-conversation on the request -> the header is not added upstream, and the turn still works', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(CONVERSATION in fetchCalls[0].init.headers, false, 'no empty conversation header is invented');
+});
+
+test('a hostile, oversized x-nexus-conversation value is passed through untouched and never crashes the route', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  // 16 KiB of junk with quoting, path-traversal and injection shapes. The
+  // proxy is not the validator: the core's MAC check is the only authority,
+  // so this must arrive byte-identical and must not throw, truncate or 4xx.
+  const hostile = 'v1.' + 'A"<>;,%00\'`$'.repeat(1400) + '/../../etc/passwd';
+  assert.ok(hostile.length > 16384, 'the hostile value must exceed 16 KiB');
+  const res = await POST(makeRequest({ headers: { [CONVERSATION]: hostile } }));
+  assert.equal(res.status, 200, 'a hostile token is not the proxy’s business');
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].init.headers[CONVERSATION], hostile, 'passed through untouched');
+  // And it is never logged.
+  assert.equal(logLines.length, 1);
+  assert.doesNotMatch(logLines[0], /etc\/passwd|AAAA/);
+});
+
+test('SSE relay copies the upstream x-nexus-conversation header back to the browser and still sets no CORS header', async () => {
+  enableEnv();
+  const frames = 'event: delta\ndata: {"text":"hi"}\n\nevent: done\ndata: {}\n\n';
+  const minted = 'v1.NewMinted-Token.1758700000001.bWFjMg';
+  stubFetch(
+    () =>
+      new Response(frames, {
+        status: 200,
+        headers: { 'content-type': 'text/event-stream', [CONVERSATION]: minted },
+      }),
+  );
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get(CONVERSATION), minted);
+  assert.equal(res.headers.has('access-control-allow-origin'), false, 'route sets no CORS headers');
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.equal(await res.text(), frames, 'the stream is still byte-transparent');
+});
+
+test('pre-stream JSON relay also copies the upstream x-nexus-conversation header back', async () => {
+  enableEnv();
+  const minted = 'v1.MintedOnError.1758700000002.bWFjMw';
+  stubFetch(
+    () =>
+      new Response('{"code":"rate_limited","message":"slow down"}', {
+        status: 429,
+        headers: { 'content-type': 'application/json', 'retry-after': '30', [CONVERSATION]: minted },
+      }),
+  );
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 429);
+  assert.equal(res.headers.get(CONVERSATION), minted);
+  assert.equal(res.headers.get('retry-after'), '30');
+  assert.equal(res.headers.has('access-control-allow-origin'), false);
+});
+
+test('an upstream response without x-nexus-conversation leaves the browser response without one', async () => {
+  enableEnv();
+  stubFetch(() => new Response('event: done\ndata: {}\n\n', { status: 200, headers: { 'content-type': 'text/event-stream' } }));
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(res.headers.get(CONVERSATION), null, 'no token is invented by the proxy');
+});
+
 test('fetch throws -> 503 provider_unavailable, no retry', async () => {
   enableEnv();
   stubFetch(() => {

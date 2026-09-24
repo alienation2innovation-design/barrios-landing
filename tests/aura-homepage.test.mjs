@@ -67,7 +67,7 @@ test('the served document keeps the Barrios message readable without JavaScript'
   assert.match(fallback, /Barrios A2I/i);
   assert.match(fallback, /connected marketing automation built around your business/i);
   assert.match(fallback, /href="#no-js-automate"/i);
-  assert.doesNotMatch(fallback, /preview|prototype/i, 'the no-JS copy must describe the public pilot honestly');
+  assert.doesNotMatch(fallback, /preview|prototype/i, 'the no-JS copy must describe the NEXUS AI beta honestly');
 });
 
 test('the Meet Gary panel and compact footer expose the approved profiles without Facebook', () => {
@@ -142,31 +142,96 @@ test('the consultation CTA stays inside the compact footer and every NEXUS opene
   }
 });
 
-test('the NEXUS panel is honestly labeled as a public pilot with a real consultation CTA and no booking claims', () => {
-  assert.match(html, /PUBLIC PILOT/);
+function nexusPanelMarkup() {
+  const panelStart = markup.search(/<section\b[^>]*id="nexus-panel"/i);
+  assert.ok(panelStart >= 0, 'the NEXUS panel section must exist');
+  const panelEnd = markup.indexOf('</section>', panelStart);
+  assert.ok(panelEnd > panelStart, 'the NEXUS panel section must close');
+  return markup.slice(panelStart, panelEnd);
+}
+
+test('the NEXUS panel is honestly labeled as the NEXUS AI beta with a real consultation CTA and no booking claims', () => {
+  assert.match(html, /NEXUS AI BETA/);
+  assert.doesNotMatch(html, /PUBLIC PILOT/i, 'the retired public-pilot label must be gone from the served page');
   assert.match(html, /Start a consultation request/);
   assert.doesNotMatch(html, /ASSISTANT PREVIEW|Book Now|BOOKING NOT LIVE|data-nexus-book|Meeting preference/);
   assert.match(html, /Contact Gary/);
 
   // RD-I1: the accessible names inside the panel must say what the visible
   // badge says. A screen reader announces the dialog's aria-label the moment
-  // focus enters it, and "preview"/"prototype" contradicts PUBLIC PILOT.
-  const panelStart = markup.search(/<section\b[^>]*id="nexus-panel"/i);
-  assert.ok(panelStart >= 0, 'the NEXUS panel section must exist');
-  const panelEnd = markup.indexOf('</section>', panelStart);
-  assert.ok(panelEnd > panelStart, 'the NEXUS panel section must close');
-  const panel = markup.slice(panelStart, panelEnd);
+  // focus enters it, and "preview"/"prototype" contradicts NEXUS AI BETA.
+  const panel = nexusPanelMarkup();
   const panelTags = [...panel.matchAll(/<[a-z][^>]*>/gi)].map((m) => m[0]);
   const labels = panelTags.map((tag) => getAttribute(tag, 'aria-label')).filter((label) => label !== null);
   assert.ok(labels.length >= 3, 'the dialog, the close button and the send button carry accessible names');
   for (const label of labels) {
-    assert.doesNotMatch(label, /preview|prototype/i, `aria-label "${label}" must not diminish the public pilot`);
+    assert.doesNotMatch(label, /preview|prototype/i, `aria-label "${label}" must not diminish the NEXUS AI beta`);
   }
   const dialogTag = panelTags[0];
-  assert.match(getAttribute(dialogTag, 'aria-label') ?? '', /public pilot/i, 'the dialog is named as the public pilot');
+  assert.match(getAttribute(dialogTag, 'aria-label') ?? '', /beta/i, 'the dialog is named as the beta');
   const sendTag = panelTags.find((tag) => /class="nexus__send"/i.test(tag));
   assert.ok(sendTag, 'the send button must exist');
   assert.equal(getAttribute(sendTag, 'aria-label'), 'Send message');
+});
+
+test('the NEXUS AI beta badge carries exactly one supporting line and names no vendor, model or host', () => {
+  const panel = nexusPanelMarkup();
+  assert.match(panel, /<span\b[^>]*class="nexus__status"[^>]*>\s*NEXUS AI BETA\s*<\/span>/i, 'the visible badge reads NEXUS AI BETA');
+
+  // One short, unobtrusive status line. It states what is happening to the
+  // product; it must never read as a claim that a visitor's request succeeded.
+  const supporting = panel.match(/Daily improvements are being added\./g) ?? [];
+  assert.equal(supporting.length, 1, 'exactly one supporting line, inside the panel');
+  assert.doesNotMatch(panel, /\b(?:saved|sent|submitted|booked|scheduled|delivered)\b/i, 'no copy may imply an unfinished action succeeded');
+
+  // The supporting line is ordinary text in a real element: visible on desktop
+  // and at 375px (no width-gated class, no hidden/sr-only wrapper) and
+  // therefore announced by a screen reader like any other panel copy.
+  const line = panel.match(/<([a-z][a-z0-9]*)\b[^>]*>\s*Daily improvements are being added\.\s*<\/\1>/i);
+  assert.ok(line, 'the supporting line must be its own text element');
+  assert.doesNotMatch(line[0], /\bsr-only\b|aria-hidden|display:\s*none|visibility:\s*hidden/i, 'the supporting line must be visible and announced');
+
+  // Visitor-visible panel text names no vendor, model or host.
+  const visible = panel.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ');
+  assert.doesNotMatch(visible, /anthropic|openai|claude|gpt|gemini|llama|vercel|railway|azure|microsoft|n8n|zapier/i);
+});
+
+test('the panel offers a keyboard-reachable "New conversation" control that is not a NEXUS opener', () => {
+  const panel = nexusPanelMarkup();
+  const control = panel.match(/<button\b[^>]*data-nexus-new[^>]*>[\s\S]*?<\/button>/i)?.[0] ?? '';
+  assert.ok(control, 'a [data-nexus-new] control must exist inside the panel');
+
+  // A native button with no tabindex override is in the tab order, and its
+  // visible text is its accessible name.
+  assert.match(control, /^<button\b/i, 'the control must be a native button');
+  assert.equal(getAttribute(control, 'type'), 'button');
+  assert.equal(getAttribute(control, 'tabindex'), null, 'no tabindex may remove it from the tab order');
+  assert.equal(getAttribute(control, 'disabled'), null);
+  assert.equal(getAttribute(control, 'aria-hidden'), null);
+  const name = (getAttribute(control, 'aria-label') ?? control.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+  assert.equal(name, 'New conversation', 'the control must have an accessible name');
+
+  // It resets the conversation; it must never be counted as a panel opener.
+  assert.equal(getAttribute(control, 'data-nexus-open'), null, 'the reset control is not an opener');
+  assert.equal(getAttribute(control, 'aria-controls'), null);
+  assert.match(control, /class="nexus__prompt"/i, 'it reuses the existing pill styling, adding no new design language');
+
+  // The opener contract is unchanged: still exactly the four approved openers.
+  const openers = openingTagsWith('data-nexus-open');
+  assert.equal(openers.length, 4, 'hero, launcher, Meet Gary and footer remain the only openers');
+  assert.equal((markup.match(/data-nexus-new/g) ?? []).length, 1, 'exactly one reset control');
+});
+
+test('the widget scopes its conversation token to the tab and never exposes it', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.ok(script, 'the NEXUS widget script must exist');
+  assert.match(script, /sessionStorage/, 'the token lives in sessionStorage, which is per-tab by construction');
+  assert.doesNotMatch(script, /localStorage|document\.cookie|window\.name/, 'never a shared store');
+  assert.match(script, /x-nexus-conversation/, 'the token is sent and read back as the contract header');
+  assert.match(script, /getEntriesByType\('navigation'\)/, 'a reload must start a fresh conversation');
+  // The token is opaque: it is never written into the DOM, a URL or the log.
+  assert.doesNotMatch(script, /console\.(?:log|warn|error|info)/);
+  assert.doesNotMatch(script, /textContent\s*=\s*(?:conv|token)|location\.search|history\.replaceState/i);
 });
 
 test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {

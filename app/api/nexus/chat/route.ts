@@ -44,6 +44,12 @@ const UPSTREAM_TIMEOUT_MS = 55_000;
 const MIN_SECRET_LENGTH = 32;
 const MAX_IP_LENGTH = 45; // longest textual IPv6 (incl. IPv4-mapped) is 45 chars
 const SESSION_COOKIE = 'nexus_sid';
+// Opaque, server-minted conversation token. The core mints it, MAC-signs it and
+// is the ONLY authority on whether a value is acceptable; this proxy is a dumb
+// conduit that forwards the browser's value upstream and copies the core's
+// value back. It performs no parsing, validation, truncation or normalisation,
+// and it is never logged.
+const CONVERSATION_HEADER = 'x-nexus-conversation';
 
 type ErrorCode =
   | 'disabled'
@@ -250,9 +256,12 @@ async function handle(request: Request): Promise<Response> {
   }
   const buf = bodyResult;
 
-  // 6 + 7. The only two pieces of caller context the core receives.
+  // 6 + 7. The only pieces of caller context the core receives.
   const ip = clientIp(request);
   const cookie = sessionCookie(request);
+  // The browser's tab-scoped conversation token, if it has one. A first turn in
+  // a new tab has none, and the core then mints a fresh conversation.
+  const conversation = request.headers.get(CONVERSATION_HEADER);
 
   // 8. Upstream call. Exactly one attempt; the client owns retry policy.
   //    Abort if the browser disconnects (request.signal) or the budget runs
@@ -269,6 +278,7 @@ async function handle(request: Request): Promise<Response> {
         'x-nexus-proxy-auth': secret,
         'x-nexus-client-ip': ip,
         ...(cookie ? { cookie } : {}),
+        ...(conversation ? { [CONVERSATION_HEADER]: conversation } : {}),
       },
       body: buf,
       cache: 'no-store',
@@ -296,6 +306,11 @@ async function handle(request: Request): Promise<Response> {
     for (const c of upstream.headers.getSetCookie()) {
       headers.append('set-cookie', c);
     }
+    // Every chat answer carries the conversation token, whether the core
+    // continued a conversation or minted a new one. Same-origin fetch reads
+    // response headers unfiltered, so no expose-headers dance is needed.
+    const mintedConversation = upstream.headers.get(CONVERSATION_HEADER);
+    if (mintedConversation) headers.set(CONVERSATION_HEADER, mintedConversation);
     return new Response(pumpSse(upstream.body), { status: 200, headers });
   }
 
@@ -333,5 +348,9 @@ async function handle(request: Request): Promise<Response> {
   });
   const retryAfter = upstream.headers.get('retry-after');
   if (retryAfter) headers.set('retry-after', retryAfter);
+  // A refused turn still belongs to a conversation; relay the token so the
+  // browser keeps the same one when it retries.
+  const mintedConversation = upstream.headers.get(CONVERSATION_HEADER);
+  if (mintedConversation) headers.set(CONVERSATION_HEADER, mintedConversation);
   return new Response(text, { status: upstream.status, headers });
 }

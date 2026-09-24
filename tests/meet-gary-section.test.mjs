@@ -4,8 +4,10 @@ import { before, test } from 'node:test';
 
 const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
 const originalHeaderHash = '36FF16482263F806E93AAA09D5D0252CC4DDBBFD3310D6AE4AF697949DFB7137';
-// 2026-09-21: re-pinned after the NEXUS public-pilot reconciliation replaced the
+// 2026-09-21: re-pinned after the NEXUS release reconciliation replaced the
 // section's "Book with NEXUS" scheduling control with the consultation opener.
+// (The release itself is now labelled NEXUS AI BETA; this section's markup is
+// unaffected by that relabel, so the hash below still holds.)
 const approvedMeetGaryHash = '5802E3127FA95CFC27241B38F7F38A0EF0C4A8C1CDBEE00DA32125F24E5D2B6F';
 const oldInstagramUrl = 'https://www.instagram.com/barrios.ai.gary/';
 const newInstagramUrl = 'https://www.instagram.com/barriosa2i/';
@@ -104,7 +106,7 @@ test('the Meet Gary consultation control opens the shared assistant without any 
   assert.equal(getAttribute(button, 'data-nexus-book'), null);
   assert.equal(getAttribute(button, 'data-nexus-schedule'), null);
   assert.match(section, /<button\b[^>]*class="meet-gary__book"[^>]*>\s*<span>Start a consultation request<\/span>/i);
-  // NEXUS public pilot: the shared [data-nexus-open] handler opens the panel;
+  // NEXUS AI beta: the shared [data-nexus-open] handler opens the panel;
   // no script may rewrite the assistant into a scheduling or booking mode.
   assert.doesNotMatch(html, /data-nexus-book=|data-nexus-schedule=|Book with NEXUS|SCHEDULING PREVIEW/i);
   assert.doesNotMatch(script, /SCHEDULING PREVIEW|data-nexus-schedule|is-scheduling|nexus__greeting/i);
