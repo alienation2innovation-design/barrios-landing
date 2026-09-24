@@ -2666,10 +2666,20 @@
         const readConv=()=>{try{return sessionStorage.getItem(CONV_KEY)||''}catch(err){return ''}};
         const storeConv=value=>{try{sessionStorage.setItem(CONV_KEY,value)}catch(err){}};
         const forgetConv=()=>{try{sessionStorage.removeItem(CONV_KEY)}catch(err){}};
-        /* Rule: a reload deliberately starts a FRESH conversation. There is no resume
-           affordance, so the stored token is dropped before the first turn. Closing
-           and reopening the panel in the same tab keeps it; a new tab never had one. */
-        try{if(performance.getEntriesByType('navigation')[0]?.type==='reload')forgetConv()}catch(err){}
+        /* Rule: ANY fresh document load starts a FRESH conversation, not only a
+           reload. The transcript lives only in the DOM (see .nexus__local above),
+           so a reload, an in-tab navigation away and back (the Privacy and Contact
+           links below stay in this same tab), or a back/forward that misses the
+           bfcache all arrive with an EMPTY transcript while a lingering token would
+           silently resume the old one - the exact symptom this fix exists to
+           remove. Deleting the token here, unconditionally, before the widget can
+           send its first turn, keeps "empty transcript" and "no token" in lockstep.
+           A bfcache restore needs no handling at all: this script never re-runs on
+           that restore, so the DOM (and its transcript, and every variable in this
+           closure) comes back exactly as it was. Closing and reopening the panel
+           within THIS SAME document still keeps the conversation, because nothing
+           above this line ever runs a second time. */
+        forgetConv();
         const syncExpanded=expanded=>opens.forEach(element=>element.setAttribute('aria-expanded',String(expanded)));
         const focusInput=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>input.focus({preventScroll:true})));
         const cancel=()=>{if(controller)controller.abort()};
@@ -2691,7 +2701,12 @@
         const offlineNotice=()=>{line('Status','The assistant is offline right now.');const a=document.createElement('a');a.href='/contact.html';a.style.textDecoration='underline';a.textContent='Contact Gary';local.appendChild(a);body.scrollTop=body.scrollHeight};
         const busy=on=>{input.disabled=on;send.disabled=on};
         const finish=()=>{controller=null;busy(false);if(pendingReset){pendingReset=false;clearTranscript()}if(root.classList.contains('is-open'))input.focus({preventScroll:true})};
-        const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
+        /* A hold (rate limit / budget) never reaches finish(), so a pendingReset
+           scheduled for the turn now on hold must be cancelled here instead - the
+           transcript was already cleared synchronously by newConversation(), and
+           leaving the flag set would let it wipe a later, unrelated turn's answer
+           the moment some future finish() finally runs (M2). */
+        const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;pendingReset=false;status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
         /* "New conversation": forget the token so the server mints a fresh identifier
            on the next turn, empty the transcript, and drop every in-closure
            conversation variable plus any hold/retry state. The transcript is cleared
@@ -2703,7 +2718,7 @@
           forgetConv();lastMessage='';
           if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
           clearTranscript();
-          if(controller){pendingReset=true;cancel()}else busy(false);
+          if(controller){pendingReset=true;cancel()}else{pendingReset=false;busy(false)}
           input.focus({preventScroll:true})};
         if(fresh)fresh.addEventListener('click',newConversation);
         const parse=frame=>{const ev=/^event: (.+)$/m.exec(frame),data=/^data: (.+)$/m.exec(frame);if(!ev||!data)return null;try{return {event:ev[1],data:JSON.parse(data[1])}}catch(err){return {event:'malformed',data:{}}}};

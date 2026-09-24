@@ -34,6 +34,19 @@ function openingTagsWith(attribute) {
     .filter((tag) => getAttribute(tag, attribute) !== null);
 }
 
+function stripComments(scriptText) {
+  return scriptText.replace(/\/\*[\s\S]*?\*\//g, '');
+}
+
+// The widget script mixes tightly-minified single-line statements with
+// multi-line block comments; once a comment is stripped, the indentation and
+// newlines that surrounded it remain. Collapsing every run of whitespace to
+// a single space makes structural regexes robust to that without touching
+// any string literal's visible content in a way these tests rely on.
+function normalizeCode(scriptText) {
+  return stripComments(scriptText).replace(/\s+/g, ' ');
+}
+
 before(async () => {
   response = await fetch(homepageUrl, { redirect: 'manual' });
   html = await response.text();
@@ -226,12 +239,84 @@ test('the widget scopes its conversation token to the tab and never exposes it',
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
   assert.match(script, /sessionStorage/, 'the token lives in sessionStorage, which is per-tab by construction');
-  assert.doesNotMatch(script, /localStorage|document\.cookie|window\.name/, 'never a shared store');
+  assert.doesNotMatch(
+    script,
+    /localStorage|document\.cookie|window\.name|BroadcastChannel|SharedWorker/,
+    'never a shared store'
+  );
   assert.match(script, /x-nexus-conversation/, 'the token is sent and read back as the contract header');
-  assert.match(script, /getEntriesByType\('navigation'\)/, 'a reload must start a fresh conversation');
   // The token is opaque: it is never written into the DOM, a URL or the log.
   assert.doesNotMatch(script, /console\.(?:log|warn|error|info)/);
   assert.doesNotMatch(script, /textContent\s*=\s*(?:conv|token)|location\.search|history\.replaceState/i);
+});
+
+test('a fresh document load unconditionally forgets the stored token before any turn can be sent (RVP I1)', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.ok(script, 'the NEXUS widget script must exist');
+
+  // The reload-only guard reproduced the reported symptom (empty transcript,
+  // inherited context) on any other fresh document load - an in-tab navigation
+  // to /privacy-directive.html or /contact.html and back, or a back/forward
+  // that misses the bfcache. It must be gone entirely, not merely widened.
+  assert.doesNotMatch(script, /===\s*'reload'/, 'no comparison may gate the delete on the reload navigation type');
+  assert.doesNotMatch(script, /getEntriesByType\(['"]navigation['"]\)/, 'the navigation-timing check that only covered reload must be removed');
+
+  // Every storage access, including this one, stays wrapped in try/catch -
+  // private mode and blocked storage must degrade to "no token", never throw.
+  const code = normalizeCode(script);
+  assert.match(
+    code,
+    /const forgetConv=\(\)=>\{try\{sessionStorage\.removeItem\(CONV_KEY\)\}catch\(err\)\{\}\};/,
+    'forgetConv itself must remain a guarded sessionStorage access'
+  );
+
+  // The load-time delete must be unconditional (a bare statement, not inside
+  // an if) and must run before the widget wires up anything that could send a
+  // turn: right after forgetConv is defined and strictly before the rest of
+  // the widget (openers, the form handler, and the async ask() that fetches).
+  assert.match(
+    code,
+    /\};\s*forgetConv\(\);\s*const syncExpanded=/,
+    'on load, forgetConv() must run unconditionally, immediately, with nothing gating it'
+  );
+  const loadTimeForget = code.search(/\};\s*forgetConv\(\);\s*const syncExpanded=/);
+  const formSubmitWiring = code.indexOf("form.addEventListener('submit'");
+  const askDefinition = code.indexOf('async function ask');
+  assert.ok(loadTimeForget >= 0, 'the unconditional load-time delete must exist');
+  assert.ok(askDefinition > loadTimeForget, 'the delete must happen before ask() (which sends turns) is even defined');
+  assert.ok(formSubmitWiring > loadTimeForget, 'the delete must happen before the form can submit a turn');
+});
+
+test('a rate-limit hold cancels its pendingReset so it cannot later wipe a legitimate transcript (RVP M2)', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  const code = normalizeCode(script);
+
+  // limited() runs on every rate-limit/budget hold and never reaches finish(),
+  // so a pendingReset scheduled for the turn now on hold must be cancelled
+  // here - otherwise it would fire on some later, unrelated turn's finish()
+  // and delete the answer that turn just received.
+  const limitedStart = code.indexOf('const limited=seconds=>');
+  const newConversationStart = code.indexOf('const newConversation=');
+  assert.ok(limitedStart >= 0 && newConversationStart > limitedStart, 'limited() must be defined before newConversation()');
+  const limitedBody = code.slice(limitedStart, newConversationStart);
+  assert.match(limitedBody, /pendingReset=false/, 'entering a hold must cancel any pending reset');
+
+  // newConversation() must assign pendingReset on both branches: true when it
+  // aborts an in-flight turn (so that turn's own closing line is swept away),
+  // and false when there is no in-flight turn to abort (nothing to sweep).
+  const openersWiring = code.indexOf("if(fresh)fresh.addEventListener");
+  const newConversationBody = code.slice(newConversationStart, openersWiring);
+  assert.match(
+    newConversationBody,
+    /if\(controller\)\{pendingReset=true;cancel\(\)\}else\{pendingReset=false;busy\(false\)\}/,
+    'both branches of newConversation() must assign pendingReset explicitly'
+  );
+
+  // The user-visible behaviour is unchanged: it still clears the transcript
+  // and in-closure state, aborts an in-flight stream, and rotates the token.
+  assert.match(newConversationBody, /forgetConv\(\);lastMessage=''/, 'New conversation still rotates the identifier');
+  assert.match(newConversationBody, /clearTranscript\(\)/, 'New conversation still clears the transcript');
+  assert.match(newConversationBody, /cancel\(\)/, 'New conversation still aborts an in-flight stream');
 });
 
 test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
