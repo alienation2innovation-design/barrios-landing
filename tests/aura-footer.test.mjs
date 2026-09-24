@@ -45,11 +45,15 @@ test('the consultation request control remains the single footer NEXUS opener', 
   assert.equal(getAttribute(button, 'aria-controls'), 'nexus-panel');
   assert.equal(getAttribute(button, 'aria-expanded'), 'false');
   assert.notEqual(getAttribute(button, 'data-nexus-open'), null);
-  assert.equal(getAttribute(button, 'aria-label'), 'Start a consultation request');
+  // Finding 9: production has no active lead backend, so no control may offer to
+  // start a request the site cannot submit. The opener names what it actually
+  // does - it opens a conversation.
+  assert.equal(getAttribute(button, 'aria-label'), 'Explore your automation with NEXUS.');
   assert.equal((footer.match(/data-nexus-open=/g) ?? []).length, 1);
   // NEXUS AI beta: no control anywhere may claim booking or scheduling.
   assert.doesNotMatch(html, /data-nexus-book=|data-nexus-schedule=|Book with NEXUS/i);
-  assert.match(footer, />\s*Start a consultation request\s*</i);
+  assert.match(footer, />\s*Explore your automation with NEXUS\.\s*</i);
+  assert.doesNotMatch(html, /Start a consultation request/i, 'the retired submission CTA must be gone from the served page');
 });
 
 test('the footer contains only approved contact, navigation, and social destinations', () => {

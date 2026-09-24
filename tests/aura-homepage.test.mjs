@@ -70,7 +70,7 @@ test('the served root is the approved Barrios A2I Aura experience', () => {
   assert.match(response.headers.get('content-type') ?? '', /text\/html/i);
   assert.match(markup, /Barrios A2I — connected marketing automation built around your business/i);
   assert.match(markup, /id="nexus-panel"[^>]*role="dialog"/i);
-  assert.match(markup, /Start a consultation request/i);
+  assert.match(markup, /Explore your automation with NEXUS\./i);
 });
 
 test('the first viewport has a visible marketing headline without depending on WebGL', () => {
@@ -173,10 +173,23 @@ function nexusPanelMarkup() {
   return markup.slice(panelStart, panelEnd);
 }
 
-test('the NEXUS panel is honestly labeled as the NEXUS AI beta with a real consultation CTA and no booking claims', () => {
+test('the NEXUS panel is honestly labeled as the NEXUS AI beta with a capability-honest CTA and no booking claims', () => {
   assert.match(html, /NEXUS AI BETA/);
   assert.doesNotMatch(html, /PUBLIC PILOT/i, 'the retired public-pilot label must be gone from the served page');
-  assert.match(html, /Start a consultation request/);
+
+  // Finding 9 (S8): production has no active lead backend, so the assistant
+  // genuinely cannot submit a consultation request. The primary CTA must name
+  // the thing it can actually do - open a conversation - and the wording that
+  // promised a submission must be gone everywhere, not merely softened in one
+  // of the four places it appeared.
+  assert.match(html, /Explore your automation with NEXUS\./);
+  assert.doesNotMatch(html, /Start a consultation request/i, 'the retired submission CTA must be gone from the served page');
+  assert.equal(
+    (html.match(/Explore your automation with NEXUS\./g) ?? []).length,
+    5,
+    'the panel headline plus the aria-label and visible text of the Meet Gary and footer openers'
+  );
+
   assert.doesNotMatch(html, /ASSISTANT PREVIEW|Book Now|BOOKING NOT LIVE|data-nexus-book|Meeting preference/);
   assert.match(html, /Contact Gary/);
 
@@ -368,7 +381,19 @@ test('the NEXUS widget carries only the concise chat notice and links to the Pri
   const disclosure = markup.match(/<p\b[^>]*class="nexus__disclosure"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? '';
   assert.ok(disclosure, 'the nexus__disclosure paragraph must exist');
   const text = disclosure.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
-  assert.equal(text, 'AI-powered chat. Contact details are requested only with your consent. Privacy');
+
+  // Finding 9 (S8): the retired sentence promised that contact details are
+  // requested with consent. With no active lead backend they are never
+  // requested at all, so the promise was untrue on a live site. The disclosure
+  // now states what the build actually does, and says nothing about a
+  // capability being enabled.
+  assert.equal(text, 'AI-powered chat. This chat does not collect contact details. Privacy');
+  assert.doesNotMatch(
+    html,
+    /Contact details are requested only with your consent/i,
+    'the retired consent promise must be gone from the served page'
+  );
+
   assert.match(disclosure, /<a\b[^>]*href="\/privacy-directive\.html"[^>]*>Privacy<\/a>/i);
   assert.doesNotMatch(disclosure, /anthropic|microsoft|openai|claude|vercel|n8n|zapier|make\.com|hosting|api/i);
   assert.doesNotMatch(disclosure, /does not book|schedule|send email|issue quotes|30 days/i);
