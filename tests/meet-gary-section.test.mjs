@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { before, test } from 'node:test';
 
-const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
+import { useStaticSite } from './support/site.mjs';
+
+// Hermetic by default; HOMEPAGE_URL still points a run at an external server.
+const site = useStaticSite();
+let homepageUrl;
+
 const originalHeaderHash = '36FF16482263F806E93AAA09D5D0252CC4DDBBFD3310D6AE4AF697949DFB7137';
 // 2026-09-21: re-pinned after the NEXUS release reconciliation replaced the
 // section's "Book with NEXUS" scheduling control with the consultation opener.
@@ -30,6 +35,8 @@ function getAttribute(tag, name) {
 }
 
 before(async () => {
+  await site.ready();
+  homepageUrl = site.url;
   response = await fetch(homepageUrl, { redirect: 'manual' });
   html = await response.text();
   section = html.match(/<!-- meet-gary:section:start -->([\s\S]*?)<!-- meet-gary:section:end -->/)?.[1] ?? '';

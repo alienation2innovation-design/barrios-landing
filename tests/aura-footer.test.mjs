@@ -1,7 +1,11 @@
 import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 
-const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
+import { useStaticSite } from './support/site.mjs';
+
+// Hermetic by default; HOMEPAGE_URL still points a run at an external server.
+const site = useStaticSite();
+let homepageUrl;
 
 let html;
 let footer;
@@ -14,6 +18,8 @@ function getAttribute(tag, name) {
 }
 
 before(async () => {
+  await site.ready();
+  homepageUrl = site.url;
   const response = await fetch(homepageUrl, { redirect: 'manual' });
   assert.equal(response.status, 200);
   html = await response.text();

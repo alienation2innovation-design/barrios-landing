@@ -1,7 +1,15 @@
 import assert from 'node:assert/strict';
 import { before, test } from 'node:test';
 
-const homepageUrl = process.env.HOMEPAGE_URL ?? 'http://127.0.0.1:4173/';
+import { useStaticSite } from './support/site.mjs';
+
+// Hermetic by default: this starts its own static server over public/ on an
+// operating-system-assigned port and stops it in an `after` hook. Set
+// HOMEPAGE_URL to run against an external server instead. Nothing here requires
+// a listener to already exist.
+const site = useStaticSite();
+let homepageUrl;
+
 const requiredSocialCounts = new Map([
   ['https://www.linkedin.com/in/gary-barrios-3953b2390/', 2],
   ['https://x.com/BarriosA2I', 1],
@@ -48,6 +56,8 @@ function normalizeCode(scriptText) {
 }
 
 before(async () => {
+  await site.ready();
+  homepageUrl = site.url;
   response = await fetch(homepageUrl, { redirect: 'manual' });
   html = await response.text();
   markup = stripExecutableContent(html);
