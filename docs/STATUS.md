@@ -14,7 +14,8 @@ any production deployment.
 
 ## Branch and commits
 
-`feat/homepage-ai-workers-rewrite`, **4 commits ahead of `origin`**, not pushed:
+`feat/homepage-ai-workers-rewrite`, **4 commits ahead of `origin`** (the three below plus the commit that adds
+this file), not pushed:
 
 ```text
 ba85d6d fix: meet WCAG AA contrast and legible size for the beta label
