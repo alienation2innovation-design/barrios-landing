@@ -14,8 +14,8 @@ any production deployment.
 
 ## Branch and commits
 
-`feat/homepage-ai-workers-rewrite`, **4 commits ahead of `origin`** (the three below plus the commit that adds
-this file), not pushed:
+`feat/homepage-ai-workers-rewrite`, **ahead of `origin` and not pushed**. The three code commits are below;
+the branch also carries the documentation commits that record them, so check `git log` for the exact count:
 
 ```text
 ba85d6d fix: meet WCAG AA contrast and legible size for the beta label
