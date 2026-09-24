@@ -209,6 +209,41 @@ test('the NEXUS AI beta badge carries exactly one supporting line and names no v
   assert.doesNotMatch(visible, /anthropic|openai|claude|gpt|gemini|llama|vercel|railway|azure|microsoft|n8n|zapier/i);
 });
 
+test('the NEXUS AI beta badge and supporting line meet the corrected contrast and legibility floor', () => {
+  // Both strings still ship, and the retired label is still gone.
+  assert.match(html, /NEXUS AI BETA/);
+  assert.match(html, /Daily improvements are being added\./);
+  assert.doesNotMatch(html, /PUBLIC PILOT/i);
+
+  // The badge was 9px on desktop and 8px on mobile, below any reasonable
+  // legibility floor. Both now resolve to the --t-xs type-scale token
+  // (11px), reusing the existing scale rather than inventing a new size.
+  const badgeBaseRule = html.match(/\.nexus__status\{margin-left:auto;[^}]*\}/);
+  assert.ok(badgeBaseRule, 'the base .nexus__status rule must exist');
+  assert.match(badgeBaseRule[0], /font-size:var\(--t-xs\)/, 'the badge must use the --t-xs type-scale token, not a bare 9px');
+  assert.doesNotMatch(badgeBaseRule[0], /font-size:9px/, 'the old 9px badge size must be gone');
+
+  const mobileBlock = html.match(/@media\(max-width:699px\)\{[\s\S]*?\}\}@media\(prefers-reduced-motion:reduce\)/);
+  assert.ok(mobileBlock, 'the mobile breakpoint block must exist');
+  assert.match(mobileBlock[0], /\.nexus__status\{font-size:var\(--t-xs\)\}/, 'the mobile badge override must also use --t-xs, not a bare 8px');
+  assert.doesNotMatch(mobileBlock[0], /\.nexus__status\{font-size:8px\}/, 'the old 8px mobile badge size must be gone');
+
+  // The supporting line measured 3.94:1 against the panel at 11px, below the
+  // WCAG AA threshold of 4.5:1 for normal text. rgba(255,255,255,.58) against
+  // the panel's real rendered backdrop (rgb(28,29,33), sampled from a live
+  // screenshot) computes to 6.45:1; see priv-WB-report.md for the derivation.
+  assert.match(
+    html,
+    /<p class="nexus__support" style="margin-top:\.4rem;font-size:var\(--t-xs\);color:rgba\(255,255,255,\.58\)">\s*Daily improvements are being added\./,
+    'the supporting line must carry the corrected, AA-passing colour'
+  );
+  assert.doesNotMatch(
+    html,
+    /<p class="nexus__support" style="margin-top:\.4rem;font-size:var\(--t-xs\)">\s*Daily improvements are being added\./,
+    'the old sub-AA-contrast declaration (no colour override, inheriting --mute at .42) must be gone'
+  );
+});
+
 test('the panel offers a keyboard-reachable "New conversation" control that is not a NEXUS opener', () => {
   const panel = nexusPanelMarkup();
   const control = panel.match(/<button\b[^>]*data-nexus-new[^>]*>[\s\S]*?<\/button>/i)?.[0] ?? '';
