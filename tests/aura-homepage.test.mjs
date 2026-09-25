@@ -397,18 +397,24 @@ test('a pending revoke rides the visitor\'s very next turn as the OLD token plus
   );
   assert.doesNotMatch(newConversationBody, /fetch\(/, 'clicking "New conversation" must never itself call fetch');
 
-  // ask() must consume revokeToken exactly once - read then immediately
-  // cleared - so a lost or successful send can never resend it, and the
-  // reset header must only ever accompany that captured token, never the
-  // plain stored conversation token an ordinary turn sends.
+  // ask() reads revokeToken but must NOT clear it before the fetch: a turn that
+  // never reached the server, or that the server refused, has not delivered the
+  // revocation, and clearing it there lost it forever (I4). The clear moved to
+  // revokeSent(), called only on a served turn - asserted in its own tests
+  // below. What must remain true here is that the read does not consume it.
   const askStart = code.indexOf('async function ask');
   const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
   assert.ok(askStart >= 0 && formWiring > askStart);
   const askBody = code.slice(askStart, formWiring);
   assert.match(
     askBody,
+    /const revoke=revokeToken; const revokeSent=\(\)=>\{if\(revoke&&revokeToken===revoke\)revokeToken=''\};/,
+    'the pending revoke must be read without being consumed, and cleared only by revokeSent()'
+  );
+  assert.doesNotMatch(
+    askBody,
     /const revoke=revokeToken;revokeToken='';/,
-    'the pending revoke must be read and cleared in one step so it is never sent twice'
+    'the pre-fetch read-then-clear is the I4 defect and must be gone'
   );
   assert.match(
     askBody,
@@ -489,4 +495,258 @@ test('the Privacy page keeps the full AI assistant provider disclosure and the n
   assert.ok(nexusSection, 'the NEXUS section paragraph must exist');
   assert.doesNotMatch(nexusSection, /we (?:retain|keep|store)[^.]*\b(?:days|months|years)\b/i, 'no Barrios A2I retention duration');
   assert.match(privacy, /Last updated: September 2026/);
+});
+
+// ---------------------------------------------------------------------------
+// I4: a revocation that was never delivered must not be silently dropped.
+//
+// The old code ran `const revoke=revokeToken;revokeToken='';` BEFORE the fetch.
+// Any refusal of that turn - an abort, a network error, a 409 turn_in_progress
+// (very reachable: clicking "New conversation" mid-stream aborts the client
+// while the server turn is still unwinding and holding the session lock), a 429
+// hold - therefore destroyed the pending revocation while the UI had already
+// told the visitor the conversation was new. The server-side record then lived
+// on to the idle sweep.
+//
+// The fix keeps the pending revoke until a response head proves the turn was
+// actually served, which is the only answer that proves the core resolved this
+// conversation and therefore evaluated the reset.
+//
+// These are behavioural tests, not string matches: they lift the shipped source
+// text for the capture, the read, revokeSent() and the header expression out of
+// the served page and execute it against scripted turn outcomes. A copy of the
+// logic would drift; this cannot.
+
+function widgetScript() {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.ok(script, 'the NEXUS widget script must exist');
+  return script;
+}
+
+function revokeMachine() {
+  const code = normalizeCode(widgetScript());
+
+  const capture = code.match(/const old=readConv\(\);if\(old\)revokeToken=old;/)?.[0];
+  assert.ok(capture, 'newConversation() must capture the abandoned token');
+
+  const stateMachine = code.match(
+    /const revoke=revokeToken; const revokeSent=\(\)=>\{if\(revoke&&revokeToken===revoke\)revokeToken=''\};/
+  )?.[0];
+  assert.ok(stateMachine, 'ask() must read the pending revoke without consuming it, and define revokeSent()');
+
+  const spread = code.match(/\.\.\.\(revoke\?\{[^{}]*\}:conv\?\{[^{}]*\}:\{\}\)/)?.[0];
+  assert.ok(spread, 'the conditional conversation/reset header expression must exist');
+
+  // A turn harness built from the shipped fragments. `outcome` is what the turn
+  // came back as: 'network' (the fetch threw - an abort or a transport error, so
+  // no response head at all), 'refused' (a response head arrived but the turn
+  // was not served: 409, 429, 403, 503...), or 'served' (a 200 text/event-stream
+  // head, which is where the widget calls revokeSent()).
+  const body = `
+    let revokeToken = '', stored = '';
+    const readConv = () => stored;
+    const forgetConv = () => { stored = ''; };
+    const storeConv = (value) => { stored = value; };
+    const requests = [];
+
+    const newConversation = () => { ${capture} forgetConv(); };
+
+    const turn = (outcome, issued, midFlight) => {
+      const conv = readConv();
+      ${stateMachine}
+      const headers = { 'content-type': 'application/json', ${spread} };
+      requests.push(headers);
+      if (typeof midFlight === 'function') midFlight();
+      if (outcome === 'network') return;
+      if (issued) storeConv(issued);
+      if (outcome !== 'served') return;
+      revokeSent();
+    };
+
+    return {
+      requests,
+      newConversation,
+      turn,
+      storeConv,
+      pending: () => revokeToken,
+      storedToken: () => stored
+    };
+  `;
+  return new Function(body)();
+}
+
+const TOKEN = 'x-nexus-conversation';
+const RESET = 'x-nexus-conversation-reset';
+
+test('a pending revoke survives a turn that never reached the server and rides the next one (I4)', () => {
+  const widget = revokeMachine();
+  widget.storeConv('T1');
+  widget.newConversation();
+  assert.equal(widget.pending(), 'T1', 'the abandoned token is captured on the click');
+  assert.equal(widget.storedToken(), '', 'and is gone from storage immediately');
+
+  // The fetch threw: an abort (the visitor clicked "New conversation" mid-stream)
+  // or a transport error. Nothing was delivered.
+  widget.turn('network');
+  assert.equal(widget.requests[0][TOKEN], 'T1');
+  assert.equal(widget.requests[0][RESET], '1');
+  assert.equal(widget.pending(), 'T1', 'a turn that never reached the server must not consume the revoke');
+
+  // A response head arrived, but the turn was refused - 409 turn_in_progress,
+  // 429 rate limited, 403, 503. The core never resolved this conversation, so
+  // the reset was never evaluated.
+  widget.turn('refused');
+  assert.equal(widget.requests[1][TOKEN], 'T1');
+  assert.equal(widget.requests[1][RESET], '1');
+  assert.equal(widget.pending(), 'T1', 'a refused turn must not consume the revoke either');
+
+  // 429 with a fresh token issued alongside the refusal: the revoke still stands.
+  widget.turn('refused', 'T2');
+  assert.equal(widget.requests[2][TOKEN], 'T1');
+  assert.equal(widget.pending(), 'T1');
+
+  // Served at last. Now, and only now, is it spent.
+  widget.turn('served', 'T9');
+  assert.equal(widget.requests[3][TOKEN], 'T1');
+  assert.equal(widget.requests[3][RESET], '1');
+  assert.equal(widget.pending(), '', 'a served turn delivered the revocation, so it is spent');
+});
+
+test('a delivered revoke is never sent a second time for the same conversation (I4)', () => {
+  const widget = revokeMachine();
+  widget.storeConv('T1');
+  widget.newConversation();
+  widget.turn('served', 'T9');
+  assert.equal(widget.requests[0][RESET], '1');
+
+  // Every later turn is an ordinary turn: the stored token, no reset header.
+  widget.turn('served', 'T10');
+  widget.turn('refused');
+  widget.turn('served', 'T11');
+  for (const request of widget.requests.slice(1)) {
+    assert.equal(RESET in request, false, 'an ordinary turn must never carry the reset header');
+  }
+  assert.equal(widget.requests[1][TOKEN], 'T9', 'an ordinary turn carries the stored token');
+  assert.equal(widget.requests[3][TOKEN], 'T10');
+  assert.equal(
+    widget.requests.filter((request) => RESET in request).length,
+    1,
+    'exactly one request in the whole session asked for the revocation'
+  );
+});
+
+test('the reset header is never sent without a token, and never on an ordinary turn (I4)', () => {
+  const widget = revokeMachine();
+
+  // A brand new tab: nothing stored, nothing abandoned. No conversation header
+  // at all, and certainly no reset.
+  widget.turn('served', 'T1');
+  assert.equal(TOKEN in widget.requests[0], false);
+  assert.equal(RESET in widget.requests[0], false);
+
+  // An ordinary second turn: the stored token alone.
+  widget.turn('served', 'T2');
+  assert.equal(widget.requests[1][TOKEN], 'T1');
+  assert.equal(RESET in widget.requests[1], false);
+
+  // A click with nothing stored yet cannot invent a revocation.
+  const empty = revokeMachine();
+  empty.newConversation();
+  assert.equal(empty.pending(), '', 'there is nothing to revoke when no token was ever issued');
+  empty.turn('served', 'A');
+  assert.equal(RESET in empty.requests[0], false);
+
+  // Invariant over every request produced by all three widgets: a reset always
+  // travels with a non-empty token.
+  for (const request of [...widget.requests, ...empty.requests]) {
+    if (!(RESET in request)) continue;
+    assert.equal(typeof request[TOKEN], 'string');
+    assert.ok(request[TOKEN].length > 0, 'the reset header must only ever accompany a token');
+  }
+});
+
+test('a "New conversation" clicked while a turn is in flight is not wiped by that turn succeeding (I4)', () => {
+  const widget = revokeMachine();
+  widget.storeConv('T1');
+  widget.newConversation();
+
+  // The turn carrying T1's revocation is in flight. Mid-flight the visitor sends
+  // a second reset: a later answer has since stored T2, so the click captures T2
+  // into the same single slot. The in-flight turn then succeeds - and must clear
+  // only what it was carrying, which is no longer what is pending.
+  widget.turn('served', 'T9', () => {
+    widget.storeConv('T2');
+    widget.newConversation();
+  });
+  assert.equal(widget.pending(), 'T2', 'the newer pending revoke must survive the older turn completing');
+
+  widget.turn('served', 'T10');
+  assert.equal(widget.requests[1][TOKEN], 'T2');
+  assert.equal(widget.requests[1][RESET], '1');
+  assert.equal(widget.pending(), '');
+});
+
+test('two "New conversation" clicks queue nothing: the slot holds the most recently abandoned token (I4)', () => {
+  // DECISION, recorded here because it is a deliberate limit and not an
+  // oversight. The wire carries exactly one conversation token per request, so a
+  // queue could only drain one revocation per turn - and because a revoking turn
+  // is served on a brand new conversation, draining a queue would reset the
+  // visitor's context on every turn until it emptied. That is worse for the
+  // visitor than letting the older abandoned record fall to the deadline sweep,
+  // where it is already unreachable. So: a single slot, holding the most recent
+  // abandonment. Only the most recent is attempted.
+  const twice = revokeMachine();
+  twice.storeConv('A');
+  twice.newConversation();
+  twice.storeConv('B');
+  twice.newConversation();
+  assert.equal(twice.pending(), 'B', 'the most recently abandoned conversation is the one attempted');
+
+  // And the case with no turn between the two clicks is not a loss at all: no
+  // second conversation was ever minted, so the first click's capture stands.
+  const noTurnBetween = revokeMachine();
+  noTurnBetween.storeConv('A');
+  noTurnBetween.newConversation();
+  noTurnBetween.newConversation();
+  assert.equal(noTurnBetween.pending(), 'A', 'a second click with nothing stored must not erase the pending revoke');
+  noTurnBetween.turn('served', 'Z');
+  assert.equal(noTurnBetween.requests[0][TOKEN], 'A');
+  assert.equal(noTurnBetween.requests[0][RESET], '1');
+});
+
+test('revokeSent() is called in exactly one place, after the turn is known to be served (I4)', () => {
+  const code = normalizeCode(widgetScript());
+  const askStart = code.indexOf('async function ask');
+  const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
+  const askBody = code.slice(askStart, formWiring);
+
+  assert.equal(
+    (askBody.match(/revokeSent\(\);/g) ?? []).length,
+    1,
+    'revokeSent() must be called from exactly one place'
+  );
+
+  const definedAt = askBody.indexOf('const revokeSent=');
+  const fetchAt = askBody.indexOf("res=await fetch('/api/nexus/chat'");
+  const issuedAt = askBody.indexOf("const issued=res.headers.get('x-nexus-conversation')");
+  const statusGuardAt = askBody.indexOf('if(res.status!==200');
+  const calledAt = askBody.indexOf('revokeSent();');
+
+  assert.ok(definedAt >= 0 && fetchAt > definedAt, 'the pending revoke is read before the fetch that carries it');
+  assert.ok(statusGuardAt > issuedAt && issuedAt > fetchAt, 'the status guard follows the response head');
+  assert.ok(
+    calledAt > statusGuardAt,
+    'the revoke may only be discarded after the 200 text/event-stream guard has been passed'
+  );
+
+  // Nothing else may clear it. If any other statement assigned revokeToken='',
+  // a refused turn could still lose the revocation.
+  const script = widgetScript();
+  const clears = (script.match(/revokeToken=''/g) ?? []).length;
+  assert.equal(clears, 2, 'revokeToken is initialised once and cleared once, inside revokeSent()');
+  assert.match(script, /pendingReset=false,revokeToken=''/, 'one of the two is the declaration');
+
+  // And the failure is silent: nothing in the revoke path surfaces a status line.
+  const machine = askBody.slice(definedAt, fetchAt);
+  assert.doesNotMatch(machine, /status\(|offlineNotice\(|retryPill\(/, 'a failed revocation is never shown to the visitor');
 });

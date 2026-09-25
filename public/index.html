@@ -2743,13 +2743,29 @@
           const reply=line('NEXUS',TEXT.sending);let gotText=false,terminal=false,res;
           const dropPending=()=>{if(!gotText)reply.el.remove()};
           const conv=readConv();
-          /* A pending revoke (set by newConversation(), consumed exactly once here)
-             rides this turn as the OLD token plus the reset header, asking the server
-             to delete that abandoned conversation while THIS turn is served on a
-             brand new one. Read-then-clear in one step so it can never be sent twice;
-             never combined with the ordinary stored token, and never present when
-             nothing was just abandoned. */
-          const revoke=revokeToken;revokeToken='';
+          /* A pending revoke (set by newConversation()) rides this turn as the OLD
+             token plus the reset header, asking the server to delete that abandoned
+             conversation while THIS turn is served on a brand new one. It is NOT
+             consumed here, and that is the fix for I4: clearing it before the fetch
+             destroyed the revocation for good whenever the turn did not get through -
+             an abort, a network error, a 409 turn_in_progress (very reachable, since
+             clicking "New conversation" mid-stream aborts this client while the server
+             turn is still unwinding and holding the session lock), or a 429 hold. The
+             transcript had already been emptied synchronously, so the visitor was told
+             the conversation was gone while the server record survived to the idle
+             sweep. Instead revokeSent() clears it, and it is called from exactly one
+             place: after the 200 text/event-stream head, which is the only answer that
+             proves the core resolved this conversation and therefore reached its
+             decision about the reset. Every other outcome leaves revokeToken set, so
+             the very next turn carries it again - silently: a revocation that did not
+             land is never surfaced to the visitor, and never blocks anything. The
+             revokeToken===revoke guard means a "New conversation" clicked while this
+             turn is in flight, which captures a NEWER token into the same slot, is not
+             wiped by this turn succeeding. Still never combined with the ordinary
+             stored token, never present when nothing was abandoned, and - because a
+             served turn spends it - never sent twice for one conversation. */
+          const revoke=revokeToken;
+          const revokeSent=()=>{if(revoke&&revokeToken===revoke)revokeToken=''};
           try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(revoke?{'x-nexus-conversation':revoke,'x-nexus-conversation-reset':'1'}:conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
           catch(err){dropPending();status(controller.signal.aborted?TEXT.cancelled:TEXT.error,!controller.signal.aborted);finish();return}
           /* Every answer carries the conversation token, continued or freshly minted,
@@ -2759,6 +2775,10 @@
              dropping it. */
           const issued=res.headers.get('x-nexus-conversation');if(issued)storeConv(issued);
           if(res.status!==200||!(res.headers.get('content-type')||'').startsWith('text/event-stream')){dropPending();if(await httpFailure(res)!=='hold')finish();return}
+          /* The turn is being served, so the core resolved this conversation and has
+             already decided what to do with the reset. Only here is the pending revoke
+             spent - see the note above. */
+          revokeSent();
           const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='',hold=false;
           const handle=frame=>{const f=parse(frame);if(!f||terminal)return;
             if(f.event==='delta'&&typeof f.data.text==='string'){if(!gotText){reply.t.data='';gotText=true}reply.t.data+=f.data.text;body.scrollTop=body.scrollHeight;return}
