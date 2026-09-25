@@ -272,7 +272,7 @@ test('the hermetic server replays the shipped policy, so a browser check is a ch
   assert.deepEqual(sources(directives, 'frame-ancestors'), ["'none'"]);
 });
 
-test('the conversation credential is put nowhere but sessionStorage', async () => {
+test("the conversation credential is put nowhere but this document's closure memory (item 1)", async () => {
   // CSP is defence in depth for M5, not the fix: server-side revocation and
   // session binding are what make a stolen token useless, and those live in the
   // NEXUS core. What the page can do is not widen the exposure.
@@ -281,11 +281,17 @@ test('the conversation credential is put nowhere but sessionStorage', async () =
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
 
-  assert.match(script, /sessionStorage/, 'the token has to be readable by the widget, and is per-tab');
+  // UPDATED DELIBERATELY (item 1). This used to require `sessionStorage` on the
+  // reasoning that the widget "has to read it" from somewhere persistent. It does
+  // not: it reads it from its own closure. sessionStorage is scoped to the origin
+  // and the tab, not to a page, so it survived a same-tab navigation and left a
+  // live credential readable by every script on whatever page the visitor landed
+  // on next. Nothing is stored now, so there is no key for any of them to read.
+  assert.doesNotMatch(script, /sessionStorage/, 'the credential is not in per-tab web storage either');
   assert.doesNotMatch(
     script,
     /localStorage|document\.cookie|window\.name|BroadcastChannel|SharedWorker|indexedDB/,
-    'the token must be in exactly one place'
+    "the credential must be in exactly one place: this document's closure"
   );
   assert.doesNotMatch(script, /location\.search|location\.hash|history\.(?:replace|push)State/, 'never in a URL');
   assert.doesNotMatch(script, /console\.(?:log|warn|error|info)/, 'never in the console');
@@ -741,4 +747,78 @@ test('contact.html renders the same twelve glyphs as inline SVG, decorative, at 
   const labelled = anchors.find(([, , inner]) => /alienation2innovation@gmail\.com/.test(inner));
   assert.ok(labelled, 'the direct-contact e-mail link must exist');
   assert.doesNotMatch(labelled[1], /aria-label/, 'a link with visible text needs no second name');
+});
+
+// ---------------------------------------------------------------------------
+// ITEM 1 - a script on another same-origin page cannot recover a prior token.
+//
+// The credential used to live in sessionStorage, which is scoped to the origin
+// and the tab rather than to a page. The panel links to /privacy-directive.html
+// and /contact.html in the SAME tab, and seven other pages on this origin still
+// execute third-party code, so an injection two clicks away could read a live
+// NEXUS credential out of storage.
+//
+// The guarantee asserted here is the real one and it is stronger than "those
+// pages behave": NO storage key holds the credential at all, on any page of this
+// origin, so there is nothing to recover. That is a fact about every page, not a
+// promise about a host, so it is asserted over all of public/ rather than over
+// the two pages the panel happens to link to today.
+// ---------------------------------------------------------------------------
+
+const CREDENTIAL_IN_STORAGE =
+  /(?:(?:session|local)Storage|indexedDB|document\.cookie)[\s\S]{0,80}conversation|conversation[\s\S]{0,80}(?:(?:session|local)Storage|indexedDB|document\.cookie)/i;
+
+test('the credential-in-storage scan works in both directions (item 1)', () => {
+  // The scan must be able to see a reintroduction, in either order, and must not
+  // fire on an unrelated key - command-center.html keeps a "seen the tour" flag
+  // in localStorage and that is none of this test's business.
+  assert.match(CREDENTIAL_IN_STORAGE.source, /conversation/, 'the scan is about the credential, not about storage in general');
+  for (const reintroduced of [
+    "sessionStorage.setItem('nexus.conversation', token)",
+    "localStorage.setItem('nx', conversation)",
+    "const conversation = sessionStorage.getItem('nx')",
+    "document.cookie = 'c=' + conversation"
+  ]) {
+    assert.match(reintroduced, CREDENTIAL_IN_STORAGE, `the scan must catch: ${reintroduced}`);
+  }
+  for (const unrelated of ["localStorage.getItem('nexus_tour_v5')", "sessionStorage.setItem('theme', 'dark')"]) {
+    assert.doesNotMatch(unrelated, CREDENTIAL_IN_STORAGE, `an unrelated key must not trip the scan: ${unrelated}`);
+  }
+});
+
+test('no page on this origin can recover a prior NEXUS credential from browser storage, because no key holds it (item 1)', async () => {
+  const names = (await readdir(PUBLIC_ROOT)).filter((name) => name.endsWith('.html'));
+  assert.ok(names.length > 5, 'the static pages must be discoverable, not hard-coded');
+  assert.ok(names.includes('index.html'), 'the homepage is one of them');
+  assert.ok(names.includes('terms-of-service.html'), 'and so is the Terms page the review named');
+
+  const scanned = [];
+  for (const name of names) {
+    const page = stripDocumentComments(await readFile(publicFile(name), 'utf8'));
+    scanned.push(name);
+    assert.doesNotMatch(page, /nexus\.conversation/, `${name} must not name a NEXUS credential storage key`);
+    // Any storage or cookie access within reach of the word "conversation", in
+    // either direction. Unrelated keys on the legacy pages (command-center.html
+    // keeps a "seen the tour" flag) are none of this test's business - the
+    // credential is.
+    assert.doesNotMatch(
+      page,
+      CREDENTIAL_IN_STORAGE,
+      `${name} must not put the conversation credential into storage or a cookie, or read it back out`
+    );
+    // And only the homepage may even know the credential's header name.
+    if (name !== 'index.html') {
+      assert.doesNotMatch(page, /x-nexus-conversation/i, `${name} must not handle the credential header at all`);
+    }
+  }
+  assert.ok(scanned.length === names.length, 'every static page was scanned');
+
+  // The homepage also loads /js/meet-gary.js into the same document, so it gets
+  // the same scan - a helper that cached the credential would be just as bad.
+  for (const script of ['js/meet-gary.js']) {
+    const source = await readFile(publicFile(script), 'utf8').catch(() => null);
+    if (source === null) continue;
+    assert.doesNotMatch(source, /nexus\.conversation|x-nexus-conversation/, `${script} must not touch the credential`);
+    assert.doesNotMatch(source, /(?:session|local)Storage|indexedDB|document\.cookie/i, `${script} must not store anything`);
+  }
 });

@@ -293,10 +293,17 @@ test('the panel offers a keyboard-reachable "New conversation" control that is n
   assert.equal((markup.match(/data-nexus-new/g) ?? []).length, 1, 'exactly one reset control');
 });
 
-test('the widget scopes its conversation token to the tab and never exposes it', () => {
+test('the widget scopes its conversation credential to this document and never exposes it (item 1)', () => {
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
-  assert.match(script, /sessionStorage/, 'the token lives in sessionStorage, which is per-tab by construction');
+  // UPDATED DELIBERATELY (item 1). This used to require `sessionStorage` and to
+  // call it "per-tab by construction". sessionStorage is scoped to the ORIGIN
+  // and the tab, not to a page: it survives a same-tab navigation, so a script
+  // on any other page of this origin - Terms, Founder, anything - could read a
+  // previous NEXUS credential after the visitor navigated. The credential is
+  // now a single variable in this document's closure and nothing else.
+  assert.match(normalizeCode(script), /let conversation='';/, 'the credential is one closure variable');
+  assert.doesNotMatch(script, /sessionStorage/, 'it is no longer in per-tab web storage either');
   assert.doesNotMatch(
     script,
     /localStorage|document\.cookie|window\.name|BroadcastChannel|SharedWorker/,
@@ -308,7 +315,7 @@ test('the widget scopes its conversation token to the tab and never exposes it',
   assert.doesNotMatch(script, /textContent\s*=\s*(?:conv|token)|location\.search|history\.replaceState/i);
 });
 
-test('a fresh document load unconditionally forgets the stored token before any turn can be sent (RVP I1)', () => {
+test('a fresh document load unconditionally retires any credential before any turn can be sent (RVP I1, item 1)', () => {
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
 
@@ -319,13 +326,17 @@ test('a fresh document load unconditionally forgets the stored token before any 
   assert.doesNotMatch(script, /===\s*'reload'/, 'no comparison may gate the delete on the reload navigation type');
   assert.doesNotMatch(script, /getEntriesByType\(['"]navigation['"]\)/, 'the navigation-timing check that only covered reload must be removed');
 
-  // Every storage access, including this one, stays wrapped in try/catch -
-  // private mode and blocked storage must degrade to "no token", never throw.
+  // UPDATED DELIBERATELY (item 1). This used to pin forgetConv as a guarded
+  // `sessionStorage.removeItem(CONV_KEY)`, because a blocked or private store
+  // had to degrade to "no token" instead of throwing. There is no storage call
+  // left to guard: the credential is one closure variable reached through three
+  // accessors, none of which can throw, and a fresh document therefore starts
+  // fresh because the declaration says so - not because a delete succeeded.
   const code = normalizeCode(script);
   assert.match(
     code,
-    /const forgetConv=\(\)=>\{try\{sessionStorage\.removeItem\(CONV_KEY\)\}catch\(err\)\{\}\};/,
-    'forgetConv itself must remain a guarded sessionStorage access'
+    /let conversation=''; const readConv=\(\)=>conversation; const storeConv=value=>\{conversation=value\}; const forgetConv=\(\)=>\{conversation=''\};/,
+    'the credential and its three accessors are the whole mechanism, declared together inside the widget closure'
   );
 
   // The load-time delete must be unconditional (a bare statement, not inside
@@ -843,4 +854,181 @@ test('the reset request shape is minimal and same-origin (item 2)', () => {
   assert.match(sender, /body:'\{"v":1\}'/, 'a tiny fixed body: no visitor text is ever sent with a reset');
   // Nothing about the transcript, the draft or the page goes with it.
   assert.doesNotMatch(sender, /message|lastMessage|input\.value|document\./);
+});
+
+// ---------------------------------------------------------------------------
+// ITEM 1 - the conversation credential is memory-only.
+//
+// It used to live in sessionStorage. sessionStorage is scoped to the ORIGIN and
+// the tab, not to a page, so it survives a same-tab navigation: a visitor who
+// chatted and then clicked Privacy, Contact, Terms or Founder left a live
+// credential that every script on the page he landed on could read - and several
+// pages on this origin still execute third-party code. The credential now lives
+// in one variable inside the widget IIFE's closure, for the lifetime of that
+// document, and in nothing else.
+//
+// The guarantee these tests pin is not "the other pages behave". It is that NO
+// storage key holds the credential at all, so there is nothing on this origin
+// for another page to recover.
+// ---------------------------------------------------------------------------
+
+/**
+ * A harness built from the widget's own credential code.
+ *
+ * It lifts the shipped declaration, the three shipped accessors, the shipped
+ * load-time retire, the shipped per-turn read and the shipped rotation line out
+ * of the SERVED page and runs them with every browser storage surface replaced
+ * by a spy that records any access. One instance is one DOCUMENT: a second
+ * instance is a second tab, and a reload or a navigation is simply a new
+ * instance, because a closure cannot outlive its document.
+ */
+function credentialMachine() {
+  const code = normalizeCode(widgetScript());
+
+  const closure = code.match(
+    /let conversation=''; const readConv=\(\)=>conversation; const storeConv=value=>\{conversation=value\}; const forgetConv=\(\)=>\{conversation=''\};/
+  )?.[0];
+  assert.ok(closure, 'the credential must be declared and reached through three accessors inside the widget closure');
+
+  const retire = code.match(/\}; (forgetConv\(\);) const syncExpanded=/)?.[1];
+  assert.ok(retire, 'a fresh document must retire any credential before the widget wires anything up');
+
+  const read = code.match(/const conv=readConv\(\);/)?.[0];
+  assert.ok(read, 'a turn must read the credential out of the closure');
+
+  const rotate = code.match(
+    /const issued=res\.headers\.get\('x-nexus-conversation'\);if\(issued\)storeConv\(issued\);/
+  )?.[0];
+  assert.ok(rotate, 'every response must rotate the in-memory credential');
+
+  const body = `
+    // Any touch of any of these is recorded. The shipped code must touch none.
+    const touched = [];
+    const trap = (label) => new Proxy({}, {
+      get: (_target, key) => { touched.push(label + '.' + String(key)); return () => undefined; },
+      set: (_target, key) => { touched.push(label + '.' + String(key) + '='); return true; }
+    });
+    const sessionStorage = trap('sessionStorage');
+    const localStorage = trap('localStorage');
+    const indexedDB = trap('indexedDB');
+    const caches = trap('caches');
+    const document = {
+      get cookie() { touched.push('document.cookie'); return ''; },
+      set cookie(value) { touched.push('document.cookie='); }
+    };
+    const window = {
+      get name() { touched.push('window.name'); return ''; },
+      set name(value) { touched.push('window.name='); },
+      addEventListener: () => undefined
+    };
+
+    ${closure}
+    ${retire}
+
+    // One turn, exactly as the widget does it: read what this closure holds,
+    // send that as the header, then rotate from the response head.
+    const turn = (issuedByServer) => {
+      ${read}
+      const res = {
+        headers: { get: (header) => (header === 'x-nexus-conversation' ? (issuedByServer ?? null) : null) }
+      };
+      ${rotate}
+      return conv;
+    };
+
+    return { turn, touched, held: () => conversation, retire: forgetConv };
+  `;
+  return new Function(body)();
+}
+
+test('the conversation credential is held only in closure memory, and no storage surface is ever touched (item 1)', () => {
+  const machine = credentialMachine();
+  assert.equal(machine.held(), '', 'a fresh document starts with no credential at all');
+  assert.equal(machine.turn('T1'), '', 'so its first turn is tokenless and the core mints a new conversation');
+  assert.equal(machine.held(), 'T1', 'the credential the response issued is held in memory');
+  assert.deepEqual(
+    machine.touched,
+    [],
+    'no Web Storage, cookie, IndexedDB, cache or window-name access happened - not even a read'
+  );
+});
+
+test('consecutive turns on one open page rotate the in-memory credential and continue the conversation (item 1)', () => {
+  const machine = credentialMachine();
+  assert.equal(machine.turn('T1'), '', 'turn 1 carries nothing');
+  assert.equal(machine.turn('T2'), 'T1', 'turn 2 presents the credential turn 1 was issued: same conversation');
+  assert.equal(machine.turn('T3'), 'T2', 'single-use rotation: each response replaces the one held in memory');
+  assert.equal(machine.held(), 'T3');
+
+  // A response with no credential header must leave the held one alone, or a
+  // refusal that carries none would silently end the conversation.
+  assert.equal(machine.turn(null), 'T3');
+  assert.equal(machine.held(), 'T3', 'a response carrying no credential never clears the held one');
+  assert.deepEqual(machine.touched, []);
+
+  // And "New conversation" retires it in memory, so the next turn is tokenless.
+  machine.retire();
+  assert.equal(machine.held(), '');
+  assert.equal(machine.turn('T4'), '', 'after a retire the next turn opens a fresh conversation');
+});
+
+test('two tabs stay isolated, and a reload or navigation leaves no reusable client credential (item 1)', () => {
+  const tabA = credentialMachine();
+  const tabB = credentialMachine();
+
+  tabA.turn('A1');
+  assert.equal(tabA.held(), 'A1');
+  assert.equal(tabB.held(), '', "a second document has its own closure and cannot see the first one's credential");
+  assert.equal(tabB.turn('B1'), '', 'so the second tab opens its own conversation');
+  assert.equal(tabA.held(), 'A1', 'and neither tab disturbs the other');
+
+  // A reload or an in-tab navigation destroys the document, and with it the
+  // closure. The next document is indistinguishable from a brand new tab, so
+  // there is no reusable client credential and no key for a later page to read.
+  const afterReload = credentialMachine();
+  assert.equal(afterReload.held(), '', 'nothing survived the document');
+  assert.equal(afterReload.turn('C1'), '', 'the first turn after a reload is tokenless: a fresh conversation');
+  for (const machine of [tabA, tabB, afterReload]) {
+    assert.deepEqual(machine.touched, [], 'and none of it was ever written anywhere a later document could read');
+  }
+});
+
+test('no storage key can hold the credential: the shipped widget contains no storage access at all (item 1)', () => {
+  const script = widgetScript();
+  const code = normalizeCode(script);
+
+  // A surface named in a block comment is documentation; a surface named in code
+  // is an access site - the same distinction tests/static-harness.test.mjs draws
+  // for a hard-coded port. Only an access site can put the credential somewhere
+  // a script on another page of this origin could read it.
+  const surfaces = [
+    /Storage/i, /indexedDB/i, /IDBFactory/, /openDatabase/, /\.cookie\b/,
+    /window\.name/, /self\.name/, /BroadcastChannel/, /SharedWorker/,
+    /ServiceWorker/, /\bcaches\b/, /postMessage/, /CONV_KEY/
+  ];
+  for (const surface of surfaces) {
+    assert.doesNotMatch(code, surface, `the credential must not reach ${surface}`);
+  }
+
+  // Never hung off a global, never put in a URL, the DOM or the log.
+  assert.doesNotMatch(
+    code,
+    /(?:window|self|globalThis|top|parent)\.[A-Za-z_$][\w$]*\s*=\s*(?:conversation|conv|issued|old|token)\b/,
+    'the credential is never attached to a global object'
+  );
+  assert.doesNotMatch(
+    code,
+    /location\s*=|location\.(?:href|search|hash)\s*=|history\.(?:replace|push)State/,
+    'never in a URL'
+  );
+  assert.doesNotMatch(code, /console\./, 'never logged');
+  assert.doesNotMatch(
+    code,
+    /(?:textContent|innerHTML|value|setAttribute)\s*[=(]\s*(?:conversation|conv|issued|old)\b/,
+    'never written into the DOM'
+  );
+
+  // And the retired storage key exists nowhere in the served document, so there
+  // is not even a name left for another page to guess at.
+  assert.doesNotMatch(html, /nexus\.conversation/, 'the old storage key must be gone from the served page');
 });

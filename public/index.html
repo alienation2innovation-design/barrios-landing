@@ -2654,31 +2654,59 @@
         const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body'),fresh=root.querySelector('[data-nexus-new]');
         const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.'};
         let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,resetEpoch=0;
-        /* Tab-scoped conversation token, carried in the x-nexus-conversation header.
-           sessionStorage is per-tab by construction, and that is the whole fix: a
-           second tab of this site starts its own conversation instead of joining the
-           first one. The value is minted and verified by the server and is opaque
-           here - never invented, parsed, rendered, logged, or placed in the DOM or a
-           URL. Every access is guarded, because private mode and blocked storage must
-           degrade to "no stored token" (a fresh conversation), never to a thrown
-           error or a dead widget. */
-        const CONV_KEY='nexus.conversation';
-        const readConv=()=>{try{return sessionStorage.getItem(CONV_KEY)||''}catch(err){return ''}};
-        const storeConv=value=>{try{sessionStorage.setItem(CONV_KEY,value)}catch(err){}};
-        const forgetConv=()=>{try{sessionStorage.removeItem(CONV_KEY)}catch(err){}};
-        /* Rule: ANY fresh document load starts a FRESH conversation, not only a
-           reload. The transcript lives only in the DOM (see .nexus__local above),
-           so a reload, an in-tab navigation away and back (the Privacy and Contact
-           links below stay in this same tab), or a back/forward that misses the
-           bfcache all arrive with an EMPTY transcript while a lingering token would
-           silently resume the old one - the exact symptom this fix exists to
-           remove. Deleting the token here, unconditionally, before the widget can
-           send its first turn, keeps "empty transcript" and "no token" in lockstep.
-           A bfcache restore needs no handling at all: this script never re-runs on
-           that restore, so the DOM (and its transcript, and every variable in this
-           closure) comes back exactly as it was. Closing and reopening the panel
-           within THIS SAME document still keeps the conversation, because nothing
-           above this line ever runs a second time. */
+        /* THE CONVERSATION CREDENTIAL LIVES ONLY HERE: one variable inside this
+           IIFE's closure, for the lifetime of this document.
+
+           It used to be in per-tab web storage, and that was the exposure. Web
+           storage is scoped to the ORIGIN and the tab, not to a page, so it
+           survived a same-tab navigation: a visitor who chatted and then followed
+           the Privacy link below - or Contact, Terms, Founder, any link on this
+           site - left a live NEXUS credential that every script on the page he
+           landed on could read, and several pages on this origin still execute
+           third-party code. A closure cannot outlive its document, so after this
+           change there is no key anywhere for another page to read.
+
+           Deliberately nowhere else: no Web Storage, no browser database, no
+           cookie, not the window's name, not a DOM attribute or text node, not a
+           URL, and on no global object - and never logged. The value is minted
+           and verified by the server and is opaque here: never invented, parsed
+           or rendered. Nothing below reaches it except through these three
+           accessors, and none of them can throw, so there is no blocked-storage
+           failure mode left to guard against either.
+
+           What this keeps working. One isolated conversation per document, so a
+           second tab runs a second closure and starts its own. Continuity between
+           turns while this page is open, including the single-use rotation,
+           because storeConv() replaces the value from every response head.
+           Closing and reopening the panel keeps that conversation, because
+           nothing in this closure re-runs when the panel toggles. And the
+           immediate, provider-free reset endpoint keeps working for as long as
+           the document is open, because that is exactly how long the credential
+           it needs exists.
+
+           What it gives up, stated plainly rather than worked around: after a
+           reload or a navigation the credential is simply gone from the client,
+           so the client can no longer revoke that conversation - "New
+           conversation" in the next document has nothing to authenticate a
+           revocation with. The core's deadline sweep reclaims the record instead.
+           Smuggling the credential across documents to recover that ability is
+           precisely the exposure this change removes. */
+        let conversation='';
+        const readConv=()=>conversation;
+        const storeConv=value=>{conversation=value};
+        const forgetConv=()=>{conversation=''};
+        /* ANY fresh document therefore starts a FRESH conversation - a reload, an
+           in-tab navigation away and back (the Privacy and Contact links below
+           stay in this same tab), or a back/forward that misses the bfcache. The
+           declaration above is the guarantee; this call is the same invariant
+           stated once more where the widget starts, and it keeps forgetConv() the
+           single place a credential is retired, so the transcript (which lives
+           only in the DOM, see .nexus__local above) and the credential can never
+           drift apart. A bfcache restore needs no handling at all: this script
+           never re-runs on that restore, so the DOM, its transcript and every
+           variable in this closure come back exactly as they were. Closing and
+           reopening the panel within THIS SAME document still keeps the
+           conversation, because nothing above this line ever runs a second time. */
         forgetConv();
         const syncExpanded=expanded=>opens.forEach(element=>element.setAttribute('aria-expanded',String(expanded)));
         const focusInput=()=>requestAnimationFrame(()=>requestAnimationFrame(()=>input.focus({preventScroll:true})));
