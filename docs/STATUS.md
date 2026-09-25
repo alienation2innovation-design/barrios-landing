@@ -4,6 +4,117 @@ Newest entry first. This file records website-side state for the NEXUS assistant
 with the assistant core's detail, is `C:\Projects\barrios-nexus-assistant\docs\STATUS.md`.
 
 ---
+# MEMORY-ONLY CONVERSATION CREDENTIAL AND A CLOSED FIRST-TURN RESET RACE — NOT PUSHED, 2026-09-25
+
+Gary authorized one final, narrowly bounded pass. Two of its findings were the website's, plus a documentation
+correction. Both are done, an independent security review ran afterwards specifically on browser storage,
+cross-page navigation and first-turn reset behaviour, and it judged both **closed**. **Nothing was pushed or
+deployed**, and no Vercel setting, DNS record, billing setting or production environment variable was changed.
+
+## Branch and HEAD
+
+`feat/homepage-ai-workers-rewrite` at **`56027c8`**, ahead of `origin` and not pushed:
+
+```text
+56027c8 fix: "New conversation" waits until it has something to revoke
+ee254bf security: the conversation credential never leaves this document
+```
+
+Changed paths: `public/index.html` and `tests/**` only.
+
+## An important correction to earlier wording in this file
+
+An earlier entry said the third-party executable script was removed from the panel-reachable pages, and paired it
+with an open item about the rest of the origin. Read together they can give the impression that the same-origin
+script problem was handled. **It was not, and this entry is precise about it.**
+
+- `privacy-directive.html` and `contact.html` genuinely no longer load an off-origin script.
+- **Unrelated historical pages still do** — `terms-of-service.html`, `founder.html`, `nexus-personal.html`,
+  `status.html`, `data-sovereignty.html`, `command-center.html` and `creative-director.html` — two of them from
+  unpinned sources (`unpkg.com/lucide@latest`) and one loading `cdn.tailwindcss.com`. **That supply-chain risk
+  remains open.** It was deliberately not swept, because the pass was bounded to the panel-reachable pages.
+- What changed instead is that **there is no longer a NEXUS conversation credential for such a script to
+  steal.** The credential is memory-only and cannot persist across navigation. The earlier claim should be read
+  as "the credential is out of reach", not "the origin is clean".
+
+The reviewer proved this rather than asserting it: on `terms-of-service.html` the third-party Iconify code
+**writes its own keys into both `sessionStorage` and `localStorage`**, which shows storage there is fully
+reachable by off-origin script — and the NEXUS credential is simply not in it.
+
+## What changed
+
+**The conversation credential is memory-only.** It was in `sessionStorage`, which survives same-tab navigation,
+so any other same-origin page could read a previous NEXUS credential after the visitor navigated. It now lives in
+a single variable inside the widget's private closure for the life of that document, reached only through its
+accessors; the storage key and all four access sites are gone. It appears in no Web Storage, no cookie, no
+`window.name`, no IndexedDB or Cache API, no DOM attribute or text node, no URL and no global, and it is never
+logged.
+
+This keeps working: one isolated conversation per tab, continuity between turns on the open page including the
+single-use rotation, continuity when the panel is closed and reopened **in the same document**, a fresh
+conversation after reload or navigation, and the immediate provider-free reset endpoint.
+
+**Honest consequence:** after a reload or navigation the client holds nothing to revoke with, so that conversation
+is reclaimed by the core's deadline sweep instead of by an explicit reset. That was accepted rather than worked
+around, because working around it would mean persisting the credential again — which is the thing being removed.
+
+**The first-turn reset race is closed.** While a turn is awaiting its response headers and no token exists yet,
+there is nothing to authenticate a revocation with, so "New conversation" must not claim it revoked server state.
+The control is now genuinely disabled during that window — native `disabled` plus a mirrored `aria-disabled` that
+is **removed** rather than set to `"false"`, so assistive technology reports it — and the handler refuses early.
+Escape and the never-disabled Close control still cancel, so the visitor is never trapped, and the control
+re-enables on every settle path. Once a token exists it uses the immediate reset endpoint as before, a failure
+stays retryable, and no reset ever causes a provider call.
+
+## Verification — after the last edit, real exit codes
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm test`, `HOMEPAGE_URL` absent | **0** | **167 tests, 167 pass, 0 fail, 0 skipped** |
+| `npm test`, dead ambient `HOMEPAGE_URL` | **0** | 167/167 — the suite used its own server |
+| two concurrent `npm test` runs | **0 / 0** | no port collision |
+| `npx tsc --noEmit` | **0** | clean |
+| production build (placeholder env in-shell only) | **0** | compiled successfully, both `ƒ /api/nexus/chat` and `ƒ /api/nexus/reset` present |
+| `git diff --check` | **0** | clean |
+
+The shipped widget was also checked directly for every storage surface: `sessionStorage`, `localStorage`,
+`document.cookie`, `window.name`, `indexedDB`, `BroadcastChannel` and `SharedWorker` all occur **zero** times.
+
+Independent verification in live Chrome, after four rotating turns holding a real token, swept **fourteen**
+surfaces empty — storage, cookies, `window.name`, IndexedDB, the Cache API, service workers, every window string
+global, the entire serialized DOM, every attribute, every text node **and comment**, every dataset,
+performance-entry names and a `BroadcastChannel` listener — and a forced 500 leaked nothing while correctly
+retaining the credential. Same-tab navigation to `privacy-directive.html`, `contact.html` and
+`terms-of-service.html` recovered nothing. The reset race was attacked with a 20-second turn in flight: the
+accessibility snapshot reported the control disabled, three activation attempts changed nothing, and **zero**
+reset requests reached the server.
+
+## Remaining risks
+
+- **Same-origin request forgery is unchanged.** A script on any same-origin page can still call
+  `/api/nexus/chat` with `credentials:'same-origin'` and spend provider budget as that visitor. It cannot resume
+  the visitor's conversation — with no token it gets a fresh one — and it **cannot revoke anything**, because the
+  reset proxy refuses a reset with no token before any upstream call. Together with the historical pages that
+  still load unpinned third-party scripts, this is the most significant open item on this side.
+- The browser evidence is Chrome-only and manual; the source-level scan and the trap-harness proof are the
+  automated gates.
+- A reset refused with 429 is dropped without retry, so that revocation waits for the core's sweep.
+- The disabled control's label sits at roughly 3.9:1 contrast — WCAG exempts an inactive control, but a reviewer
+  may still flag it.
+- `app/api/nexus/chat/route.ts` still forwards the now-dead reset header, harmless but worth tidying.
+- `'unsafe-inline'` remains in the CSP, forced by the inline blocks in a static page, so CSP narrows inline
+  injection without closing it.
+- The committed `dist/output.css` is still stale against source and is what ships, since the Vercel build command
+  does not run the npm `prebuild` lifecycle. It is byte-identical to the deployed commit; regenerating it remains
+  Gary's call.
+
+## Next release gate
+
+Codex's review, then the decisions on sweeping the remaining third-party scripts from the historical pages and on
+enabling the lead backend together with the copy that depends on it. Pushing this branch remains a separate
+explicit approval. `origin/master` is `7b93711`, so production still serves the pre-hardening release.
+
+---
 # RESET-ONLY PROXY, TRUTHFUL DISCLOSURE, NO CDN SCRIPT ON PANEL PAGES, HERMETIC TESTS — NOT PUSHED, 2026-09-25
 
 Gary authorized one bounded pass over eight verified findings; four were the website's. All are implemented and
