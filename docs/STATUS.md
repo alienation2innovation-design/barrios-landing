@@ -4,6 +4,108 @@ Newest entry first. This file records website-side state for the NEXUS assistant
 with the assistant core's detail, is `C:\Projects\barrios-nexus-assistant\docs\STATUS.md`.
 
 ---
+# CSP, HERMETIC TEST HARNESS, HONEST CTA, SERVER-SIDE REVOCATION — NOT PUSHED, 2026-09-24
+
+Gary supplied eleven review findings; four of them were the website's. All are implemented and tested, an
+independent security and privacy review ran after the last edit, and its two website findings were fixed and
+re-verified. **Nothing was pushed or deployed**, and no Vercel setting, DNS record, billing setting or
+production environment variable was changed. Codex reviews this before any production deployment.
+
+## Branch and HEAD
+
+`feat/homepage-ai-workers-rewrite` at **`239db94`**, ahead of `origin` and not pushed. The six commits of this
+pass, oldest first:
+
+```text
+455a303 test: the website suite starts and stops its own server
+741a54b fix: the panel offers what this build can actually do
+9bcb068 security: give the site a Content-Security-Policy
+2ad59f8 feat: revoke the conversation server-side and follow the rotated token
+833511d fix: every page on this origin carries exactly one CSP
+239db94 fix: a revocation that did not land is retried, not dropped
+```
+
+Changed paths: `next.config.js`, `public/index.html`, `app/api/nexus/chat/route.ts`, `package.json`,
+`tests/**` (including the new `tests/support/site.mjs` harness). `vercel.json`, `middleware.ts`, `lib/**` and
+every `.env*` were left alone, and `dist/output.css` / `public/dist/output.css` were never staged.
+
+## What changed
+
+**Honest wording while no lead backend is active (finding 9).** The panel previously offered to start a
+consultation request and promised that contact details would be collected with consent — a capability the
+assistant backend does not currently have. The primary call to action is now
+**"Explore your automation with NEXUS."** and the disclosure no longer promises contact collection. The
+`NEXUS AI BETA` badge, its supporting line and the Privacy link are unchanged, and the honesty assertions still
+hold: the panel contains none of `saved|sent|submitted|booked|scheduled|delivered` and names no vendor, model or
+host.
+
+**A Content-Security-Policy where there was none (finding 10).** Measured beforehand: zero occurrences in the
+repository. The policy is set in `next.config.js` in five tiers whose sources are **mutually exclusive**, so
+rule order cannot yield two intersected headers. The homepage and the static HTML pages — including
+`/privacy-directive.html`, which is linked from inside the panel and can therefore read the conversation token —
+take a tight policy: `default-src 'self'`, `connect-src 'self'`, `object-src 'none'`, `base-uri 'self'`,
+`frame-ancestors 'none'`, `form-action 'self'`, `img-src 'self' data:`, `font-src 'self'`,
+`upgrade-insecure-requests`. A catch-all **floor** covers every remaining path with the structural directives.
+`vercel.json` was not touched, the `/api/:path((?!nexus/).*)` CORS carve-out is intact, and the NEXUS route
+still emits no CORS header.
+
+It was proved three ways: exactly one matching rule per path; the raw served header captured from
+`next build` + `next start` + `curl`, showing exactly one CSP header on all ten probes; and against Next's own
+compiled regexes in `routes-manifest.json`, which caught a real collision — Next compiles sources with an
+optional trailing slash, so `/founder/` matched two rules until the exclusions were anchored.
+
+**A hermetic test harness (finding 11).** The suite previously required a listener at `127.0.0.1:4173`, which
+had already produced a confident but entirely spurious 26-failure report when a stale server served another
+commit's bytes. `npm test` now starts and stops its own static server on a **kernel-assigned** port, with a full
+MIME table and clean teardown even when a test fails, so collision is impossible by construction. Two
+concurrent runs both pass. The `HOMEPAGE_URL` override still works for anyone pointing at an external server.
+
+**The browser half of server-side revocation and rotation.** The core now treats the conversation credential as
+single-use and revokes on request, so this page forwards `x-nexus-conversation-reset` through the proxy, stores
+the rotated token from every response, and sends the reset with the visitor's next turn rather than spending a
+provider call on a click. "New conversation" clears the transcript and the local token **synchronously**, so the
+visitor never waits on the network. A revocation that does not land — abort, 409, 429, a network error — is
+**kept and retried on the next turn** rather than silently dropped, and only a served turn spends it. No error
+is ever surfaced for a failed revocation.
+
+## Verification — after the last edit, real exit codes
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm test` (hermetic) | **0** | **121 tests, 121 pass, 0 fail, 0 skipped** |
+| `npm test` twice concurrently | **0 / 0** | no port collision |
+| `npx tsc --noEmit` | **0** | clean |
+| `npm run build` (placeholder env in-shell only) | **0** | Next.js 15.5.26, `ƒ /api/nexus/chat` present, no `pages/api/nexus`, 13 CSP rules in `routes-manifest.json` |
+| `git diff --check` | **0** | clean |
+
+## Remaining risks
+
+- **`'unsafe-inline'` remains** in `script-src` and `style-src`, forced by four inline `<script>` and four
+  inline `<style>` blocks in a static file. A nonce cannot reach bytes that are never rendered per request, and
+  hashes fail closed on a page rewritten by codegen. So CSP narrows the exposure of the `sessionStorage`
+  conversation token but does **not** stop inline-injected script, and it does not replace the core's
+  server-side revocation and session binding.
+- **Floor-only pages** — `/dashboard`, `/sign-in`, `/checkout.html` and the API — still permit off-origin
+  script. Tightening them requires first measuring the Clerk and Stripe hosts in a browser; Clerk's Frontend API
+  host exists only in an environment variable, so a literal `default-src 'self'` catch-all would have broken
+  authentication and checkout.
+- `/founder/` is manifest-verified rather than served-verified, because a 308 precedes the headers phase.
+- A second "New conversation" click before any turn is sent revokes only the most recent abandoned token; the
+  older record waits for the core's deadline sweep.
+- The honest CTA is correct only while the lead backend is unset. If `NEXUS_LEAD_BACKEND` is ever enabled, this
+  copy must be revisited in the same change, or the site will be wrong in the other direction.
+- The committed `dist/output.css` is still stale against source, and `vercel.json`'s build command does not run
+  the npm `prebuild` lifecycle, so the committed artifact is what ships. It is byte-identical to the deployed
+  commit; regenerating it remains Gary's call.
+
+## Next release gate
+
+Codex's review, then the coupled decision about enabling the lead backend together with the CTA copy, and a
+browser measurement of the Clerk and Stripe hosts before the floor-only pages are tightened. Pushing this branch
+remains a separate explicit approval. `origin/master` is `7b93711`, so production still serves the pre-hardening
+release.
+
+---
 
 # NEXUS AI BETA: TAB-SCOPED CONVERSATIONS, NEW-CONVERSATION CONTROL, ACCESSIBLE LABEL — NOT PUSHED, 2026-09-24
 
