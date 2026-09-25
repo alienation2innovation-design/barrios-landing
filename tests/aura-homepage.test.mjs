@@ -503,10 +503,27 @@ test('the Privacy page keeps the provider disclosure and states the OneDrive/ema
   assert.match(privacy, /does not use commercial API data to train its models by default/);
   assert.match(privacy, /do not share sensitive, personal or confidential information/i);
 
-  // What does NOT happen, stated plainly, because the lead backend is off.
+  // What does NOT happen, stated plainly, because the lead backend is off —
+  // and what DOES happen to the conversation while it is off. The page must
+  // not claim nothing is saved: every turn is stored server-side, masked,
+  // until the conversation's idle/absolute deadline or a new conversation.
   assert.match(privacy, /Lead capture is switched off in the current release\./);
-  assert.match(privacy, /NEXUS does not ask you for contact details/);
-  assert.match(privacy, /does not save anything you type in the chat/);
+  assert.match(privacy, /NEXUS does not ask you for, or save, contact details while lead capture is off/);
+  assert.match(privacy, /sent to our third-party model provider/);
+  assert.match(privacy, /held on our own server for the length of that conversation/);
+  assert.match(privacy, /contact-shaped details masked in what is stored/);
+  assert.match(privacy, /deleted when the conversation reaches its idle or absolute time limit/);
+  assert.match(privacy, /immediately if you start a new conversation/);
+  assert.doesNotMatch(
+    privacy,
+    /does not save anything you type in the chat/,
+    'the false "nothing is saved" claim must be gone'
+  );
+  assert.doesNotMatch(
+    privacy,
+    /Barrios A2I does not save anything/,
+    'the false blanket no-save claim must be gone'
+  );
 
   // The OneDrive and email-notification terms survive, but only inside the
   // conditional paragraph. Item 4: while the capability is off, the page must
