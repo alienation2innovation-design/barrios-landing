@@ -278,6 +278,10 @@ test('the panel offers a keyboard-reachable "New conversation" control that is n
   assert.equal(getAttribute(control, 'type'), 'button');
   assert.equal(getAttribute(control, 'tabindex'), null, 'no tabindex may remove it from the tab order');
   assert.equal(getAttribute(control, 'disabled'), null);
+  // ADDED (item 2): the control ships available. It becomes unavailable only while
+  // a turn is awaiting its response head, and that state is applied at runtime -
+  // so neither attribute may be baked into the served markup.
+  assert.equal(getAttribute(control, 'aria-disabled'), null, 'the control must ship available, with no stale aria-disabled');
   assert.equal(getAttribute(control, 'aria-hidden'), null);
   const name = (getAttribute(control, 'aria-label') ?? control.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
   assert.equal(name, 'New conversation', 'the control must have an accessible name');
@@ -444,7 +448,15 @@ test('"New conversation" clears the transcript and forgets the token synchronous
   const newConversationBody = code.slice(newConversationStart, openersWiring);
   assert.match(newConversationBody, /forgetConv\(\);lastMessage=''/, 'the token is dropped from storage synchronously');
   assert.match(newConversationBody, /clearTranscript\(\)/, 'the transcript is emptied synchronously');
-  assert.doesNotMatch(newConversationBody, /await|\.then\(|fetch\(/, 'clearing must never be deferred to a network response, so a failed or dropped revocation cannot leave stale state visible');
+  // TIGHTENED, NOT WEAKENED (item 2): this read `/await|\.then\(|fetch\(/`, which
+  // matched the substring "await" inside the handler's new `if(awaitingHead)return;`
+  // guard. `\bawait[\s(]` is the actual syntax - a real await is always followed by
+  // whitespace or an open paren - so the guarantee is unchanged and an added
+  // `await something` still fails here.
+  assert.doesNotMatch(newConversationBody, /\bawait[\s(]|\.then\(|fetch\(/, 'clearing must never be deferred to a network response, so a failed or dropped revocation cannot leave stale state visible');
+  assert.match('await fetch(x)', /\bawait[\s(]|\.then\(|fetch\(/, 'the tightened pattern still catches a real await');
+  assert.match('p.then(run)', /\bawait[\s(]|\.then\(|fetch\(/, 'and a real continuation');
+  assert.doesNotMatch('if(awaitingHead)return;', /\bawait[\s(]|\.then\(|fetch\(/, 'while the guard is not a deferral');
 
   // And the revocation is fired only once every one of those synchronous steps
   // has run: it is the last statement in the handler, so the UI is already
@@ -627,6 +639,13 @@ function resetMachine() {
   assert.ok(sender, 'sendReset() must be defined in the shipped widget');
   assert.match(sender, /if\(!token\|\|epoch!==resetEpoch\)return;/, 'sendReset must refuse a missing token and a superseded generation');
 
+  // ADDED for item 2: the guard that makes the first-turn race unreachable even
+  // if a click somehow races the disabled attribute. It is the FIRST statement of
+  // the handler, so nothing - not the generation counter, not the capture - runs
+  // while a turn is still awaiting its response head.
+  const guard = code.match(/const newConversation=\(\)=>\{ (if\(awaitingHead\)return;)/)?.[1];
+  assert.ok(guard, 'newConversation() must refuse outright while a turn is awaiting its response head');
+
   const capture = code.match(/const old=readConv\(\); resetEpoch\+\+;/)?.[0];
   assert.ok(capture, 'newConversation() must read the retired token and open a new generation');
 
@@ -634,7 +653,7 @@ function resetMachine() {
   assert.ok(fire, 'newConversation() must fire the reset for the token it retired');
 
   const body = `
-    let resetEpoch = 0, stored = '';
+    let resetEpoch = 0, stored = '', awaitingHead = false;
     const readConv = () => stored;
     const forgetConv = () => { stored = ''; };
     const storeConv = (value) => { stored = value; };
@@ -656,10 +675,11 @@ function resetMachine() {
     ${budget}
     ${sender}
 
-    // The two shipped statements from newConversation() that constitute the
-    // reset contract, in their shipped order. The rest of that handler (the
+    // The shipped statements from newConversation() that constitute the reset
+    // contract, in their shipped order: the awaiting-head guard first, then the
+    // capture, then the retire, then the fire. The rest of that handler (the
     // transcript, the abort, the focus) is asserted separately, by source.
-    const newConversation = () => { ${capture} forgetConv(); ${fire}; };
+    const newConversation = () => { ${guard} ${capture} forgetConv(); ${fire}; };
 
     const settle = async () => { for (let i = 0; i < 12; i += 1) await Promise.resolve(); };
     const drain = async () => {
@@ -671,6 +691,9 @@ function resetMachine() {
       requests, timers, newConversation, storeConv, drain, settle,
       storedToken: () => stored,
       generation: () => resetEpoch,
+      // The widget's awaitHead(): true the instant a turn's request goes out,
+      // false the instant its head is read or the turn settles.
+      awaitHead: (pending) => { awaitingHead = pending; },
       setResponder: (fn) => { respond = fn; }
     };
   `;
@@ -1031,4 +1054,218 @@ test('no storage key can hold the credential: the shipped widget contains no sto
   // And the retired storage key exists nowhere in the served document, so there
   // is not even a name left for another page to guess at.
   assert.doesNotMatch(html, /nexus\.conversation/, 'the old storage key must be gone from the served page');
+});
+
+// ---------------------------------------------------------------------------
+// ITEM 2 - the first-turn reset race.
+//
+// While a turn is awaiting its response head there is no credential this
+// document can authenticate a revocation with: on a first turn none has been
+// issued yet, and on an established conversation the turn in flight is about to
+// consume and rotate the one being held. Clearing the transcript in that window
+// told the visitor his conversation had been revoked when nothing on the server
+// had been.
+//
+// The fix is that "New conversation" is genuinely unavailable for exactly that
+// window - a real `disabled` attribute on a native button, mirrored by
+// aria-disabled while it holds - and available again the moment a credential
+// exists or the turn settles. Escape and the panel's Close control are never
+// gated, so the visitor is never trapped.
+// ---------------------------------------------------------------------------
+
+test('a first turn with no credential yet cannot trigger a false successful reset (item 2)', async () => {
+  const widget = resetMachine();
+
+  // A brand new document: nothing held, the first turn's request is out, its head
+  // has not come back, so no credential exists. The click must do nothing at all -
+  // not open a generation, not fire a request, not imply a revocation happened.
+  widget.awaitHead(true);
+  widget.newConversation();
+  await widget.drain();
+  assert.deepEqual(widget.requests, [], 'no reset request goes out, so nothing can be reported as revoked');
+  assert.equal(widget.generation(), 0, 'and no generation was opened: the guard returns before the counter');
+  assert.deepEqual(widget.timers, [], 'and nothing was scheduled to try later');
+
+  // The turn settles having issued nothing (a refusal, say). The control is
+  // available again and still, correctly, has nothing to revoke.
+  widget.awaitHead(false);
+  widget.newConversation();
+  await widget.drain();
+  assert.deepEqual(widget.requests, [], 'still nothing to revoke, so still no request');
+});
+
+test('an established conversation resets immediately through the reset endpoint once a head has arrived (item 2)', async () => {
+  const widget = resetMachine();
+
+  // A turn is in flight on T1 and is about to rotate it: not a safe moment.
+  widget.storeConv('T1');
+  widget.awaitHead(true);
+  widget.newConversation();
+  assert.deepEqual(widget.requests, [], 'the window in which the in-flight turn is about to consume T1 is not a safe moment to revoke it');
+  assert.equal(widget.storedToken(), 'T1', 'and the held credential is untouched, so the turn can finish normally');
+
+  // The head arrives and rotates the credential to T2. The control is available
+  // again, and a reset goes out immediately - on the click, carrying T2.
+  widget.storeConv('T2');
+  widget.awaitHead(false);
+  widget.newConversation();
+  assert.equal(widget.requests.length, 1, 'the reset is fired synchronously on the click, exactly as before');
+  assert.equal(widget.storedToken(), '', 'and the credential is retired synchronously');
+  await widget.drain();
+  assert.equal(widget.requests[0].url, '/api/nexus/reset', 'through the provider-free reset endpoint');
+  assert.equal(widget.requests[0].init.headers['x-nexus-conversation'], 'T2');
+  assert.equal(widget.requests.length, 1, 'a successful reset is sent exactly once');
+});
+
+test('a reset failure stays retryable, and no reset ever reaches a provider (item 2)', async () => {
+  const widget = resetMachine();
+  widget.setResponder(() => ({ status: 503 }));
+  widget.storeConv('T1');
+  widget.newConversation();
+  await widget.drain();
+
+  assert.ok(widget.requests.length > 1, 'a reset the core could not serve is retried, not dropped');
+  assert.ok(
+    widget.requests.every((request) => request.url === '/api/nexus/reset'),
+    'every attempt goes to the reset endpoint - never /api/nexus/chat, which is the only route that can reach a provider'
+  );
+  assert.ok(
+    widget.requests.every((request) => request.init.headers.accept !== 'text/event-stream'),
+    'and none of them asks for a model stream'
+  );
+  assert.deepEqual(
+    widget.requests.map((request) => request.init.headers['x-nexus-conversation']),
+    Array(widget.requests.length).fill('T1'),
+    'every retry carries the same retired credential, never a newer one'
+  );
+
+  // A retry that wakes up after the control became unavailable again is still
+  // dropped by the generation guard, not smuggled onto a newer conversation.
+  const raced = resetMachine();
+  let allow = false;
+  raced.setResponder(() => (allow ? { status: 204 } : new Error('network')));
+  raced.storeConv('T1');
+  raced.newConversation();
+  await raced.settle();
+  assert.equal(raced.timers.length, 1, 'the failed T1 reset scheduled a retry');
+  allow = true;
+  raced.storeConv('T2');
+  raced.newConversation();
+  await raced.drain();
+  assert.deepEqual(
+    raced.requests.map((request) => request.init.headers['x-nexus-conversation']),
+    ['T1', 'T2'],
+    'the superseded T1 retry dropped itself; only the current abandonment was attempted'
+  );
+});
+
+test('the "New conversation" control has a real accessible unavailable state, not merely a visual one (item 2)', () => {
+  const code = normalizeCode(widgetScript());
+
+  // A native <button> carrying `disabled`: assistive technology reports it, and
+  // it can be activated neither by pointer nor by keyboard. aria-disabled mirrors
+  // it only while it holds and is REMOVED rather than set to "false", so the two
+  // can never contradict each other.
+  assert.match(
+    code,
+    /const syncReset=\(\)=>\{if\(!fresh\)return;fresh\.disabled=awaitingHead;if\(awaitingHead\)fresh\.setAttribute\('aria-disabled','true'\);else fresh\.removeAttribute\('aria-disabled'\)\};/,
+    'the unavailable state must be the disabled attribute, mirrored by aria-disabled only while it holds'
+  );
+  assert.doesNotMatch(code, /setAttribute\('aria-disabled','false'\)/, 'aria-disabled must never be set to false beside a real disabled attribute');
+  assert.doesNotMatch(
+    code,
+    /fresh\.classList|classList\.(?:add|toggle)\('is-(?:disabled|busy|waiting)'\)/,
+    'a class name is a style, not a state: assistive technology would report nothing'
+  );
+
+  // Exactly one variable drives it, and only the reset control is affected.
+  const syncStart = code.indexOf('const syncReset=');
+  const syncEnd = code.indexOf('const awaitHead=');
+  assert.ok(syncStart >= 0 && syncEnd > syncStart, 'syncReset() and awaitHead() must both exist');
+  const syncBody = code.slice(syncStart, syncEnd);
+  assert.doesNotMatch(syncBody, /\binput\b|\bsend\b|\bclose\b|\blauncher\b/, 'this window disables the reset control and nothing else');
+});
+
+test('the unavailable window opens when a turn is sent and closes on the head or on settling (item 2)', () => {
+  const code = normalizeCode(widgetScript());
+
+  // Opened the instant the request goes out.
+  const askStart = code.indexOf('async function ask');
+  const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
+  assert.ok(askStart >= 0 && formWiring > askStart);
+  const askBody = code.slice(askStart, formWiring);
+  assert.match(askBody, /busy\(true\);awaitHead\(true\);/, 'the window opens as the turn starts, beside the existing busy state');
+
+  // Closed the instant the head is read and any issued credential is held - so a
+  // mid-stream reset on an established conversation still works, because by then
+  // the credential has been rotated to one the core has not seen consumed.
+  assert.match(
+    askBody,
+    /const issued=res\.headers\.get\('x-nexus-conversation'\);if\(issued\)storeConv\(issued\);awaitHead\(false\);/,
+    'the window closes immediately after the head is read and the credential rotated'
+  );
+  const openedAt = askBody.indexOf('awaitHead(true)');
+  const closedAt = askBody.indexOf('awaitHead(false)');
+  const statusBranchAt = askBody.indexOf('if(res.status!==200');
+  assert.ok(openedAt >= 0 && closedAt > openedAt, 'it is opened before it is closed');
+  assert.ok(statusBranchAt > closedAt, 'and closed before the status branch, so every refusal re-enables the control too');
+
+  // And closed again whenever a turn settles, which covers the request that never
+  // came back at all (network error or abort): that path returns through finish().
+  assert.match(
+    code,
+    /const finish=\(\)=>\{controller=null;busy\(false\);awaitHead\(false\);/,
+    'settling a turn always closes the window, including a turn that never produced a head'
+  );
+});
+
+test('Escape and the panel Close control still work while "New conversation" is unavailable (item 2)', () => {
+  const code = normalizeCode(widgetScript());
+
+  // Escape is a document-level listener and is not gated on anything this window
+  // touches: while a turn is in flight it aborts that turn, which settles it and
+  // makes the reset control available again.
+  assert.match(
+    code,
+    /document\.addEventListener\('keydown',e=>\{if\(e\.key!=='Escape'\)return;if\(controller\)\{cancel\(\);return\}if\(root\.classList\.contains\('is-open'\)\)shut\(\)\}\);/,
+    'Escape must still cancel an in-flight turn, then close the panel, with no awaiting-head condition on it'
+  );
+
+  // The Close control is wired to shut(), which cancels, and is never disabled.
+  assert.match(code, /close\.addEventListener\('click',shut\);/, 'Close stays wired');
+  assert.match(code, /const shut=\(\)=>\{cancel\(\);/, 'and Close cancels the in-flight turn first');
+  assert.doesNotMatch(code, /close\.disabled|close\.setAttribute\('aria-disabled'/, 'the cancel affordance is never disabled');
+  assert.doesNotMatch(code, /if\(awaitingHead\)return\}?\s*\);?\s*document\.addEventListener\('keydown'/, 'nothing gates the Escape handler on this window');
+
+  // The guard is inside the handler as well as on the element, so a click that
+  // races the attribute cannot get through either. It is the first statement.
+  assert.match(
+    code,
+    /const newConversation=\(\)=>\{ if\(awaitingHead\)return;/,
+    'the guard runs before anything else in the handler'
+  );
+});
+
+test('the unavailable "New conversation" control reads as inactive without losing its shape (item 2)', () => {
+  // The style is the visual half of a state whose accessible half is the disabled
+  // attribute. It uses the panel's own muted token rather than an opacity wash: a
+  // wash dims the hairline along with the label, which reads as broken rather
+  // than as temporarily unavailable, and it puts the label below anything else
+  // this panel ships. The pill keeps its full border and its exact footprint, so
+  // nothing shifts and nothing appears to vanish.
+  const rule = html.match(/\.nexus__prompt:disabled\{[^}]*\}/)?.[0] ?? '';
+  assert.ok(rule, 'a .nexus__prompt:disabled rule must ship');
+  assert.match(rule, /cursor:not-allowed/, 'the pointer says so before the click');
+  assert.match(rule, /color:var\(--mute\)/, "the label drops to the panel's existing muted token");
+  assert.match(rule, /border-color:var\(--hair\)/, 'the pill keeps its full hairline, so its footprint is unchanged');
+  assert.doesNotMatch(rule, /opacity:/, 'no opacity wash: it would dim the border with the label and read as broken');
+  assert.doesNotMatch(rule, /pointer-events:\s*none/, 'pointer-events:none would suppress the not-allowed cursor and hide the control from hit-testing');
+  assert.doesNotMatch(rule, /display:\s*none|visibility:\s*hidden/, 'the control stays present and findable');
+
+  // And it must not light up on hover or focus while it is unavailable.
+  assert.match(html, /\.nexus__prompt:disabled:hover,\.nexus__prompt:disabled:focus-visible\{[^}]*\}/, 'the hover and focus affordance is neutralised while it is unavailable');
+
+  // No new design language: no new class, token or colour was introduced for this.
+  assert.doesNotMatch(html, /\.nexus__prompt--/, 'no new modifier class');
+  assert.equal((html.match(/\.nexus__prompt:disabled/g) ?? []).length, 3, 'exactly the two rules above, and nothing else keyed on the state');
 });
