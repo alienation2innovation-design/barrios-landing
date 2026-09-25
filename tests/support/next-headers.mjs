@@ -62,3 +62,21 @@ export async function headersForPath(pathname) {
   }
   return out;
 }
+
+/** Parse a Content-Security-Policy value into directive -> array of sources. */
+export function parsePolicy(value) {
+  const directives = new Map();
+  for (const chunk of String(value).split(';')) {
+    const parts = chunk.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) continue;
+    directives.set(parts[0].toLowerCase(), parts.slice(1));
+  }
+  return directives;
+}
+
+/** The Content-Security-Policy for `pathname`, raw and parsed. */
+export async function policyForPath(pathname) {
+  const headers = await headersForPath(pathname);
+  const raw = headers['content-security-policy'];
+  return { raw: raw ?? null, directives: raw ? parsePolicy(raw) : null };
+}
