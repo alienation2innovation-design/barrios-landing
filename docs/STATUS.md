@@ -4,6 +4,112 @@ Newest entry first. This file records website-side state for the NEXUS assistant
 with the assistant core's detail, is `C:\Projects\barrios-nexus-assistant\docs\STATUS.md`.
 
 ---
+# RESET-ONLY PROXY, TRUTHFUL DISCLOSURE, NO CDN SCRIPT ON PANEL PAGES, HERMETIC TESTS — NOT PUSHED, 2026-09-25
+
+Gary authorized one bounded pass over eight verified findings; four were the website's. All are implemented and
+tested, an independent security and privacy review ran after the last edit, and both of its website findings were
+then fixed and re-verified. **Nothing was pushed or deployed**, and no Vercel setting, DNS record, billing
+setting or production environment variable was changed.
+
+## Branch and HEAD
+
+`feat/homepage-ai-workers-rewrite` at **`0b5030f`**, ahead of `origin` and not pushed. The six commits of this
+pass, oldest first:
+
+```text
+896ca89 feat: a reset-only proxy route and an immediate, retried revocation
+7081fab fix: the disclosure warns visitors instead of overclaiming what is not processed
+cc90679 fix: remove the third-party icon script from both panel-reachable pages
+e9d2a38 test: npm test is hermetic whatever HOMEPAGE_URL the shell is carrying
+4232ec4 fix: a successful reset is not reported as a failure
+0b5030f fix: tell the truth about what the chat stores
+```
+
+Changed paths: `app/api/nexus/reset/route.ts` (new), `public/index.html`, `public/privacy-directive.html`,
+`public/contact.html`, `package.json`, `tests/**` (including the new hermetic harness at
+`tests/support/site.mjs`). `next.config.js`, `vercel.json`, `middleware.ts`, `app/api/nexus/chat/route.ts`,
+`lib/**` and every `.env*` were left alone, and `dist/output.css` / `public/dist/output.css` were never staged.
+
+## What changed
+
+**A reset-only proxy and an immediate revocation.** `app/api/nexus/reset/route.ts` mirrors the chat route's
+security properties — the same origin gate, the same `NEXUS_CHAT_ENABLED` kill switch checked before anything
+else, the shared proxy secret, the same cookie filter, one attempt, `redirect:'error'`, **no CORS header at all**
+(asserted on success and on refusal, and asserted absent from the source), a bounded log line with no token, body
+or IP — narrowed to a 512-byte cap and a 5-second timeout, with no stream pump, and it never relays a conversation
+token back. It validates nothing; the core is the only authority. "New conversation" now clears the transcript,
+the in-closure state and the stored token **synchronously**, then fires the revocation immediately. A transport
+failure or 5xx is retried twice with the same retired token, a 4xx or 429 is final, and a pending retry is
+**dropped** once a new conversation has begun, so it can never revoke newer state.
+
+A follow-up fixed a real contract bug found by cross-lane verification: the proxy had been collapsing any
+upstream body without a string `code` into a 503, but `code` is this API's **error** convention and the core's
+success body carries none — so every successful reset was being reported to the browser as a failure and then
+retried. Any upstream 2xx is now relayed as success regardless of body shape, and the core additionally carries a
+stable `code` on success so neither side has to guess.
+
+**Truthful disclosure.** The panel says NEXUS does not ask for or save contact details and warns visitors not to
+type personal information, without claiming that typed text goes unprocessed. The Privacy page's OneDrive and
+email language is now one explicitly conditional paragraph, asserted structurally so it cannot be restated as
+present fact while lead capture is off. The first attempt then over-corrected — it claimed *"Barrios A2I does not
+save anything you type in the chat"*, which is **false** — and that has been replaced with what actually happens:
+text is sent to the third-party model provider as described on the page, the conversation is also held on our own
+server for its lifetime with contact-shaped details masked in what is stored, and it is deleted when the
+conversation reaches its idle or absolute limit or immediately if the visitor starts a new conversation. A test
+guards against both the old sentence and any blanket "does not save anything" phrasing.
+
+**No third-party executable script on either panel-reachable page.** `privacy-directive.html` and `contact.html`
+previously loaded `code.iconify.design`, a mutable CDN script that — being same-origin with the page — could read
+the `sessionStorage` conversation credential. All twelve icons are now inlined SVG with no vendored exception,
+measured in a browser to within 0.02 px of the previous glyph boxes; four icon-only social links gained accessible
+names and the rest stay decorative.
+
+**Hermetic tests.** `npm test` starts and stops its own static server on a **kernel-assigned** port and ignores an
+ambient `HOMEPAGE_URL`, so an inherited value can no longer redirect the suite at an external site — a failure
+mode that had already produced one confident but entirely spurious 26-failure report. Intentional external
+testing sits behind an explicit opt-in flag.
+
+## Verification — after the last edit, real exit codes
+
+| Command | Exit | Result |
+|---|---|---|
+| `npm test`, `HOMEPAGE_URL` unset | **0** | **154 tests, 154 pass, 0 fail, 0 skipped** |
+| `HOMEPAGE_URL=http://127.0.0.1:9/ npm test` | **0** | 154/154 — the suite used its own server |
+| two concurrent `npm test` runs | **0 / 0** | no port collision |
+| `npx tsc --noEmit` | **0** | clean |
+| production build (placeholder env in-shell only) | **0** | compiled successfully, both `ƒ /api/nexus/chat` and `ƒ /api/nexus/reset` in the route table |
+| `git diff --check` | **0** | clean |
+
+The dead-URL result is only meaningful because the same dead URL **with** the opt-in external flag produces 43
+failures — that control is what proves the host really is unreachable and the default suite genuinely ignored it.
+
+## Remaining risks and open decisions
+
+- **The origin is not clean; only the two pages in scope are.** Seven pages one click away from the panel still
+  load off-origin executable scripts, including two unpinned (`unpkg.com/lucide@latest`) and
+  `cdn.tailwindcss.com`. Because they share this origin, a script there can read the `sessionStorage`
+  conversation credential **and** call `/api/nexus/chat` and `/api/nexus/reset` with `credentials:'same-origin'`
+  and pass the origin gate. This pass was bounded to the panel-reachable pages, so the sweep was deliberately not
+  widened. **Treat this as an open decision, not a closed finding.**
+- `'unsafe-inline'` remains in `script-src` and `style-src`, forced by the inline blocks in a static page, so CSP
+  narrows inline injection without closing it and is not a substitute for the core's server-side revocation and
+  session binding.
+- Floor-only pages (`/dashboard`, `/sign-in`, `/checkout.html`, the API) still permit off-origin script; tightening
+  them needs a browser measurement of the Clerk and Stripe hosts first.
+- A reset refused with 429 is dropped without retry, so that revocation waits for the core's deadline sweep.
+- The honest CTA and disclosure are correct only while the lead backend is unset; enabling it requires revisiting
+  this copy in the same change.
+- The committed `dist/output.css` is still stale against source, and `vercel.json`'s build command does not run the
+  npm `prebuild` lifecycle, so the committed artifact is what ships. It is byte-identical to the deployed commit;
+  regenerating it remains Gary's call.
+
+## Next release gate
+
+Codex's review, then the two coupled decisions: finishing the off-origin script removal across the rest of the
+origin, and enabling the lead backend together with the copy that depends on it. Pushing this branch remains a
+separate explicit approval. `origin/master` is `7b93711`, so production still serves the pre-hardening release.
+
+---
 # CSP, HERMETIC TEST HARNESS, HONEST CTA, SERVER-SIDE REVOCATION — NOT PUSHED, 2026-09-24
 
 Gary supplied eleven review findings; four of them were the website's. All are implemented and tested, an
