@@ -736,6 +736,23 @@ test('a 5xx is retried and a 4xx is final (item 2)', async () => {
   assert.equal(rateLimited.requests.length, 1, 'a rate-limited reset is not hammered');
 });
 
+test('a successful reset (2xx) is never retried (item 2)', async () => {
+  // The proxy now relays a successful upstream reset with the upstream's own
+  // 2xx status instead of collapsing it to 503. sendReset()'s own guard
+  // (`if(res.status>=500)again()`) already treats anything below 500 as
+  // final, so once the proxy stops mislabelling success as 503 the widget
+  // must stop retrying it too - exercised here against a few 2xx codes.
+  for (const status of [200, 201, 204]) {
+    const widget = resetMachine();
+    widget.setResponder(() => ({ status }));
+    widget.storeConv('T1');
+    widget.newConversation();
+    await widget.drain();
+    assert.equal(widget.requests.length, 1, `a ${status} reset must be sent exactly once, never retried`);
+    assert.deepEqual(widget.timers, [], `a ${status} reset must not schedule a retry`);
+  }
+});
+
 test('a pending retry is DROPPED once a new conversation has begun (item 2)', async () => {
   // THE DECISION, recorded here because it is deliberate. A retry always
   // carries the token it was issued for, and that token names exactly one

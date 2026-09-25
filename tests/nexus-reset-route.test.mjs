@@ -409,22 +409,70 @@ test('Set-Cookie from the core is relayed verbatim, each as its own header', asy
   assert.deepEqual(res.headers.getSetCookie(), [a, b]);
 });
 
-test('a non-JSON, code-less or empty-5xx upstream answer collapses to the generic 503', async () => {
+test('a non-2xx upstream still requires the code convention: an unparseable, code-less, or empty-5xx body collapses to the generic 503', async () => {
   enableEnv();
 
   stubFetch(() => new Response('<html>gateway error</html>', { status: 502, headers: { 'content-type': 'text/html' } }));
   await expectJsonError(await POST(makeRequest()), 503, 'provider_unavailable');
 
-  stubFetch(() => new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  // A non-2xx body without the error convention's string `code` is not the
+  // core speaking either, and still collapses to the generic failure - only a
+  // 2xx status is exempt from this requirement now.
+  stubFetch(() => new Response('{"message":"no code here"}', { status: 502, headers: { 'content-type': 'application/json' } }));
   await expectJsonError(await POST(makeRequest()), 503, 'provider_unavailable');
 
   stubFetch(() => new Response('', { status: 500 }));
   await expectJsonError(await POST(makeRequest()), 503, 'provider_unavailable');
+});
 
-  // An SSE answer is not a reset answer: it has no string `code`, so it is not
-  // the core speaking and is never pumped.
+// ---------------------------------------------------------------------------
+// 8b. success is a status code, not a body shape.
+//
+// The core's successful reset body is `{"ok":true}` and carries no string
+// `code` - `code` is the ERROR convention. The original relay required a
+// string `code` on every body, success included, which meant the core's own
+// success response collapsed to a 503 and the widget then retried a
+// revocation that had already happened server-side. The fix: any 2xx status
+// is success, full stop, independent of what the body looks like. The core
+// is also being changed, in parallel, to add a `code` to its success body
+// too, so both shapes are exercised here and neither may become a dependency.
+// ---------------------------------------------------------------------------
+test('an upstream 200 {"ok":true} (the core\'s actual success body) relays as success, not 503', async () => {
+  enableEnv();
+  stubFetch(() => new Response('{"ok":true}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200, 'a successful reset must never be reported to the browser as a failure');
+  assert.equal(await res.text(), '{"ok":true}');
+  assert.equal(res.headers.get('cache-control'), 'no-store');
+  assert.equal(res.headers.has('access-control-allow-origin'), false);
+  assert.equal(res.headers.has('access-control-allow-credentials'), false);
+});
+
+test('an upstream 200 whose body also carries a `code` still relays as success', async () => {
+  enableEnv();
+  stubFetch(() => new Response('{"ok":true,"code":"reset"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), '{"ok":true,"code":"reset"}');
+  assert.equal(res.headers.has('access-control-allow-origin'), false);
+});
+
+test('an upstream 200 with an empty or non-JSON body still relays as success', async () => {
+  enableEnv();
+
+  stubFetch(() => new Response('', { status: 200 }));
+  let res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), '');
+  assert.equal(res.headers.has('access-control-allow-origin'), false);
+
+  // Not valid JSON at all, and not the core's error shape either - the status
+  // code alone must decide, never the body.
   stubFetch(() => new Response('event: done\ndata: {}\n\n', { status: 200, headers: { 'content-type': 'text/event-stream' } }));
-  await expectJsonError(await POST(makeRequest()), 503, 'provider_unavailable');
+  res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(await res.text(), 'event: done\ndata: {}\n\n');
+  assert.equal(res.headers.has('access-control-allow-origin'), false);
 });
 
 test('a thrown fetch -> 503 provider_unavailable with exactly one attempt', async () => {

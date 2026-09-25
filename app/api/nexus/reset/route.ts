@@ -298,6 +298,39 @@ async function handle(request: Request): Promise<Response> {
   } catch {
     return providerUnavailable();
   }
+
+  const upstreamType = upstream.headers.get('content-type') ?? '';
+  const relayHeaders = (): Headers => {
+    const headers = new Headers({
+      'content-type': upstreamType.toLowerCase().startsWith('application/json')
+        ? upstreamType
+        : 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+    });
+    // The core may (re)issue the session cookie; pass every Set-Cookie through
+    // verbatim, exactly as chat does.
+    for (const c of upstream.headers.getSetCookie()) {
+      headers.append('set-cookie', c);
+    }
+    // Deliberately NOT relayed: x-nexus-conversation. A reset mints no token,
+    // and handing one back would resurrect a credential the visitor just
+    // destroyed.
+    return headers;
+  };
+
+  // A 2xx IS success, full stop — independent of the body's shape. `code` is
+  // this API's ERROR convention; requiring it on a success response too was
+  // the bug (a bare `{"ok":true}` success collapsed to our generic 503, and
+  // the widget then retried a revocation that had already happened). The core
+  // may or may not also put a `code` on its success body; this proxy must not
+  // come to depend on either shape, so a 2xx is never parsed at all here.
+  if (upstream.status >= 200 && upstream.status < 300) {
+    return new Response(text, { status: upstream.status, headers: relayHeaders() });
+  }
+
+  // Non-2xx: unchanged — the core's error convention is a string `code`, and
+  // anything else (unparseable, code-less, or an empty 5xx body) is not the
+  // core speaking and collapses to our generic 503.
   if (upstream.status >= 500 && text.trim().length === 0) {
     return providerUnavailable();
   }
@@ -307,26 +340,11 @@ async function handle(request: Request): Promise<Response> {
   } catch {
     return providerUnavailable();
   }
-  // Every body the core emits carries a string `code`. Anything else is not the
-  // core speaking and collapses to our generic 503.
   if (typeof parsed !== 'object' || parsed === null || typeof (parsed as { code?: unknown }).code !== 'string') {
     return providerUnavailable();
   }
-  const upstreamType = upstream.headers.get('content-type') ?? '';
-  const headers = new Headers({
-    'content-type': upstreamType.toLowerCase().startsWith('application/json')
-      ? upstreamType
-      : 'application/json; charset=utf-8',
-    'cache-control': 'no-store',
-  });
-  // The core may (re)issue the session cookie; pass every Set-Cookie through
-  // verbatim, exactly as chat does.
-  for (const c of upstream.headers.getSetCookie()) {
-    headers.append('set-cookie', c);
-  }
+  const headers = relayHeaders();
   const retryAfter = upstream.headers.get('retry-after');
   if (retryAfter) headers.set('retry-after', retryAfter);
-  // Deliberately NOT relayed: x-nexus-conversation. A reset mints no token, and
-  // handing one back would resurrect a credential the visitor just destroyed.
   return new Response(text, { status: upstream.status, headers });
 }
