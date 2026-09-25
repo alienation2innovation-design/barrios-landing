@@ -450,16 +450,39 @@ test('the NEXUS widget carries only the concise chat notice and links to the Pri
   assert.ok(disclosure, 'the nexus__disclosure paragraph must exist');
   const text = disclosure.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
-  // Finding 9 (S8): the retired sentence promised that contact details are
-  // requested with consent. With no active lead backend they are never
-  // requested at all, so the promise was untrue on a live site. The disclosure
-  // now states what the build actually does, and says nothing about a
-  // capability being enabled.
-  assert.equal(text, 'AI-powered chat. This chat does not collect contact details. Privacy');
+  // Item 4. Two earlier versions of this line were both wrong. The first
+  // promised that contact details are requested with consent, which no build
+  // with the lead backend off can honour. The second - "This chat does not
+  // collect contact details" - was true about contact details but read as a
+  // claim about the chat as a whole, while every word a visitor types is in
+  // fact sent to a third-party model to answer them.
+  //
+  // So the line now says exactly the two things that are true and actionable:
+  // NEXUS does not ask for or save contact details, and the visitor should not
+  // type personal information here. It deliberately does NOT claim that what
+  // they type is unprocessed, and the Privacy link carries the provider detail
+  // the panel may not name.
+  assert.equal(
+    text,
+    'AI-powered chat. NEXUS does not ask for or save contact details. Please do not type personal information here. Privacy'
+  );
+  assert.match(text, /does not ask for or save contact details/, 'the capability limit is stated');
+  assert.match(text, /do not type personal information/i, 'and the visitor is warned');
   assert.doesNotMatch(
     html,
     /Contact details are requested only with your consent/i,
     'the retired consent promise must be gone from the served page'
+  );
+  assert.doesNotMatch(
+    html,
+    /This chat does not collect contact details/i,
+    'the superseded wording, which read as a claim about all typed text, must be gone'
+  );
+  // The warning must not be undercut by a claim that nothing is processed.
+  assert.doesNotMatch(
+    text,
+    /(?:never|not|no)\s+(?:\w+\s+){0,3}(?:processed|read|analysed|analyzed|stored anywhere)/i,
+    'the disclosure must not imply that visitor text is never processed'
   );
 
   assert.match(disclosure, /<a\b[^>]*href="\/privacy-directive\.html"[^>]*>Privacy<\/a>/i);
@@ -467,21 +490,68 @@ test('the NEXUS widget carries only the concise chat notice and links to the Pri
   assert.doesNotMatch(disclosure, /does not book|schedule|send email|issue quotes|30 days/i);
 });
 
-test('the Privacy page keeps the full AI assistant provider disclosure and the new consent/OneDrive/notification terms', async () => {
+test('the Privacy page keeps the provider disclosure and states the OneDrive/email terms as conditional on lead capture, not as fact (item 4)', async () => {
   const privacyResponse = await fetch(new URL('/privacy-directive.html', homepageUrl));
   assert.equal(privacyResponse.status, 200);
   const privacy = stripExecutableContent(await privacyResponse.text());
   assert.match(privacy, /AI Assistant \(NEXUS\)/);
+
+  // What DOES happen, unchanged and still named: typed chat goes to a
+  // third-party model provider.
   assert.match(privacy, /as written to Anthropic’s API to generate replies/);
   assert.match(privacy, /deletes API inputs and outputs within 30 days/);
   assert.match(privacy, /does not use commercial API data to train its models by default/);
   assert.match(privacy, /do not share sensitive, personal or confidential information/i);
+
+  // What does NOT happen, stated plainly, because the lead backend is off.
+  assert.match(privacy, /Lead capture is switched off in the current release\./);
+  assert.match(privacy, /NEXUS does not ask you for contact details/);
+  assert.match(privacy, /does not save anything you type in the chat/);
+
+  // The OneDrive and email-notification terms survive, but only inside the
+  // conditional paragraph. Item 4: while the capability is off, the page must
+  // not state as present fact that consented details ARE stored and emailed.
   assert.match(privacy, /consent/i);
   assert.match(privacy, /OneDrive/i);
   assert.match(privacy, /email notification/i);
-  // RE: the prospect confirmation is disclosed too - one truthful sentence,
-  // and still no retention duration asserted for Barrios A2I.
-  assert.match(privacy, /If you provide an email address, a confirmation of your request is also sent to that address\./);
+  assert.match(privacy, /If we enable lead capture in a future release/);
+  assert.match(privacy, /None of that happens while lead capture is off\./);
+
+  // The retired present-tense claims are gone.
+  assert.doesNotMatch(
+    privacy,
+    /we store that information only with your consent, in the Barrios A2I OneDrive application folder/,
+    'the unconditional storage claim must be gone'
+  );
+  assert.doesNotMatch(
+    privacy,
+    /and Gary receives an email notification/,
+    'the unconditional notification claim must be gone'
+  );
+  assert.doesNotMatch(
+    privacy,
+    /If you provide an email address, a confirmation of your request is also sent to that address\./,
+    'the unconditional confirmation claim must be gone'
+  );
+
+  // Structural, not merely textual: every mention of OneDrive and of the email
+  // notification must sit in a paragraph that also carries the condition, so a
+  // future edit cannot lift one of them back out into a bare statement of fact.
+  const paragraphs = [...privacy.matchAll(/<p\b[^>]*>([\s\S]*?)<\/p>/gi)].map((match) =>
+    match[1].replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim()
+  );
+  const conditional = /if we enable lead capture|would|only then/i;
+  for (const paragraph of paragraphs) {
+    if (!/OneDrive|email notification|confirmation of your request/i.test(paragraph)) continue;
+    assert.match(
+      paragraph,
+      conditional,
+      `a paragraph mentioning storage or notification must carry the condition: ${paragraph.slice(0, 120)}`
+    );
+  }
+  const conditionalParagraphs = paragraphs.filter((paragraph) => /OneDrive/i.test(paragraph));
+  assert.equal(conditionalParagraphs.length, 1, 'exactly one paragraph describes the future capability');
+
   const nexusSection = privacy.match(/AI Assistant \(NEXUS\)[\s\S]*?<\/p>/)?.[0] ?? '';
   assert.ok(nexusSection, 'the NEXUS section paragraph must exist');
   assert.doesNotMatch(nexusSection, /we (?:retain|keep|store)[^.]*\b(?:days|months|years)\b/i, 'no Barrios A2I retention duration');
