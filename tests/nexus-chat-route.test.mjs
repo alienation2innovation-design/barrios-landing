@@ -414,6 +414,50 @@ test('a hostile, oversized x-nexus-conversation value is passed through untouche
   assert.doesNotMatch(logLines[0], /etc\/passwd|AAAA/);
 });
 
+// ---------------------------------------------------------------------------
+// 8c. reset header passthrough (x-nexus-conversation-reset)
+//
+// The core, not the proxy, decides whether a reset is honoured - it requires
+// the header to arrive alongside a token that passes every one of its own
+// checks for the conversation being abandoned. The proxy is a dumb forward,
+// exactly like the conversation token itself: no validation, no invention.
+// ---------------------------------------------------------------------------
+const RESET = 'x-nexus-conversation-reset';
+
+test('a client-supplied x-nexus-conversation-reset request header is forwarded upstream verbatim, alongside the token', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  const token = 'v1.AbC-_123.1758700000000.bm9uY2U.ZmFrZS1tYWM';
+  await POST(makeRequest({ headers: { [CONVERSATION]: token, [RESET]: '1' } }));
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(fetchCalls[0].init.headers[RESET], '1');
+  assert.equal(fetchCalls[0].init.headers[CONVERSATION], token, 'the token the reset applies to still travels alongside it');
+});
+
+test('no x-nexus-conversation-reset on the request -> the header is not added upstream, and the turn still works', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  const res = await POST(makeRequest());
+  assert.equal(res.status, 200);
+  assert.equal(fetchCalls.length, 1);
+  assert.equal(RESET in fetchCalls[0].init.headers, false, 'no reset header is invented when the browser sent none');
+});
+
+test('the proxy performs no validation on the reset value: any string passes through untouched, the core is the only authority', async () => {
+  enableEnv();
+  stubFetch(() => upstreamJson());
+  await POST(makeRequest({ headers: { [RESET]: 'not-the-literal-1' } }));
+  assert.equal(fetchCalls[0].init.headers[RESET], 'not-the-literal-1');
+});
+
+test('the reset header value is never logged', async () => {
+  enableEnv();
+  stubFetch(() => new Response('{"code":"rate_limited","message":"try again later"}', { status: 429, headers: { 'content-type': 'application/json' } }));
+  await POST(makeRequest({ headers: { [RESET]: '1' } }));
+  assert.equal(logLines.length, 1);
+  assert.doesNotMatch(logLines[0], /reset/i);
+});
+
 test('SSE relay copies the upstream x-nexus-conversation header back to the browser and still sets no CORS header', async () => {
   enableEnv();
   const frames = 'event: delta\ndata: {"text":"hi"}\n\nevent: done\ndata: {}\n\n';

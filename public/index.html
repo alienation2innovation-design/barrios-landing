@@ -2653,7 +2653,7 @@
         const root=document.getElementById('nexus');if(!root)return;
         const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body'),fresh=root.querySelector('[data-nexus-new]');
         const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.'};
-        let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false;
+        let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,revokeToken='';
         /* Tab-scoped conversation token, carried in the x-nexus-conversation header.
            sessionStorage is per-tab by construction, and that is the whole fix: a
            second tab of this site starts its own conversation instead of joining the
@@ -2707,14 +2707,23 @@
            leaving the flag set would let it wipe a later, unrelated turn's answer
            the moment some future finish() finally runs (M2). */
         const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;pendingReset=false;status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
-        /* "New conversation": forget the token so the server mints a fresh identifier
-           on the next turn, empty the transcript, and drop every in-closure
-           conversation variable plus any hold/retry state. The transcript is cleared
-           at once so the control always reads as immediate; if a turn is still
-           streaming it is aborted too, and pendingReset makes finish() clear a second
-           time so the aborted turn's own closing line cannot linger in what is now a
-           new conversation. The visitor's unsent draft is deliberately left alone. */
+        /* "New conversation": ask the server to revoke the abandoned conversation,
+           forget the token locally so it mints a fresh identifier on the next turn,
+           empty the transcript, and drop every in-closure conversation variable plus
+           any hold/retry state. The transcript is cleared at once, synchronously, so
+           the control always reads as immediate and never waits on a network round
+           trip - a failed or never-sent revocation must not leave anything stale
+           visible or broken. Revocation itself is NOT a fetch here (that would spend
+           a provider turn on a click that may never be followed by a message):
+           whatever token was current is captured into revokeToken, and ask() attaches
+           it with the reset header to the visitor's very next turn, then clears it -
+           never sent twice, never sent without a token, never sent on an ordinary
+           turn. If a turn is still streaming it is aborted too, and pendingReset makes
+           finish() clear a second time so the aborted turn's own closing line cannot
+           linger in what is now a new conversation. The visitor's unsent draft is
+           deliberately left alone. */
         const newConversation=()=>{
+          const old=readConv();if(old)revokeToken=old;
           forgetConv();lastMessage='';
           if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
           clearTranscript();
@@ -2734,10 +2743,20 @@
           const reply=line('NEXUS',TEXT.sending);let gotText=false,terminal=false,res;
           const dropPending=()=>{if(!gotText)reply.el.remove()};
           const conv=readConv();
-          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
+          /* A pending revoke (set by newConversation(), consumed exactly once here)
+             rides this turn as the OLD token plus the reset header, asking the server
+             to delete that abandoned conversation while THIS turn is served on a
+             brand new one. Read-then-clear in one step so it can never be sent twice;
+             never combined with the ordinary stored token, and never present when
+             nothing was just abandoned. */
+          const revoke=revokeToken;revokeToken='';
+          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(revoke?{'x-nexus-conversation':revoke,'x-nexus-conversation-reset':'1'}:conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
           catch(err){dropPending();status(controller.signal.aborted?TEXT.cancelled:TEXT.error,!controller.signal.aborted);finish();return}
           /* Every answer carries the conversation token, continued or freshly minted,
-             including refusals. Keep the latest so the next turn in this tab resumes. */
+             including refusals, and it is single use now: keep the latest so the next
+             turn in this tab presents a credential the server still honours. If a
+             response carries none, keep whatever is already stored rather than
+             dropping it. */
           const issued=res.headers.get('x-nexus-conversation');if(issued)storeConv(issued);
           if(res.status!==200||!(res.headers.get('content-type')||'').startsWith('text/event-stream')){dropPending();if(await httpFailure(res)!=='hold')finish();return}
           const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='',hold=false;

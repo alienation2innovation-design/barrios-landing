@@ -50,6 +50,13 @@ const SESSION_COOKIE = 'nexus_sid';
 // value back. It performs no parsing, validation, truncation or normalisation,
 // and it is never logged.
 const CONVERSATION_HEADER = 'x-nexus-conversation';
+// Request-only revocation signal. Value is meaningful only to the core: it
+// honours a reset exclusively when this header arrives next to a
+// CONVERSATION_HEADER value that still passes every one of its own checks
+// (MAC, ownership, expiry) for the conversation being abandoned. Like the
+// token itself, this proxy performs no validation and invents nothing - it
+// only forwards whatever the browser sent, verbatim, and never logs it.
+const RESET_HEADER = 'x-nexus-conversation-reset';
 
 type ErrorCode =
   | 'disabled'
@@ -262,6 +269,9 @@ async function handle(request: Request): Promise<Response> {
   // The browser's tab-scoped conversation token, if it has one. A first turn in
   // a new tab has none, and the core then mints a fresh conversation.
   const conversation = request.headers.get(CONVERSATION_HEADER);
+  // Present only on the turn immediately following "New conversation"; the
+  // core is the only authority on whether it does anything.
+  const reset = request.headers.get(RESET_HEADER);
 
   // 8. Upstream call. Exactly one attempt; the client owns retry policy.
   //    Abort if the browser disconnects (request.signal) or the budget runs
@@ -279,6 +289,7 @@ async function handle(request: Request): Promise<Response> {
         'x-nexus-client-ip': ip,
         ...(cookie ? { cookie } : {}),
         ...(conversation ? { [CONVERSATION_HEADER]: conversation } : {}),
+        ...(reset ? { [RESET_HEADER]: reset } : {}),
       },
       body: buf,
       cache: 'no-store',

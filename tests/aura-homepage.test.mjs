@@ -377,6 +377,77 @@ test('a rate-limit hold cancels its pendingReset so it cannot later wipe a legit
   assert.match(newConversationBody, /cancel\(\)/, 'New conversation still aborts an in-flight stream');
 });
 
+test('a pending revoke rides the visitor\'s very next turn as the OLD token plus the reset header, and is never sent otherwise (H1b)', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.ok(script, 'the NEXUS widget script must exist');
+  const code = normalizeCode(script);
+
+  // newConversation() must capture whatever token is currently stored, BEFORE
+  // forgetConv() clears it, into a closure variable ask() consumes later. It
+  // must never itself call fetch - that would spend a provider turn on a
+  // click that may never be followed by a message.
+  const newConversationStart = code.indexOf('const newConversation=');
+  const openersWiring = code.indexOf("if(fresh)fresh.addEventListener");
+  assert.ok(newConversationStart >= 0 && openersWiring > newConversationStart);
+  const newConversationBody = code.slice(newConversationStart, openersWiring);
+  assert.match(
+    newConversationBody,
+    /const old=readConv\(\);if\(old\)revokeToken=old; forgetConv\(\);lastMessage=''/,
+    'the abandoned token must be captured before forgetConv() clears storage, without disturbing the existing forget/reset sequence'
+  );
+  assert.doesNotMatch(newConversationBody, /fetch\(/, 'clicking "New conversation" must never itself call fetch');
+
+  // ask() must consume revokeToken exactly once - read then immediately
+  // cleared - so a lost or successful send can never resend it, and the
+  // reset header must only ever accompany that captured token, never the
+  // plain stored conversation token an ordinary turn sends.
+  const askStart = code.indexOf('async function ask');
+  const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
+  assert.ok(askStart >= 0 && formWiring > askStart);
+  const askBody = code.slice(askStart, formWiring);
+  assert.match(
+    askBody,
+    /const revoke=revokeToken;revokeToken='';/,
+    'the pending revoke must be read and cleared in one step so it is never sent twice'
+  );
+  assert.match(
+    askBody,
+    /\.\.\.\(revoke\?\{'x-nexus-conversation':revoke,'x-nexus-conversation-reset':'1'\}:conv\?\{'x-nexus-conversation':conv\}:\{\}\)/,
+    'the reset header must only ever accompany the revoked token; an ordinary turn sends the plain stored token instead, never both'
+  );
+
+  // The reset header is wired in exactly this one place.
+  assert.equal((script.match(/x-nexus-conversation-reset/g) ?? []).length, 1, 'the reset header must appear in exactly one place in the widget');
+});
+
+test('the widget replaces its stored token from every response, and keeps the existing one when a response carries none (H1c)', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  const code = normalizeCode(script);
+  assert.match(
+    code,
+    /const issued=res\.headers\.get\('x-nexus-conversation'\);if\(issued\)storeConv\(issued\);/,
+    'every response, success or refusal, must overwrite the stored token when one is present, and must never clear it when one is absent'
+  );
+  // This must run before the status/content-type branch, so a refused turn
+  // (409, 429, 403, 503...) still rotates the credential the core issued.
+  const askStart = code.indexOf('async function ask');
+  const issuedAt = code.indexOf("const issued=res.headers.get('x-nexus-conversation')", askStart);
+  const statusCheckAt = code.indexOf('if(res.status!==200', askStart);
+  assert.ok(issuedAt > askStart, 'the token-rotation line must exist inside ask()');
+  assert.ok(statusCheckAt > issuedAt, 'the token must be captured before the status/content-type branch, so refusals still rotate it');
+});
+
+test('"New conversation" clears the transcript and forgets the token synchronously, never waiting on a network round trip (H1b)', () => {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  const code = normalizeCode(script);
+  const newConversationStart = code.indexOf('const newConversation=');
+  const openersWiring = code.indexOf("if(fresh)fresh.addEventListener");
+  const newConversationBody = code.slice(newConversationStart, openersWiring);
+  assert.match(newConversationBody, /forgetConv\(\);lastMessage=''/, 'the token is dropped from storage synchronously');
+  assert.match(newConversationBody, /clearTranscript\(\)/, 'the transcript is emptied synchronously');
+  assert.doesNotMatch(newConversationBody, /await|\.then\(|fetch\(/, 'clearing must never be deferred to a network response, so a failed or never-sent revocation cannot leave stale state visible');
+});
+
 test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
   const disclosure = markup.match(/<p\b[^>]*class="nexus__disclosure"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? '';
   assert.ok(disclosure, 'the nexus__disclosure paragraph must exist');
