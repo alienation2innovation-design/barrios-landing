@@ -2653,7 +2653,7 @@
         const root=document.getElementById('nexus');if(!root)return;
         const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body'),fresh=root.querySelector('[data-nexus-new]');
         const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.'};
-        let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,revokeToken='';
+        let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,resetEpoch=0;
         /* Tab-scoped conversation token, carried in the x-nexus-conversation header.
            sessionStorage is per-tab by construction, and that is the whole fix: a
            second tab of this site starts its own conversation instead of joining the
@@ -2707,28 +2707,59 @@
            leaving the flag set would let it wipe a later, unrelated turn's answer
            the moment some future finish() finally runs (M2). */
         const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;pendingReset=false;status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
-        /* "New conversation": ask the server to revoke the abandoned conversation,
-           forget the token locally so it mints a fresh identifier on the next turn,
-           empty the transcript, and drop every in-closure conversation variable plus
-           any hold/retry state. The transcript is cleared at once, synchronously, so
-           the control always reads as immediate and never waits on a network round
-           trip - a failed or never-sent revocation must not leave anything stale
-           visible or broken. Revocation itself is NOT a fetch here (that would spend
-           a provider turn on a click that may never be followed by a message):
-           whatever token was current is captured into revokeToken, and ask() attaches
-           it with the reset header to the visitor's very next turn, then clears it -
-           never sent twice, never sent without a token, never sent on an ordinary
-           turn. If a turn is still streaming it is aborted too, and pendingReset makes
-           finish() clear a second time so the aborted turn's own closing line cannot
-           linger in what is now a new conversation. The visitor's unsent draft is
-           deliberately left alone. */
+        /* Immediate server-side revocation, POSTed to this site's own
+           /api/nexus/reset proxy, which forwards it to the core. The core deletes
+           and tombstones that conversation with NO provider call and NO model
+           turn, so this is not the "spend a provider budget on a click that may
+           never be followed by a message" problem the old design avoided by
+           making the revocation ride the visitor's next chat turn. That
+           mechanism is replaced: a reset is now its own request, sent the
+           instant the visitor asks for one.
+
+           Fire-and-forget from the visitor's point of view: nothing awaits it,
+           there is no spinner, and no outcome - success, refusal or failure - is
+           ever surfaced. A reset is never sent without a token.
+
+           Retry, and why it is bounded: a request that never reached the server,
+           or that came back 5xx, is retried a couple of times with a short
+           backoff, because "New conversation" and leave is exactly the case the
+           old design lost. A 4xx is final and is never retried - the core has
+           spoken, and it never says why. But a pending retry is DROPPED the
+           moment a new conversation has begun: `epoch` is the generation this
+           reset belongs to, newConversation() increments resetEpoch, and a retry
+           that wakes up in a later generation does nothing. The retired token
+           could not in fact reach a newer conversation - it names one record and
+           one nonce, and the core refuses it for anything else - so the drop is
+           belt and braces over the core's own binding, chosen because losing a
+           stale revocation is strictly safer than racing newer state.
+
+           keepalive lets the request outlive the page, so clicking "New
+           conversation" and leaving still gets an immediate delete instead of
+           one bounded by the core's idle sweep. */
+        const RESET_RETRIES=2,RESET_BACKOFF_MS=1500;
+        const sendReset=(token,epoch,attempt)=>{
+          if(!token||epoch!==resetEpoch)return;
+          const again=()=>{if(attempt>=RESET_RETRIES)return;setTimeout(()=>sendReset(token,epoch,attempt+1),RESET_BACKOFF_MS*(attempt+1))};
+          try{fetch('/api/nexus/reset',{method:'POST',credentials:'same-origin',cache:'no-store',keepalive:true,headers:{'content-type':'application/json','x-nexus-conversation':token},body:'{"v":1}'}).then(res=>{if(res.status>=500)again()},again)}catch(err){again()}};
+        /* "New conversation": empty the transcript, forget the stored token, and
+           drop every in-closure conversation variable plus any hold/retry state -
+           all synchronously, so the control always reads as immediate and never
+           waits on a network round trip. A revocation that fails or is dropped
+           must not leave anything stale visible or broken. Only after that work
+           is done does it fire the revocation above, with the token it has just
+           retired. If a turn is still streaming it is aborted too, and
+           pendingReset makes finish() clear a second time so the aborted turn's
+           own closing line cannot linger in what is now a new conversation. The
+           visitor's unsent draft is deliberately left alone. */
         const newConversation=()=>{
-          const old=readConv();if(old)revokeToken=old;
+          const old=readConv();
+          resetEpoch++;
           forgetConv();lastMessage='';
           if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
           clearTranscript();
           if(controller){pendingReset=true;cancel()}else{pendingReset=false;busy(false)}
-          input.focus({preventScroll:true})};
+          input.focus({preventScroll:true});
+          sendReset(old,resetEpoch,0)};
         if(fresh)fresh.addEventListener('click',newConversation);
         const parse=frame=>{const ev=/^event: (.+)$/m.exec(frame),data=/^data: (.+)$/m.exec(frame);if(!ev||!data)return null;try{return {event:ev[1],data:JSON.parse(data[1])}}catch(err){return {event:'malformed',data:{}}}};
         const httpFailure=async res=>{let code='';try{code=(await res.json()).code||''}catch(err){}
@@ -2742,31 +2773,14 @@
           line('You',message);
           const reply=line('NEXUS',TEXT.sending);let gotText=false,terminal=false,res;
           const dropPending=()=>{if(!gotText)reply.el.remove()};
+          /* An ordinary turn carries nothing but the stored conversation token,
+             if there is one. Revocation is no longer coupled to a chat turn at
+             all: it is its own request to /api/nexus/reset, fired by
+             newConversation() (see sendReset above), so a turn can no longer
+             carry, delay, consume or lose a reset. A first turn in a fresh tab
+             sends no conversation header and the core mints a new conversation. */
           const conv=readConv();
-          /* A pending revoke (set by newConversation()) rides this turn as the OLD
-             token plus the reset header, asking the server to delete that abandoned
-             conversation while THIS turn is served on a brand new one. It is NOT
-             consumed here, and that is the fix for I4: clearing it before the fetch
-             destroyed the revocation for good whenever the turn did not get through -
-             an abort, a network error, a 409 turn_in_progress (very reachable, since
-             clicking "New conversation" mid-stream aborts this client while the server
-             turn is still unwinding and holding the session lock), or a 429 hold. The
-             transcript had already been emptied synchronously, so the visitor was told
-             the conversation was gone while the server record survived to the idle
-             sweep. Instead revokeSent() clears it, and it is called from exactly one
-             place: after the 200 text/event-stream head, which is the only answer that
-             proves the core resolved this conversation and therefore reached its
-             decision about the reset. Every other outcome leaves revokeToken set, so
-             the very next turn carries it again - silently: a revocation that did not
-             land is never surfaced to the visitor, and never blocks anything. The
-             revokeToken===revoke guard means a "New conversation" clicked while this
-             turn is in flight, which captures a NEWER token into the same slot, is not
-             wiped by this turn succeeding. Still never combined with the ordinary
-             stored token, never present when nothing was abandoned, and - because a
-             served turn spends it - never sent twice for one conversation. */
-          const revoke=revokeToken;
-          const revokeSent=()=>{if(revoke&&revokeToken===revoke)revokeToken=''};
-          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(revoke?{'x-nexus-conversation':revoke,'x-nexus-conversation-reset':'1'}:conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
+          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
           catch(err){dropPending();status(controller.signal.aborted?TEXT.cancelled:TEXT.error,!controller.signal.aborted);finish();return}
           /* Every answer carries the conversation token, continued or freshly minted,
              including refusals, and it is single use now: keep the latest so the next
@@ -2775,10 +2789,6 @@
              dropping it. */
           const issued=res.headers.get('x-nexus-conversation');if(issued)storeConv(issued);
           if(res.status!==200||!(res.headers.get('content-type')||'').startsWith('text/event-stream')){dropPending();if(await httpFailure(res)!=='hold')finish();return}
-          /* The turn is being served, so the core resolved this conversation and has
-             already decided what to do with the reset. Only here is the pending revoke
-             spent - see the note above. */
-          revokeSent();
           const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='',hold=false;
           const handle=frame=>{const f=parse(frame);if(!f||terminal)return;
             if(f.event==='delta'&&typeof f.data.text==='string'){if(!gotText){reply.t.data='';gotText=true}reply.t.data+=f.data.text;body.scrollTop=body.scrollHeight;return}

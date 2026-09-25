@@ -377,53 +377,35 @@ test('a rate-limit hold cancels its pendingReset so it cannot later wipe a legit
   assert.match(newConversationBody, /cancel\(\)/, 'New conversation still aborts an in-flight stream');
 });
 
-test('a pending revoke rides the visitor\'s very next turn as the OLD token plus the reset header, and is never sent otherwise (H1b)', () => {
+test('revocation no longer rides a chat turn: the reset header and its machinery are gone from the widget (item 2)', () => {
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
   const code = normalizeCode(script);
 
-  // newConversation() must capture whatever token is currently stored, BEFORE
-  // forgetConv() clears it, into a closure variable ask() consumes later. It
-  // must never itself call fetch - that would spend a provider turn on a
-  // click that may never be followed by a message.
-  const newConversationStart = code.indexOf('const newConversation=');
-  const openersWiring = code.indexOf("if(fresh)fresh.addEventListener");
-  assert.ok(newConversationStart >= 0 && openersWiring > newConversationStart);
-  const newConversationBody = code.slice(newConversationStart, openersWiring);
-  assert.match(
-    newConversationBody,
-    /const old=readConv\(\);if\(old\)revokeToken=old; forgetConv\(\);lastMessage=''/,
-    'the abandoned token must be captured before forgetConv() clears storage, without disturbing the existing forget/reset sequence'
-  );
-  assert.doesNotMatch(newConversationBody, /fetch\(/, 'clicking "New conversation" must never itself call fetch');
+  // The old mechanism captured the abandoned token and attached it, with
+  // x-nexus-conversation-reset, to the visitor's NEXT ordinary chat turn. That
+  // coupled a delete to a message that might never be sent and to a turn that
+  // could be refused. It is replaced by a dedicated request to
+  // /api/nexus/reset, so every trace of the ride-along must be gone - not
+  // merely bypassed, or a future edit could resurrect it.
+  assert.doesNotMatch(script, /x-nexus-conversation-reset/, 'the reset header must no longer exist in the widget');
+  assert.doesNotMatch(script, /revokeToken|revokeSent/, 'the pending-revoke slot and its consume function are replaced');
 
-  // ask() reads revokeToken but must NOT clear it before the fetch: a turn that
-  // never reached the server, or that the server refused, has not delivered the
-  // revocation, and clearing it there lost it forever (I4). The clear moved to
-  // revokeSent(), called only on a served turn - asserted in its own tests
-  // below. What must remain true here is that the read does not consume it.
+  // An ordinary turn now carries nothing but the stored token, if there is one.
   const askStart = code.indexOf('async function ask');
   const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
   assert.ok(askStart >= 0 && formWiring > askStart);
   const askBody = code.slice(askStart, formWiring);
   assert.match(
     askBody,
-    /const revoke=revokeToken; const revokeSent=\(\)=>\{if\(revoke&&revokeToken===revoke\)revokeToken=''\};/,
-    'the pending revoke must be read without being consumed, and cleared only by revokeSent()'
-  );
-  assert.doesNotMatch(
-    askBody,
-    /const revoke=revokeToken;revokeToken='';/,
-    'the pre-fetch read-then-clear is the I4 defect and must be gone'
-  );
-  assert.match(
-    askBody,
-    /\.\.\.\(revoke\?\{'x-nexus-conversation':revoke,'x-nexus-conversation-reset':'1'\}:conv\?\{'x-nexus-conversation':conv\}:\{\}\)/,
-    'the reset header must only ever accompany the revoked token; an ordinary turn sends the plain stored token instead, never both'
+    /\.\.\.\(conv\?\{'x-nexus-conversation':conv\}:\{\}\)/,
+    'a chat turn sends the plain stored conversation token and nothing else'
   );
 
-  // The reset header is wired in exactly this one place.
-  assert.equal((script.match(/x-nexus-conversation-reset/g) ?? []).length, 1, 'the reset header must appear in exactly one place in the widget');
+  // Exactly one fetch inside ask(), to the chat proxy. A reset is not one of
+  // its concerns any more.
+  const fetches = askBody.match(/fetch\('([^']+)'/g) ?? [];
+  assert.deepEqual(fetches, ["fetch('/api/nexus/chat'"], 'ask() talks to the chat proxy only');
 });
 
 test('the widget replaces its stored token from every response, and keeps the existing one when a response carries none (H1c)', () => {
@@ -451,7 +433,16 @@ test('"New conversation" clears the transcript and forgets the token synchronous
   const newConversationBody = code.slice(newConversationStart, openersWiring);
   assert.match(newConversationBody, /forgetConv\(\);lastMessage=''/, 'the token is dropped from storage synchronously');
   assert.match(newConversationBody, /clearTranscript\(\)/, 'the transcript is emptied synchronously');
-  assert.doesNotMatch(newConversationBody, /await|\.then\(|fetch\(/, 'clearing must never be deferred to a network response, so a failed or never-sent revocation cannot leave stale state visible');
+  assert.doesNotMatch(newConversationBody, /await|\.then\(|fetch\(/, 'clearing must never be deferred to a network response, so a failed or dropped revocation cannot leave stale state visible');
+
+  // And the revocation is fired only once every one of those synchronous steps
+  // has run: it is the last statement in the handler, so the UI is already
+  // correct before a single byte goes near the network.
+  const clearAt = newConversationBody.indexOf('clearTranscript()');
+  const forgetAt = newConversationBody.indexOf('forgetConv()');
+  const fireAt = newConversationBody.indexOf('sendReset(old,resetEpoch,0)');
+  assert.ok(fireAt > clearAt && fireAt > forgetAt, 'the reset request is fired after the synchronous clearing, not before or instead of it');
+  assert.match(newConversationBody, /sendReset\(old,resetEpoch,0\)\};\s*$/, 'firing the reset is the final statement of the handler');
 });
 
 test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
@@ -498,24 +489,21 @@ test('the Privacy page keeps the full AI assistant provider disclosure and the n
 });
 
 // ---------------------------------------------------------------------------
-// I4: a revocation that was never delivered must not be silently dropped.
+// Item 2 (website half): "New conversation" is an immediate, dedicated
+// revocation, not a passenger on the next chat turn.
 //
-// The old code ran `const revoke=revokeToken;revokeToken='';` BEFORE the fetch.
-// Any refusal of that turn - an abort, a network error, a 409 turn_in_progress
-// (very reachable: clicking "New conversation" mid-stream aborts the client
-// while the server turn is still unwinding and holding the session lock), a 429
-// hold - therefore destroyed the pending revocation while the UI had already
-// told the visitor the conversation was new. The server-side record then lived
-// on to the idle sweep.
+// The previous mechanism captured the abandoned token and attached it, with
+// x-nexus-conversation-reset, to whatever chat turn the visitor sent next. Two
+// consequences: a visitor who clicked and left revoked nothing at all, and a
+// turn that was aborted, refused (409/429/403) or lost to the network delayed
+// the revocation indefinitely. Both are gone. The click now POSTs to
+// /api/nexus/reset with the token it just retired, and the core deletes and
+// tombstones the record with no provider call and no model turn.
 //
-// The fix keeps the pending revoke until a response head proves the turn was
-// actually served, which is the only answer that proves the core resolved this
-// conversation and therefore evaluated the reset.
-//
-// These are behavioural tests, not string matches: they lift the shipped source
-// text for the capture, the read, revokeSent() and the header expression out of
-// the served page and execute it against scripted turn outcomes. A copy of the
-// logic would drift; this cannot.
+// These are behavioural tests, not string matches: they lift the shipped retry
+// budget, the shipped sendReset() and the shipped capture/fire statements out of
+// the served page and execute them against scripted network outcomes and a
+// scripted clock. A reimplementation of the logic would drift; this cannot.
 
 function widgetScript() {
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
@@ -523,230 +511,232 @@ function widgetScript() {
   return script;
 }
 
-function revokeMachine() {
+/**
+ * A harness built from the widget's own reset code.
+ *
+ * `setResponder(fn)` decides what each request comes back as: an Error (the
+ * fetch rejected - a transport failure, or the page going away) or `{status}`.
+ * `drain()` runs the scheduled retries the way a timer would, oldest first, so
+ * a retry that the shipped guard refuses to send simply produces no request.
+ */
+function resetMachine() {
   const code = normalizeCode(widgetScript());
 
-  const capture = code.match(/const old=readConv\(\);if\(old\)revokeToken=old;/)?.[0];
-  assert.ok(capture, 'newConversation() must capture the abandoned token');
+  const budget = code.match(/const RESET_RETRIES=\d+,RESET_BACKOFF_MS=\d+;/)?.[0];
+  assert.ok(budget, 'the retry budget and backoff must be declared in the shipped widget');
 
-  const stateMachine = code.match(
-    /const revoke=revokeToken; const revokeSent=\(\)=>\{if\(revoke&&revokeToken===revoke\)revokeToken=''\};/
-  )?.[0];
-  assert.ok(stateMachine, 'ask() must read the pending revoke without consuming it, and define revokeSent()');
+  const sender = code.match(/const sendReset=\(token,epoch,attempt\)=>\{[\s\S]*?catch\(err\)\{again\(\)\}\};/)?.[0];
+  assert.ok(sender, 'sendReset() must be defined in the shipped widget');
+  assert.match(sender, /if\(!token\|\|epoch!==resetEpoch\)return;/, 'sendReset must refuse a missing token and a superseded generation');
 
-  const spread = code.match(/\.\.\.\(revoke\?\{[^{}]*\}:conv\?\{[^{}]*\}:\{\}\)/)?.[0];
-  assert.ok(spread, 'the conditional conversation/reset header expression must exist');
+  const capture = code.match(/const old=readConv\(\); resetEpoch\+\+;/)?.[0];
+  assert.ok(capture, 'newConversation() must read the retired token and open a new generation');
 
-  // A turn harness built from the shipped fragments. `outcome` is what the turn
-  // came back as: 'network' (the fetch threw - an abort or a transport error, so
-  // no response head at all), 'refused' (a response head arrived but the turn
-  // was not served: 409, 429, 403, 503...), or 'served' (a 200 text/event-stream
-  // head, which is where the widget calls revokeSent()).
+  const fire = code.match(/sendReset\(old,resetEpoch,0\)/)?.[0];
+  assert.ok(fire, 'newConversation() must fire the reset for the token it retired');
+
   const body = `
-    let revokeToken = '', stored = '';
+    let resetEpoch = 0, stored = '';
     const readConv = () => stored;
     const forgetConv = () => { stored = ''; };
     const storeConv = (value) => { stored = value; };
+
     const requests = [];
+    const timers = [];
+    // Shadows the global inside this harness: a scheduled retry is captured
+    // rather than run, so drain() controls the clock.
+    const setTimeout = (run, ms) => { timers.push({ run, ms }); return timers.length; };
 
-    const newConversation = () => { ${capture} forgetConv(); };
+    let respond = () => ({ status: 204 });
+    const fetch = (url, init) => {
+      requests.push({ url, init });
+      const outcome = respond(requests.length, init);
+      if (outcome instanceof Error) return Promise.reject(outcome);
+      return Promise.resolve(outcome);
+    };
 
-    const turn = (outcome, issued, midFlight) => {
-      const conv = readConv();
-      ${stateMachine}
-      const headers = { 'content-type': 'application/json', ${spread} };
-      requests.push(headers);
-      if (typeof midFlight === 'function') midFlight();
-      if (outcome === 'network') return;
-      if (issued) storeConv(issued);
-      if (outcome !== 'served') return;
-      revokeSent();
+    ${budget}
+    ${sender}
+
+    // The two shipped statements from newConversation() that constitute the
+    // reset contract, in their shipped order. The rest of that handler (the
+    // transcript, the abort, the focus) is asserted separately, by source.
+    const newConversation = () => { ${capture} forgetConv(); ${fire}; };
+
+    const settle = async () => { for (let i = 0; i < 12; i += 1) await Promise.resolve(); };
+    const drain = async () => {
+      await settle();
+      while (timers.length) { timers.shift().run(); await settle(); }
     };
 
     return {
-      requests,
-      newConversation,
-      turn,
-      storeConv,
-      pending: () => revokeToken,
-      storedToken: () => stored
+      requests, timers, newConversation, storeConv, drain, settle,
+      storedToken: () => stored,
+      generation: () => resetEpoch,
+      setResponder: (fn) => { respond = fn; }
     };
   `;
   return new Function(body)();
 }
 
 const TOKEN = 'x-nexus-conversation';
-const RESET = 'x-nexus-conversation-reset';
+const RESET_PATH = '/api/nexus/reset';
 
-test('a pending revoke survives a turn that never reached the server and rides the next one (I4)', () => {
-  const widget = revokeMachine();
+const tokensOf = (machine) => machine.requests.map((request) => request.init.headers[TOKEN]);
+
+test('"New conversation" immediately POSTs the retired token to the reset proxy (item 2)', async () => {
+  const widget = resetMachine();
   widget.storeConv('T1');
   widget.newConversation();
-  assert.equal(widget.pending(), 'T1', 'the abandoned token is captured on the click');
-  assert.equal(widget.storedToken(), '', 'and is gone from storage immediately');
 
-  // The fetch threw: an abort (the visitor clicked "New conversation" mid-stream)
-  // or a transport error. Nothing was delivered.
-  widget.turn('network');
-  assert.equal(widget.requests[0][TOKEN], 'T1');
-  assert.equal(widget.requests[0][RESET], '1');
-  assert.equal(widget.pending(), 'T1', 'a turn that never reached the server must not consume the revoke');
+  // Synchronous: the token is already gone from storage and the request is
+  // already out, on the click, with no turn in between.
+  assert.equal(widget.storedToken(), '', 'the stored token is retired synchronously');
+  assert.equal(widget.requests.length, 1, 'the revocation is fired on the click itself');
+  await widget.drain();
 
-  // A response head arrived, but the turn was refused - 409 turn_in_progress,
-  // 429 rate limited, 403, 503. The core never resolved this conversation, so
-  // the reset was never evaluated.
-  widget.turn('refused');
-  assert.equal(widget.requests[1][TOKEN], 'T1');
-  assert.equal(widget.requests[1][RESET], '1');
-  assert.equal(widget.pending(), 'T1', 'a refused turn must not consume the revoke either');
-
-  // 429 with a fresh token issued alongside the refusal: the revoke still stands.
-  widget.turn('refused', 'T2');
-  assert.equal(widget.requests[2][TOKEN], 'T1');
-  assert.equal(widget.pending(), 'T1');
-
-  // Served at last. Now, and only now, is it spent.
-  widget.turn('served', 'T9');
-  assert.equal(widget.requests[3][TOKEN], 'T1');
-  assert.equal(widget.requests[3][RESET], '1');
-  assert.equal(widget.pending(), '', 'a served turn delivered the revocation, so it is spent');
+  const [request] = widget.requests;
+  assert.equal(request.url, RESET_PATH, 'the revocation goes to the dedicated reset proxy, not the chat route');
+  assert.equal(request.init.method, 'POST');
+  assert.equal(request.init.credentials, 'same-origin', 'the HttpOnly session cookie must ride along or the core cannot check ownership');
+  assert.equal(request.init.keepalive, true, 'clicking "New conversation" and leaving must still revoke');
+  assert.equal(request.init.cache, 'no-store');
+  assert.equal(request.init.headers[TOKEN], 'T1', 'it carries exactly the token that was just retired');
+  assert.equal(request.init.headers['content-type'], 'application/json');
+  assert.equal('x-nexus-conversation-reset' in request.init.headers, false, 'the old ride-along header is gone');
+  assert.equal(widget.requests.length, 1, 'a successful revocation is sent exactly once');
 });
 
-test('a delivered revoke is never sent a second time for the same conversation (I4)', () => {
-  const widget = revokeMachine();
+test('a reset is never sent without a token (item 2)', async () => {
+  // A brand new tab, or a second click with nothing stored: there is nothing to
+  // revoke, and inventing a request would tell the core about a conversation
+  // that never existed.
+  const widget = resetMachine();
+  widget.newConversation();
+  await widget.drain();
+  assert.deepEqual(widget.requests, [], 'no stored token means no reset request');
+
   widget.storeConv('T1');
   widget.newConversation();
-  widget.turn('served', 'T9');
-  assert.equal(widget.requests[0][RESET], '1');
-
-  // Every later turn is an ordinary turn: the stored token, no reset header.
-  widget.turn('served', 'T10');
-  widget.turn('refused');
-  widget.turn('served', 'T11');
-  for (const request of widget.requests.slice(1)) {
-    assert.equal(RESET in request, false, 'an ordinary turn must never carry the reset header');
+  widget.newConversation();
+  await widget.drain();
+  assert.deepEqual(tokensOf(widget), ['T1'], 'the second click had nothing left to retire');
+  for (const request of widget.requests) {
+    assert.equal(typeof request.init.headers[TOKEN], 'string');
+    assert.ok(request.init.headers[TOKEN].length > 0, 'every reset request carries a non-empty token');
   }
-  assert.equal(widget.requests[1][TOKEN], 'T9', 'an ordinary turn carries the stored token');
-  assert.equal(widget.requests[3][TOKEN], 'T10');
-  assert.equal(
-    widget.requests.filter((request) => RESET in request).length,
-    1,
-    'exactly one request in the whole session asked for the revocation'
+});
+
+test('a reset lost to the network is retried with the same retired token, within a bounded budget (item 2)', async () => {
+  const widget = resetMachine();
+  widget.setResponder(() => new Error('network'));
+  widget.storeConv('T1');
+  widget.newConversation();
+  await widget.drain();
+
+  // The shipped budget is 1 attempt + RESET_RETRIES, and every attempt carries
+  // the same retired credential - never a fresh one.
+  const budget = Number(normalizeCode(widgetScript()).match(/const RESET_RETRIES=(\d+)/)[1]);
+  assert.ok(budget >= 1, 'there must be at least one retry');
+  assert.equal(widget.requests.length, budget + 1, `a lost reset is attempted ${budget + 1} times and then stops`);
+  assert.deepEqual(tokensOf(widget), Array(budget + 1).fill('T1'));
+  assert.deepEqual(widget.timers, [], 'the retry budget is exhausted, not left pending forever');
+});
+
+test('a 5xx is retried and a 4xx is final (item 2)', async () => {
+  const server = resetMachine();
+  server.setResponder(() => ({ status: 503 }));
+  server.storeConv('T1');
+  server.newConversation();
+  await server.drain();
+  assert.ok(server.requests.length > 1, 'an unavailable core is retried');
+
+  const refused = resetMachine();
+  refused.setResponder(() => ({ status: 400 }));
+  refused.storeConv('T1');
+  refused.newConversation();
+  await refused.drain();
+  assert.equal(refused.requests.length, 1, 'the core has spoken; a 4xx is never retried');
+
+  const rateLimited = resetMachine();
+  rateLimited.setResponder(() => ({ status: 429 }));
+  rateLimited.storeConv('T1');
+  rateLimited.newConversation();
+  await rateLimited.drain();
+  assert.equal(rateLimited.requests.length, 1, 'a rate-limited reset is not hammered');
+});
+
+test('a pending retry is DROPPED once a new conversation has begun (item 2)', async () => {
+  // THE DECISION, recorded here because it is deliberate. A retry always
+  // carries the token it was issued for, and that token names exactly one
+  // conversation record and one nonce - the core refuses it for anything else,
+  // so it could not revoke newer state even if it arrived late. The generation
+  // guard is belt and braces over that binding: the instant a new conversation
+  // begins, an older pending retry stops existing. Losing a stale revocation is
+  // strictly safer than racing newer state, and the abandoned record is already
+  // unreachable and bounded by the core's idle sweep.
+  const widget = resetMachine();
+  let allow = false;
+  widget.setResponder(() => (allow ? { status: 204 } : new Error('network')));
+
+  widget.storeConv('T1');
+  widget.newConversation();
+  await widget.settle();
+  assert.deepEqual(tokensOf(widget), ['T1']);
+  assert.equal(widget.timers.length, 1, 'the failed T1 revocation scheduled a retry');
+
+  // A new conversation begins before that retry wakes up.
+  allow = true;
+  widget.storeConv('T2');
+  widget.newConversation();
+  await widget.drain();
+
+  assert.deepEqual(
+    tokensOf(widget),
+    ['T1', 'T2'],
+    'the T1 retry dropped itself when it woke in a later generation; only the current abandonment was attempted'
   );
+  assert.equal(widget.generation(), 2, 'each click opens a new generation');
 });
 
-test('the reset header is never sent without a token, and never on an ordinary turn (I4)', () => {
-  const widget = revokeMachine();
-
-  // A brand new tab: nothing stored, nothing abandoned. No conversation header
-  // at all, and certainly no reset.
-  widget.turn('served', 'T1');
-  assert.equal(TOKEN in widget.requests[0], false);
-  assert.equal(RESET in widget.requests[0], false);
-
-  // An ordinary second turn: the stored token alone.
-  widget.turn('served', 'T2');
-  assert.equal(widget.requests[1][TOKEN], 'T1');
-  assert.equal(RESET in widget.requests[1], false);
-
-  // A click with nothing stored yet cannot invent a revocation.
-  const empty = revokeMachine();
-  empty.newConversation();
-  assert.equal(empty.pending(), '', 'there is nothing to revoke when no token was ever issued');
-  empty.turn('served', 'A');
-  assert.equal(RESET in empty.requests[0], false);
-
-  // Invariant over every request produced by all three widgets: a reset always
-  // travels with a non-empty token.
-  for (const request of [...widget.requests, ...empty.requests]) {
-    if (!(RESET in request)) continue;
-    assert.equal(typeof request[TOKEN], 'string');
-    assert.ok(request[TOKEN].length > 0, 'the reset header must only ever accompany a token');
-  }
-});
-
-test('a "New conversation" clicked while a turn is in flight is not wiped by that turn succeeding (I4)', () => {
-  const widget = revokeMachine();
+test('a retry that wakes up in the same generation still goes out (item 2)', async () => {
+  // The guard must drop superseded retries without disabling retrying itself.
+  const widget = resetMachine();
+  let attempt = 0;
+  widget.setResponder(() => (++attempt === 1 ? new Error('network') : { status: 204 }));
   widget.storeConv('T1');
   widget.newConversation();
-
-  // The turn carrying T1's revocation is in flight. Mid-flight the visitor sends
-  // a second reset: a later answer has since stored T2, so the click captures T2
-  // into the same single slot. The in-flight turn then succeeds - and must clear
-  // only what it was carrying, which is no longer what is pending.
-  widget.turn('served', 'T9', () => {
-    widget.storeConv('T2');
-    widget.newConversation();
-  });
-  assert.equal(widget.pending(), 'T2', 'the newer pending revoke must survive the older turn completing');
-
-  widget.turn('served', 'T10');
-  assert.equal(widget.requests[1][TOKEN], 'T2');
-  assert.equal(widget.requests[1][RESET], '1');
-  assert.equal(widget.pending(), '');
+  await widget.drain();
+  assert.deepEqual(tokensOf(widget), ['T1', 'T1'], 'the retry for the current generation was sent');
+  assert.deepEqual(widget.timers, [], 'and it succeeded, so nothing further is scheduled');
 });
 
-test('two "New conversation" clicks queue nothing: the slot holds the most recently abandoned token (I4)', () => {
-  // DECISION, recorded here because it is a deliberate limit and not an
-  // oversight. The wire carries exactly one conversation token per request, so a
-  // queue could only drain one revocation per turn - and because a revoking turn
-  // is served on a brand new conversation, draining a queue would reset the
-  // visitor's context on every turn until it emptied. That is worse for the
-  // visitor than letting the older abandoned record fall to the deadline sweep,
-  // where it is already unreachable. So: a single slot, holding the most recent
-  // abandonment. Only the most recent is attempted.
-  const twice = revokeMachine();
-  twice.storeConv('A');
-  twice.newConversation();
-  twice.storeConv('B');
-  twice.newConversation();
-  assert.equal(twice.pending(), 'B', 'the most recently abandoned conversation is the one attempted');
-
-  // And the case with no turn between the two clicks is not a loss at all: no
-  // second conversation was ever minted, so the first click's capture stands.
-  const noTurnBetween = revokeMachine();
-  noTurnBetween.storeConv('A');
-  noTurnBetween.newConversation();
-  noTurnBetween.newConversation();
-  assert.equal(noTurnBetween.pending(), 'A', 'a second click with nothing stored must not erase the pending revoke');
-  noTurnBetween.turn('served', 'Z');
-  assert.equal(noTurnBetween.requests[0][TOKEN], 'A');
-  assert.equal(noTurnBetween.requests[0][RESET], '1');
-});
-
-test('revokeSent() is called in exactly one place, after the turn is known to be served (I4)', () => {
+test('the reset is fire-and-forget: nothing is awaited, and no outcome reaches the visitor (item 2)', () => {
   const code = normalizeCode(widgetScript());
-  const askStart = code.indexOf('async function ask');
-  const formWiring = code.indexOf("form.addEventListener('submit'", askStart);
-  const askBody = code.slice(askStart, formWiring);
+  const senderStart = code.indexOf('const sendReset=');
+  const senderEnd = code.indexOf('const newConversation=');
+  assert.ok(senderStart >= 0 && senderEnd > senderStart);
+  const sender = code.slice(senderStart, senderEnd);
 
-  assert.equal(
-    (askBody.match(/revokeSent\(\);/g) ?? []).length,
-    1,
-    'revokeSent() must be called from exactly one place'
-  );
+  // No status line, no offline notice, no retry pill, no spinner: a revocation
+  // the visitor cannot act on must never be reported to them.
+  assert.doesNotMatch(sender, /status\(|offlineNotice\(|retryPill\(|busy\(|line\(/, 'a failed revocation is never surfaced');
+  assert.doesNotMatch(sender, /await/, 'nothing in the widget waits on the revocation');
+  // The token stays out of the DOM, the URL and the console, like everywhere else.
+  assert.doesNotMatch(sender, /console\.|textContent|innerHTML|location\./);
 
-  const definedAt = askBody.indexOf('const revokeSent=');
-  const fetchAt = askBody.indexOf("res=await fetch('/api/nexus/chat'");
-  const issuedAt = askBody.indexOf("const issued=res.headers.get('x-nexus-conversation')");
-  const statusGuardAt = askBody.indexOf('if(res.status!==200');
-  const calledAt = askBody.indexOf('revokeSent();');
+  // The handler that calls it is not async either, so the click cannot block.
+  assert.doesNotMatch(code, /async const newConversation|const newConversation=async/, 'the click handler stays synchronous');
+});
 
-  assert.ok(definedAt >= 0 && fetchAt > definedAt, 'the pending revoke is read before the fetch that carries it');
-  assert.ok(statusGuardAt > issuedAt && issuedAt > fetchAt, 'the status guard follows the response head');
-  assert.ok(
-    calledAt > statusGuardAt,
-    'the revoke may only be discarded after the 200 text/event-stream guard has been passed'
-  );
+test('the reset request shape is minimal and same-origin (item 2)', () => {
+  const code = normalizeCode(widgetScript());
+  const sender = code.slice(code.indexOf('const sendReset='), code.indexOf('const newConversation='));
 
-  // Nothing else may clear it. If any other statement assigned revokeToken='',
-  // a refused turn could still lose the revocation.
-  const script = widgetScript();
-  const clears = (script.match(/revokeToken=''/g) ?? []).length;
-  assert.equal(clears, 2, 'revokeToken is initialised once and cleared once, inside revokeSent()');
-  assert.match(script, /pendingReset=false,revokeToken=''/, 'one of the two is the declaration');
-
-  // And the failure is silent: nothing in the revoke path surfaces a status line.
-  const machine = askBody.slice(definedAt, fetchAt);
-  assert.doesNotMatch(machine, /status\(|offlineNotice\(|retryPill\(/, 'a failed revocation is never shown to the visitor');
+  assert.match(sender, /fetch\('\/api\/nexus\/reset'/, 'the proxy path is relative, so the request is same-origin by construction');
+  assert.match(sender, /credentials:'same-origin'/);
+  assert.match(sender, /keepalive:true/);
+  assert.match(sender, /body:'\{"v":1\}'/, 'a tiny fixed body: no visitor text is ever sent with a reset');
+  // Nothing about the transcript, the draft or the page goes with it.
+  assert.doesNotMatch(sender, /message|lastMessage|input\.value|document\./);
 });
