@@ -13,10 +13,17 @@
 // other half of the evidence and is recorded in lweb-report.md.
 
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
+import { get } from 'node:http';
 import { test } from 'node:test';
 
-import { PUBLIC_ROOT, headersForPath, parsePolicy, policyForPath } from './support/next-headers.mjs';
+import {
+  PUBLIC_ROOT,
+  headersForPath,
+  matchingHeaderRules,
+  parsePolicy,
+  policyForPath
+} from './support/next-headers.mjs';
 import { useStaticSite } from './support/site.mjs';
 
 const site = useStaticSite();
@@ -283,4 +290,337 @@ test('the conversation credential is put nowhere but sessionStorage', async () =
   assert.doesNotMatch(script, /location\.search|location\.hash|history\.(?:replace|push)State/, 'never in a URL');
   assert.doesNotMatch(script, /console\.(?:log|warn|error|info)/, 'never in the console');
   assert.doesNotMatch(script, /(?:textContent|innerHTML|setAttribute)\s*[=(]\s*(?:conv|token)\b/, 'never in the DOM');
+});
+
+// ---------------------------------------------------------------------------
+// I1: the policy must cover EVERY page on this origin, and each page must be
+// sent exactly ONE Content-Security-Policy header.
+//
+// The token lives in sessionStorage, which is scoped to the origin and the tab,
+// not to a page. /privacy-directive.html is linked from inside the assistant
+// panel and sessionStorage survives a same-tab navigation, so an injection on
+// any page of this origin can read a live conversation credential. An
+// enumerated list of ten paths therefore was not coverage.
+//
+// Two headers are as dangerous as none: a browser enforces two
+// Content-Security-Policy headers as their INTERSECTION, so a second rule that
+// merely looks weaker can silently kill a page. The rules are therefore written
+// with mutually exclusive sources - proven below, path by path - rather than
+// relying on which of two matching rules Next.js or Vercel happens to apply
+// last. Order in headers() is then irrelevant to correctness, which is the
+// point.
+
+const CSP_KEY = 'content-security-policy';
+
+async function cspRulesFor(pathname) {
+  const rules = await matchingHeaderRules(pathname);
+  return rules.filter((rule) => rule.headers.some((header) => header.key.toLowerCase() === CSP_KEY));
+}
+
+/** The one rule that supplies the policy for `pathname`, asserted to be one. */
+async function soleCspRule(pathname) {
+  const rules = await cspRulesFor(pathname);
+  assert.equal(
+    rules.length,
+    1,
+    `${pathname} must be matched by exactly one Content-Security-Policy rule, not ${rules.length}`
+      + ` (${rules.map((rule) => rule.source).join(' + ')})`
+  );
+  return rules[0];
+}
+
+// Which tier a rule belongs to, read off its own source rather than copied from
+// next.config.js: a literal path is one of the enumerated per-page tiers,
+// `/:page(...)` is the static-HTML tier and `/:path(...)` the catch-all baseline.
+function tierOf(source) {
+  if (source.startsWith('/:page(')) return 'static-html';
+  if (source.startsWith('/:path(')) return 'baseline';
+  return source;
+}
+
+// One representative of every kind of path this origin answers on.
+const COVERAGE = [
+  ['/', '/'],
+  ['/index.html', '/index.html'],
+  ['/founder', '/founder'],
+  ['/founder.html', '/founder.html'],
+  ['/nexus-personal', '/nexus-personal'],
+  ['/privacy-directive.html', 'static-html'],
+  ['/contact.html', 'static-html'],
+  ['/intake.html', 'static-html'],
+  ['/login.html', 'static-html'],
+  ['/thanks.html', 'static-html'],
+  ['/terms-of-service.html', 'static-html'],
+  ['/nexus-personal-backup.html', 'static-html'],
+  ['/checkout.html', '/checkout.html'],
+  ['/dashboard', 'baseline'],
+  ['/dashboard/billing', 'baseline'],
+  ['/sign-in', 'baseline'],
+  ['/mulligan/abc123', 'baseline'],
+  ['/api/contact', 'baseline'],
+  ['/api/nexus/chat', 'baseline'],
+  ['/_next/static/chunks/main-0000.js', 'baseline'],
+  ['/a/path/that/does/not/exist', 'baseline']
+];
+
+test('every kind of path on this origin carries a Content-Security-Policy, and exactly one rule supplies it (I1)', async () => {
+  for (const [pathname, expectedTier] of COVERAGE) {
+    const rule = await soleCspRule(pathname);
+    assert.equal(tierOf(rule.source), expectedTier, `${pathname} must be policed by ${expectedTier}`);
+
+    const { raw } = await policyForPath(pathname);
+    assert.ok(raw, `${pathname} must carry a Content-Security-Policy`);
+    // A page must never receive two policies to intersect.
+    assert.doesNotMatch(raw, /,/, `${pathname} must receive a single policy, not two joined by a comma`);
+  }
+});
+
+test('no path anywhere is left uncovered: the baseline is a genuine catch-all (I1)', async () => {
+  // Deliberately adversarial spellings, including ones no page exists for. An
+  // uncovered 404 still matters: it is a page on this origin, and a page on this
+  // origin can read the token.
+  const strays = [
+    '/x', '/X.HTML', '/founderX', '/founder.html.bak', '/deep/nested/unknown',
+    '/index.htm', '/api', '/api/nexus', '/.well-known/security.txt',
+    '/dist/output.css', '/js/lead-capture.js', '/video/ragnarok-brain.mp4', '/favicon.ico',
+    // Slashed spellings. Next compiles every header source with an optional
+    // trailing slash, so '/founder/' matches the rule written '/founder'. If the
+    // catch-all's exclusions are anchored with a bare `$` they do not, and the
+    // page gets TWO policies to intersect. '//' is the same trap against '/'.
+    '/founder/', '/index.html/', '/privacy-directive.html/', '/checkout.html/',
+    '/dashboard/', '/nexus-personal/', '//'
+  ];
+  for (const pathname of strays) {
+    const rule = await soleCspRule(pathname);
+    assert.ok(rule.source, `${pathname} must be matched by a rule`);
+  }
+});
+
+test('Next.js own compiled regexes agree: one CSP rule per path in the built manifest (M7)', async (t) => {
+  // Not a re-implementation of the matcher this time. This reads the regexes Next
+  // actually compiled into .next/routes-manifest.json - the same strings Vercel's
+  // routing layer applies - and checks the one-rule property against them. It is
+  // the answer to the circularity the review named: the two sides cannot drift
+  // together, because one of them is Next's own output.
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(new URL('../.next/routes-manifest.json', import.meta.url), 'utf8'));
+  } catch {
+    t.skip('no build output present; run `next build` for this check');
+    return;
+  }
+
+  const rules = (manifest.headers ?? []).filter((rule) =>
+    rule.headers.some((header) => header.key.toLowerCase() === CSP_KEY)
+  );
+  assert.ok(rules.length >= 13, `the manifest must carry the CSP rules, found ${rules.length}`);
+
+  const paths = [
+    ...COVERAGE.map(([pathname]) => pathname),
+    '/founder/', '/index.html/', '/privacy-directive.html/', '/checkout.html/',
+    '/dashboard/', '/nexus-personal/', '//', '/x', '/deep/nested/unknown'
+  ];
+  for (const pathname of paths) {
+    const hits = rules.filter((rule) => new RegExp(rule.regex).test(pathname));
+    assert.equal(
+      hits.length,
+      1,
+      `${pathname} must match exactly one CSP rule in Next's own manifest, not ${hits.length}`
+        + ` (${hits.map((rule) => rule.source).join(' + ')})`
+    );
+  }
+});
+
+test('the four paths the review named get the directives they are supposed to get (I1)', async () => {
+  // '/' - the homepage's own tightest policy, unchanged.
+  const home = await policyForPath('/');
+  assert.deepEqual(sources(home.directives, 'script-src'), ["'self'", "'unsafe-inline'"]);
+  assert.deepEqual(sources(home.directives, 'connect-src'), ["'self'"]);
+
+  // '/privacy-directive.html' - the page the panel links to, in the same tab,
+  // with the live token still in sessionStorage. This is the finding.
+  const privacy = await policyForPath('/privacy-directive.html');
+  assert.deepEqual(sources(privacy.directives, 'default-src'), ["'self'"]);
+  assert.deepEqual(sources(privacy.directives, 'base-uri'), ["'self'"]);
+  assert.deepEqual(sources(privacy.directives, 'object-src'), ["'none'"]);
+  assert.deepEqual(sources(privacy.directives, 'frame-ancestors'), ["'none'"]);
+  // The two directives that bear on the credential: no script may be LOADED
+  // from an origin that is not on this list, and no fetch/XHR/beacon may leave
+  // for one either.
+  assert.ok(sources(privacy.directives, 'script-src').includes("'self'"));
+  assert.ok(sources(privacy.directives, 'connect-src').includes("'self'"));
+  assert.doesNotMatch(privacy.raw, /'unsafe-eval'/);
+
+  // Another rewritten static page keeps its own measured allowlist, unchanged.
+  const legacy = await policyForPath('/founder.html');
+  assert.ok(
+    sources(legacy.directives, 'script-src').includes('https://cdn.tailwindcss.com'),
+    'the legacy tier must still allow what those pages actually load'
+  );
+
+  // An arbitrary unknown path gets the baseline floor.
+  const stray = await policyForPath('/a/path/that/does/not/exist');
+  assert.deepEqual(sources(stray.directives, 'base-uri'), ["'self'"]);
+  assert.deepEqual(sources(stray.directives, 'object-src'), ["'none'"]);
+  assert.deepEqual(sources(stray.directives, 'frame-ancestors'), ["'none'"]);
+  assert.match(stray.raw, /upgrade-insecure-requests/);
+});
+
+test('the baseline floor is honest about its reach and still carries no wildcard', async () => {
+  const { raw, directives } = await policyForPath('/dashboard');
+
+  // The floor is deliberately NOT default-src 'self'. The Next/React half of
+  // this origin loads Clerk from a Frontend API host that exists only in an
+  // environment variable, and /checkout.html loads Stripe.js and its controller
+  // iframe. Neither was measured in a browser here, and an unmeasured
+  // default-src 'self' across the whole origin would break authentication and
+  // checkout in production. What the floor does carry is every directive that
+  // cannot break a page which loads third-party code.
+  for (const directive of ['base-uri', 'object-src', 'frame-ancestors', 'form-action']) {
+    assert.ok(sources(directives, directive), `the floor must carry ${directive}`);
+  }
+  assert.equal(
+    sources(directives, 'default-src'),
+    null,
+    'the floor must not claim a default-src it was never measured against'
+  );
+  assert.equal(
+    sources(directives, 'script-src'),
+    null,
+    'the floor must not claim a script-src it was never measured against'
+  );
+
+  for (const [directive, values] of directives) {
+    for (const value of values) {
+      assert.ok(
+        value !== '*' && !value.startsWith('*.') && value !== 'https:' && value !== 'http:',
+        `${directive} on the floor must not contain the wildcard source ${value}`
+      );
+      assert.doesNotMatch(value, /^http:\/\//, `${directive} on the floor must not allow plaintext ${value}`);
+    }
+  }
+  assert.doesNotMatch(raw, /'unsafe-eval'/);
+});
+
+// The static-HTML tier, measured the way the rewrite pages were: markup plus the
+// local scripts those pages pull in, never a guess.
+const STATIC_TIER_EXCLUDED = new Set([
+  'index.html',
+  'nexus-personal.html', 'creative-director.html', 'founder.html', 'command-center.html',
+  'checkout.html'
+]);
+
+async function staticTierPages() {
+  const names = await readdir(PUBLIC_ROOT);
+  return names.filter((name) => name.endsWith('.html') && !STATIC_TIER_EXCLUDED.has(name));
+}
+
+test('the static-HTML tier permits every origin those pages actually load, and nothing dead', async () => {
+  const pages = await staticTierPages();
+  assert.ok(pages.length >= 20, `the tier must cover the static pages, found ${pages.length}`);
+
+  const { directives } = await policyForPath('/privacy-directive.html');
+  const allowed = new Set([...directives.values()].flat().filter((value) => value.startsWith('https://')));
+
+  const file = (name) => new URL(name, `file:///${PUBLIC_ROOT.replace(/\\/g, '/')}`);
+  const loaded = new Set();
+  const mentioned = new Set();
+  const addLoad = (text) => {
+    for (const [, origin] of text.matchAll(
+      /(?:fetch|import|importScripts|new EventSource|new WebSocket|action\s*=\s*)[\s(]*["'`](https:\/\/[a-z0-9.-]+)/gi
+    )) loaded.add(origin.toLowerCase());
+    // <source src>, <video src> and url(...) in inline CSS are loads too, and
+    // are exactly what a script/link-tag-only scan misses.
+    for (const [, origin] of text.matchAll(/<(?:source|video|audio|img)\b[^>]*\bsrc="(https:\/\/[a-z0-9.-]+)/gi)) {
+      loaded.add(origin.toLowerCase());
+    }
+    for (const [, origin] of text.matchAll(/url\(\s*["']?(https:\/\/[a-z0-9.-]+)/gi)) loaded.add(origin.toLowerCase());
+  };
+  const addMentions = (text) => {
+    for (const [origin] of text.matchAll(/https:\/\/[a-z0-9.-]+/gi)) mentioned.add(origin.toLowerCase());
+  };
+
+  for (const page of pages) {
+    const html = await readFile(file(page), 'utf8');
+    for (const [tag, , url] of html.matchAll(/<(script|link)\b[^>]*\b(?:src|href)="(https:\/\/[^"]+)"/gi)) {
+      if (/^<link/i.test(tag) && /\brel="(?:preconnect|dns-prefetch)"/i.test(tag)) continue;
+      loaded.add(new URL(url).origin.toLowerCase());
+    }
+    addLoad(html);
+    addMentions(html);
+    for (const [, relative] of html.matchAll(/<script\b[^>]*\bsrc="\/?(js\/[^"]+)"/gi)) {
+      const source = await readFile(file(relative), 'utf8').catch(() => null);
+      if (source === null) continue;
+      addLoad(source);
+      addMentions(source);
+    }
+  }
+
+  assert.ok(loaded.size >= 4, 'the scan must find the CDNs and hosts these pages load');
+  for (const origin of loaded) {
+    assert.ok(allowed.has(origin), `${origin} is loaded by a static page but not allowed by its policy`);
+  }
+
+  // No dead permission, in the other direction. Iconify's API hosts and
+  // fonts.gstatic.com are reached by third-party code the pages load, not by the
+  // pages themselves, so they are allowed without being mentioned.
+  const reachedByThirdPartyCode = new Set([
+    'https://api.iconify.design',
+    'https://api.simplesvg.com',
+    'https://api.unisvg.com',
+    'https://fonts.gstatic.com'
+  ]);
+  for (const origin of allowed) {
+    if (reachedByThirdPartyCode.has(origin)) continue;
+    assert.ok(mentioned.has(origin), `${origin} is allowed by the static tier but no static page mentions it`);
+  }
+});
+
+test('the static-HTML tier shuts the same sinks the homepage does, with no wildcard anywhere', async () => {
+  const { raw, directives } = await policyForPath('/privacy-directive.html');
+  assert.deepEqual(sources(directives, 'frame-src'), ["'none'"], 'no static page frames anything');
+  for (const [directive, values] of directives) {
+    for (const value of values) {
+      assert.ok(
+        value !== '*' && !value.startsWith('*.') && value !== 'https:' && value !== 'data:*',
+        `${directive} must not contain the wildcard source ${value}`
+      );
+      assert.doesNotMatch(value, /^http:\/\//, `${directive} must not allow plaintext ${value}`);
+    }
+  }
+  assert.doesNotMatch(raw, /'unsafe-eval'/);
+  assert.doesNotMatch(raw, /'strict-dynamic'/);
+  assert.match(raw, /upgrade-insecure-requests/);
+});
+
+// Served, not merely configured: read the raw header lines off the wire so a
+// duplicate Content-Security-Policy cannot hide behind a Headers object that
+// joins repeats with a comma. The authoritative production-shaped check is
+// `next build && next start` plus curl, recorded in lweb-report.md; this is the
+// same check inside the suite, for the paths the hermetic server can answer.
+function rawResponse(url) {
+  return new Promise((fulfil, reject) => {
+    const request = get(url, (response) => {
+      response.resume();
+      const lines = [];
+      for (let index = 0; index < response.rawHeaders.length; index += 2) {
+        lines.push([response.rawHeaders[index].toLowerCase(), response.rawHeaders[index + 1]]);
+      }
+      response.on('end', () => fulfil({ status: response.statusCode, lines }));
+    });
+    request.on('error', reject);
+  });
+}
+
+test('the served response carries exactly one Content-Security-Policy header line, and it is the configured one', async () => {
+  await site.ready();
+  if (site.external) return; // an external server sends its own headers
+
+  for (const pathname of ['/', '/privacy-directive.html', '/founder.html', '/a/path/that/does/not/exist']) {
+    const { lines } = await rawResponse(new URL(pathname, site.url));
+    const csp = lines.filter(([key]) => key === CSP_KEY);
+    assert.equal(csp.length, 1, `${pathname} must be sent exactly one ${CSP_KEY} header, got ${csp.length}`);
+    const { raw } = await policyForPath(pathname);
+    assert.equal(csp[0][1], raw, `${pathname} must be served exactly the configured policy`);
+  }
 });

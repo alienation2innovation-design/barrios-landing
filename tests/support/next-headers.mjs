@@ -25,17 +25,25 @@ export function nextConfig() {
  * `/api/:path((?!nexus/).*)`). Anything else throws rather than matching by
  * accident, so an unrecognised pattern fails loudly in a test instead of
  * silently reporting "no headers".
+ *
+ * The trailing `(?:/)?` is not decoration. Next.js compiles every header source
+ * with an optional trailing slash - visible in `.next/routes-manifest.json`,
+ * e.g. `^/founder(?:/)?$` - so `/founder/` matches a rule written `/founder`.
+ * Leaving it out here made this matcher stricter than the real one and hid a
+ * genuine two-headers-on-one-path collision on the slashed spellings. The
+ * manifest-driven test in tests/csp.test.mjs checks the same property against
+ * Next's own compiled regexes, so this cannot drift back out of step unnoticed.
  */
 function compileSource(source) {
   const named = source.match(/^(.*?)\/:([A-Za-z_][A-Za-z0-9_]*)\((.*)\)$/s);
   if (named) {
     const [, prefix, , pattern] = named;
-    return new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/(?:${pattern})$`);
+    return new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/(?:${pattern})(?:/)?$`);
   }
   if (/[:(*?+\[\]]/.test(source)) {
     throw new Error(`unsupported Next.js header source pattern: ${source}`);
   }
-  return new RegExp(`^${source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`);
+  return new RegExp(`^${source.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:/)?$`);
 }
 
 /**

