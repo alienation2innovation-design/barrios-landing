@@ -8,7 +8,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/dist/output.css">
-    <script src="https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js"></script>
+    <!-- This page used to load an executable script from a mutable CDN
+         (code.iconify.design) and then render not one icon with it. Any script
+         on this origin can read the NEXUS conversation credential out of
+         sessionStorage, and the assistant panel links here in the same tab, so
+         the tag was pure exposure. Removed; every glyph on this page is already
+         inline <svg>. -->
     <style>
         /* LEGENDARY Header Animations */
         @keyframes breathingGlow {

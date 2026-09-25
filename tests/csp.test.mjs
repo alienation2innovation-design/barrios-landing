@@ -624,3 +624,121 @@ test('the served response carries exactly one Content-Security-Policy header lin
     assert.equal(csp[0][1], raw, `${pathname} must be served exactly the configured policy`);
   }
 });
+
+// ---------------------------------------------------------------------------
+// Item 6: the two pages the assistant panel links to must load no third-party
+// executable script.
+//
+// CSP is not the answer to this one, and that is the whole point. Allowlisting
+// code.iconify.design in script-src permits a MUTABLE remote script to run on a
+// page that can read the NEXUS conversation credential out of sessionStorage -
+// the credential is scoped to the origin and the tab, the panel links to these
+// pages in the same tab, and the token survives the navigation. An allowlist
+// entry is a promise about a host; removing the script is a fact about the page.
+//
+// Scope note: other pages on this origin still load off-origin scripts, which is
+// why STATIC_PAGE_CSP and LEGACY_PAGE_CSP still allow those hosts. Only the two
+// panel-reachable pages are asserted here.
+
+/** A file:// URL for a name inside public/, on either path separator. */
+const publicFile = (name) => new URL(name, `file:///${PUBLIC_ROOT.split('\\').join('/')}/`);
+
+// A host named in an HTML or CSS comment is documentation; a host named in a tag
+// or a URL is a dependency. Only the latter can put third-party code on the
+// page, so the scans below look at the document with its comments removed - the
+// same distinction tests/static-harness.test.mjs draws for a hard-coded port.
+function stripDocumentComments(documentText) {
+  return documentText.replace(/<!--[\s\S]*?-->/g, ' ').replace(/\/\*[\s\S]*?\*\//g, ' ');
+}
+
+/** The pages a visitor can reach from inside the panel, read off the panel. */
+async function panelReachablePages() {
+  const home = await readFile(publicFile('index.html'), 'utf8');
+  const panelStart = home.search(/<section\b[^>]*id="nexus-panel"/i);
+  assert.ok(panelStart >= 0, 'the NEXUS panel section must exist');
+  const panel = home.slice(panelStart, home.indexOf('</section>', panelStart));
+
+  const pages = new Set();
+  for (const [, href] of panel.matchAll(/href="\/([a-z0-9-]+\.html)"/gi)) pages.add(href.toLowerCase());
+  // The offline notice builds its link in the widget script, not the markup.
+  const script = home.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  for (const [, href] of script.matchAll(/a\.href='\/([a-z0-9-]+\.html)'/gi)) pages.add(href.toLowerCase());
+
+  assert.deepEqual(
+    [...pages].sort(),
+    ['contact.html', 'privacy-directive.html'],
+    'the panel reaches exactly these two pages; a new one must be added to this pass'
+  );
+  return [...pages].sort();
+}
+
+test('no page reachable from the assistant panel loads an off-origin script (item 6)', async () => {
+  const pages = await panelReachablePages();
+  for (const page of pages) {
+    const html = stripDocumentComments(await readFile(publicFile(page), 'utf8'));
+    const offOrigin = [...html.matchAll(/<script\b[^>]*\bsrc\s*=\s*"([^"]+)"/gi)]
+      .map((match) => match[1])
+      .filter((source) => /^(?:https?:)?\/\//i.test(source));
+    assert.deepEqual(offOrigin, [], `${page} must load no script from another origin`);
+    assert.doesNotMatch(html, /\/\/code\.iconify\.design/, `${page} must not fetch anything from the Iconify script host`);
+    assert.doesNotMatch(html, /<iconify-icon/i, `${page} must not use the custom element that needs that script`);
+    // No other route to remote code either: no dynamic import, no injected tag.
+    assert.doesNotMatch(html, /import\s*\(\s*['"`]https?:/i, `${page} must not dynamically import remote code`);
+    assert.doesNotMatch(html, /createElement\(\s*['"]script['"]\s*\)/i, `${page} must not inject a script element`);
+  }
+});
+
+test('contact.html renders the same twelve glyphs as inline SVG, decorative, at the same sizes (item 6)', async () => {
+  const html = await readFile(publicFile('contact.html'), 'utf8');
+
+  const icons = [...html.matchAll(/<svg class="icon ([^"]*)"([^>]*)>([\s\S]*?)<\/svg>/g)];
+  assert.equal(icons.length, 12, 'every one of the twelve iconify-icon elements became an inline SVG');
+
+  // The Tailwind size classes the custom element carried are still on the SVG,
+  // because that is what makes the 1em box resolve to the old rendered size.
+  const classes = icons.map(([, cls]) => cls.trim()).sort();
+  assert.deepEqual(classes, [
+    'text-brand-gold text-xl mt-1',
+    'text-brand-gold text-xl mt-1',
+    'text-brand-gold text-xl mt-1',
+    'text-brand-gold text-xl mt-1',
+    'text-brand-gold text-xl mt-1',
+    'text-lg',
+    'text-lg',
+    'text-xl',
+    'text-xl',
+    'text-xl',
+    'text-xl',
+    'text-xl'
+  ].sort(), 'the size and colour classes are unchanged, two at text-lg and ten at text-xl');
+
+  for (const [whole, , attributes, body] of icons) {
+    assert.match(whole, /viewBox="0 0 24 24"/, 'the 24x24 grid the icon sets are drawn on');
+    assert.match(attributes, /aria-hidden="true"/, 'the glyphs are decorative; their labels live on the link or the heading');
+    assert.match(attributes, /focusable="false"/, 'and they are not keyboard stops');
+    assert.match(body, /fill="currentColor"/, 'colour still comes from the surrounding text colour');
+    assert.doesNotMatch(body, /https?:/i, 'no inline SVG may reference a remote resource');
+  }
+
+  // The box the custom element used to give itself, now a rule of ours. Without
+  // it an <svg> would size itself to 100% and the page would visibly change.
+  assert.match(html, /\.icon \{[\s\S]*?display: inline-block;[\s\S]*?width: 1em;[\s\S]*?height: 1em;[\s\S]*?vertical-align: -0\.125em;[\s\S]*?\}/);
+
+  // The four social links had no text and no label at all: their icon carries
+  // the meaning, so the link now carries the name.
+  const anchors = [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/g)];
+  const iconOnly = anchors.filter(([, , inner]) => {
+    if (!/<svg class="icon/.test(inner)) return false;
+    // "Icon only" means the anchor has no visible text of its own once the SVG
+    // is removed; the e-mail link, which shows the address, is not one.
+    return inner.replace(/<svg[\s\S]*?<\/svg>/g, '').replace(/<[^>]+>/g, '').trim() === '';
+  });
+  assert.equal(iconOnly.length, 4, 'the four social links are the only icon-only controls');
+  for (const [, attributes] of iconOnly) {
+    assert.match(attributes, /aria-label="[^"]{10,}"/, 'an icon-only link must have an accessible name');
+  }
+  // And the link that does show its own text was left alone: no redundant label.
+  const labelled = anchors.find(([, , inner]) => /alienation2innovation@gmail\.com/.test(inner));
+  assert.ok(labelled, 'the direct-contact e-mail link must exist');
+  assert.doesNotMatch(labelled[1], /aria-label/, 'a link with visible text needs no second name');
+});
