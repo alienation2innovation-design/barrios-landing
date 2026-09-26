@@ -4,6 +4,63 @@ Newest entry first. This file records website-side state for the NEXUS assistant
 with the assistant core's detail, is `C:\Projects\barrios-nexus-assistant\docs\STATUS.md`.
 
 ---
+# THE HOMEPAGE-DOCUMENT (REFERER) GATE IS DEFENCE IN DEPTH, NOT A BOUNDARY — NOT PUSHED, 2026-09-25
+
+`16b7659` added a document gate to `/api/nexus/chat` and `/api/nexus/reset`: after the Origin check the route
+reads the browser-set `Referer` and admits only the homepage (`/` and `/index.html`, ruling R43). Its commit
+subject — "only the homepage can spend the assistant's provider budget" — and its code comments claimed more
+than the mechanism can deliver. **An independent reviewer disproved the premise in a real browser.** This entry
+and the comments it accompanies are the record. **Nothing behavioural changed in this pass**: comments, test
+names and documentation only, plus a stale-comment correction in `next.config.js`. The gate was not weakened,
+nothing was removed, and no replacement mechanism was added.
+
+## What the code claimed, and what is true
+
+Both route files said `Referer` is a forbidden header name and therefore "page script cannot set, change or
+remove it through `fetch`/`XHR`". The first clause is true and the conclusion does not follow. The `headers`
+option really is ignored for a forbidden name — but `RequestInit.referrer` is a specified way to set the
+referrer, and the Fetch standard honours a **same-origin** value verbatim, downgrading only a cross-origin one
+to `"client"`.
+
+```js
+// from ANY page of this origin. Admitted, and in production it costs one provider dispatch.
+fetch('/api/nexus/chat', { method: 'POST', headers: { 'content-type': 'application/json' },
+  body: '{"v":1,"message":"...","page":"/"}', referrer: '/' });
+```
+
+Measured in real Chromium against a locally built site and a local stub core that recorded every upstream
+dispatch, from `/terms-of-service.html` and again from `/founder.html`, on both routes and also via
+`new Request(url, { referrer })`: **five real upstream dispatches**. Three neighbouring controls did hold,
+which is why the code read as sound: a `headers: { referer: ... }` spoof is refused (forbidden name), plain
+`XMLHttpRequest` is refused, and a cross-origin `referrer` value is refused because the spec downgrades it. The
+unit suite stayed green throughout because a handler-level fixture supplies the header string itself, so it can
+only model referrers its author thought of. The test that would catch this is a real-browser one — load a
+non-homepage page, `fetch` with `referrer: '/'`, assert 403 and zero upstream hits — and it is not in the
+offline suite.
+
+## Ruling R44 — keep the gate, stop calling it a boundary
+
+This is **not closable by any header the browser sends**. Same-origin pages are the same security principal:
+`Sec-Fetch-*` carries no path, no browser API attests a document's URL to the server unforgeably, and a custom
+header the page sets itself is no control at all. So the gate stays, because it still turns away a naive or
+accidental same-origin caller at zero cost and does so before the single upstream fetch; and no cleverer header
+was substituted, because a second control that looks like a boundary without being one is worse than one
+labelled honestly. What actually bounds a hostile same-origin script is the core's per-session and per-IP rate
+limiting and the 100-per-UTC-day provider ceiling. The "same-origin request forgery is unchanged" risk recorded
+further down this file therefore **still stands**: the gate narrows it, it does not close it. A prominent
+LIMITATION note now sits on `isHomepageDocument` in both route files, and the gate test file states what it
+does and does not prove.
+
+## Also corrected in the same pass
+
+`next.config.js` still explained its Content-Security-Policy from "the conversation credential lives in
+`sessionStorage`". It does not: the credential is memory-only, held in a closure in `public/index.html`, which
+the same reviewer confirmed in a live browser. The policy is still worth having and no directive, header or
+rewrite was touched — only the reasoning, which now says that an injection executing in the page can still
+reach a memory-only token (by patching `fetch` and reading the header the widget sends) while the cross-page
+reach the old comments described is genuinely gone.
+
+---
 # MEMORY-ONLY CONVERSATION CREDENTIAL AND A CLOSED FIRST-TURN RESET RACE — NOT PUSHED, 2026-09-25
 
 Gary authorized one final, narrowly bounded pass. Two of its findings were the website's, plus a documentation

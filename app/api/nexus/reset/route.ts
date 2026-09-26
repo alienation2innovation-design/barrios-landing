@@ -32,8 +32,11 @@
 //     credential the visitor asked to destroy.
 //
 // Clerk's middleware.ts already lists /api/nexus/(.*) as public, so this route
-// receives unauthenticated traffic; the origin + document gates are our only
-// auth.
+// receives unauthenticated traffic; the origin gate is the only ingress check
+// and the document gate below only narrows it. Neither proves WHICH same-origin
+// page is calling — see the LIMITATION note on isHomepageDocument below — so a
+// reset's real protection is that it refuses a reset with no valid conversation
+// token, which is the core's decision, not this proxy's.
 // =============================================================================
 
 // Node runtime, for the same reasons as chat: AbortSignal.any and
@@ -139,16 +142,45 @@ const HOMEPAGE_PATHNAME_ALIAS = '/index.html';
  * Document gate, character-for-character the chat proxy's. The Origin check
  * above proves the call came from THIS SITE; it cannot tell which of the site's
  * pages made it, so any script on any same-origin page passes it. This gate
- * narrows it to the one page that hosts the assistant.
+ * narrows the ordinary caller to the one page that hosts the assistant.
  *
- * `Referer` is the signal because it is a forbidden header name: the browser
- * sets it from the requesting document's URL and page script cannot set, change
- * or remove it through `fetch`/`XHR`. A custom header the page sets itself would
- * be no control at all, since a same-origin attacker script can set any custom
- * header it likes. No `Referrer-Policy` is declared anywhere in this project, so
- * under the browser default (`strict-origin-when-cross-origin`) a same-origin
- * request carries the document's full URL, which is what makes the pathname
- * readable here.
+ * ---------------------------------------------------------------------------
+ * LIMITATION — THIS IS DEFENCE IN DEPTH, NOT A SECURITY BOUNDARY. A SCRIPT ON
+ * ANY SAME-ORIGIN PAGE CAN PASS THIS GATE IN ONE LINE.
+ *
+ * `Referer` is a forbidden header NAME, so the `headers` option of `fetch`/`XHR`
+ * cannot set it — that much is true, and it is why a header-dict spoof and plain
+ * `XMLHttpRequest` are both refused here. It does NOT follow that page script
+ * cannot set the referrer: `RequestInit.referrer` is a specified way to do it
+ * (`fetch(url, { referrer: '/' })`, and `new Request(url, { referrer })` the
+ * same way), and the Fetch standard honours a SAME-ORIGIN referrer value
+ * verbatim — only a cross-origin one is downgraded to `"client"`. So a script on
+ * any page of this site can present the homepage as its document and be
+ * admitted. Measured in real Chromium (2026-09-25) from `/terms-of-service.html`
+ * and `/founder.html` against a local stub core that recorded every upstream
+ * dispatch: accepted on both routes, five real upstream dispatches. The unit
+ * fixtures below could not have caught it, because a handler-level test supplies
+ * the header string itself and so can only model referrers its author thought of.
+ *
+ * No header closes this. Same-origin pages are the same security principal:
+ * `Sec-Fetch-Site`/`Sec-Fetch-Dest` carry no path, a custom header the page sets
+ * itself is no control at all, and no browser API attests a document's URL to
+ * the server unforgeably. Controller ruling R44: KEEP this gate — it refuses a
+ * naive or accidental same-origin caller at zero cost, and refuses it before the
+ * upstream fetch — and do NOT add a replacement mechanism, because a second
+ * control that looks like a boundary without being one is worse than one that is
+ * labelled honestly. What actually bounds a targeted same-origin caller is the
+ * core's per-session and per-IP rate limiting and the 100-per-UTC-day provider
+ * ceiling. Read every "only the homepage can ..." claim about this gate, here or
+ * in the commit log, as "only the homepage, and any same-origin script that asks
+ * to be treated as the homepage".
+ * ---------------------------------------------------------------------------
+ *
+ * No `Referrer-Policy` is declared anywhere in this project, so under the
+ * browser default (`strict-origin-when-cross-origin`) a same-origin request
+ * carries the document's full URL, which is what makes the pathname readable
+ * here. Declaring a stricter one would silently break the honest path without
+ * closing the bypass above, so it stays absent and a test pins its absence.
  *
  * Missing, empty, unparseable, credential-bearing, foreign-origin, or any
  * pathname but the homepage: refused.
@@ -308,12 +340,13 @@ async function handle(request: Request): Promise<Response> {
     return badOrigin();
   }
 
-  // 3b. Document. Proves it is the ONE page that hosts the assistant. A reset
-  //     spends no provider turn, but it is the chat proxy's twin and every
-  //     ingress property is reproduced here deliberately; a gate on only one of
-  //     the two routes is a gate a future reader would mistake for the rule.
-  //     Both refuse identically, and both refuse before step 8's single
-  //     upstream fetch.
+  // 3b. Document. Narrows the caller to the ONE page that hosts the assistant,
+  //     and proves nothing against a same-origin script that presents itself as
+  //     that page — see the LIMITATION note above. A reset spends no provider
+  //     turn, but it is the chat proxy's twin and every ingress property is
+  //     reproduced here deliberately; a gate on only one of the two routes is a
+  //     gate a future reader would mistake for the rule. Both refuse
+  //     identically, and both refuse before step 8's single upstream fetch.
   if (!isHomepageDocument(request)) {
     return badOrigin();
   }

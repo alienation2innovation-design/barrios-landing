@@ -4,18 +4,39 @@
 //
 // Run: node --test tests/nexus-document-gate.test.mjs
 //
-// The defect this closes: the Origin gate proves a call came from THIS SITE, not
-// from which of the site's pages. So a script on any same-origin page — the
+// The defect this narrows (it does not close it — see below): the Origin gate
+// proves a call came from THIS SITE, not from which of the site's pages. So a
+// script on any same-origin page — the
 // historical pages (terms-of-service.html, founder.html, command-center.html and
 // the rest) that still load unpinned off-origin scripts, above all — could
 // `fetch('/api/nexus/chat', {credentials:'same-origin'})`, pass the Origin gate,
 // and spend the assistant's 100-per-UTC-day provider budget as that visitor.
 //
 // The gate requires a browser-set `Referer` whose origin is this site's and
-// whose pathname is the homepage. `Referer` is the signal precisely because it
-// is a forbidden header name: page script cannot set, change or remove it via
-// fetch/XHR, whereas a same-origin attacker script can set any CUSTOM header it
-// likes — which is why a custom header would have been no control at all.
+// whose pathname is the homepage.
+//
+// WHAT THIS FILE DOES AND DOES NOT PROVE. Every test below hands the handler a
+// `Request` whose `referer` header this file chose, so what it pins is the
+// gate's DECISION FUNCTION over header values: which values are admitted, which
+// are refused, that the two routes decide identically, and that a refusal costs
+// nothing upstream. All of that is real and worth pinning.
+//
+// It does NOT prove that a page cannot choose the value. `Referer` is a
+// forbidden header NAME, so the `headers` option of fetch/XHR cannot set it
+// (row `L` of the review below, and the reason a CUSTOM header would have been
+// no control at all). But `RequestInit.referrer` can: the Fetch standard honours
+// a SAME-ORIGIN referrer verbatim and only downgrades a cross-origin one, so
+// `fetch('/api/nexus/chat', { referrer: '/' })` from ANY page of this site is
+// admitted. That was measured in real Chromium on 2026-09-25 from
+// /terms-of-service.html and /founder.html, on both routes, with an upstream
+// recorder showing five real dispatches. No handler-level fixture can catch it,
+// because the attacker's referrer is a browser decision and this file's is a
+// string its author typed. See the LIMITATION note on `isHomepageDocument` in
+// app/api/nexus/chat/route.ts: under controller ruling R44 the gate is kept as
+// defence in depth against a naive or accidental same-origin caller, and it is
+// NOT a security boundary. The test that would catch the bypass is a real-browser
+// one (load a non-homepage page, call fetch with `referrer: '/'`, assert 403 and
+// zero upstream hits); it is not in this offline suite.
 //
 // The real acceptance criterion is not the status code. It is that a refused
 // request costs NOTHING: every rejection below is asserted to have made ZERO
@@ -218,7 +239,10 @@ const REJECT = [
   // A header present but empty is the same absence of a document.
   ['an empty Referer header', ''],
 
-  // 2. Same-origin pages other than the homepage. These are the attack.
+  // 2. Same-origin pages other than the homepage — the naive and accidental
+  //    caller, which is what this gate genuinely turns away. A caller that sets
+  //    `referrer` instead of sending its own document's URL is not modelled here
+  //    and is not refused in a browser; see the header note.
   ['/terms-of-service.html', `${SITE}/terms-of-service.html`],
   ['/founder.html', `${SITE}/founder.html`],
   ['/command-center.html', `${SITE}/command-center.html`],
@@ -276,7 +300,7 @@ const REJECT = [
   ['a traversal that resolves to another page', `${SITE}/a/b/../../founder.html`],
 ];
 
-test('the exact accept set: the homepage, and only the homepage, on both routes', async () => {
+test('the exact accept set: only a homepage Referer VALUE is admitted, on both routes', async () => {
   for (const route of ROUTES) {
     for (const [label, referer] of ACCEPT) {
       enableEnv();
@@ -290,7 +314,7 @@ test('the exact accept set: the homepage, and only the homepage, on both routes'
   }
 });
 
-test('the exact reject set: every other document is refused with the bad-origin contract, on both routes', async () => {
+test('the exact reject set: every other Referer VALUE is refused with the bad-origin contract, on both routes', async () => {
   for (const route of ROUTES) {
     for (const [label, referer] of REJECT) {
       enableEnv();
@@ -510,7 +534,9 @@ test('no Referrer-Policy is declared for the homepage, so the browser default st
 
 // ---------------------------------------------------------------------------
 // The compensating fact behind the whole gate: the one admitted page runs no
-// third-party executable code, so admitting it admits no one else.
+// third-party executable code of its own. That keeps the honest path clean; it
+// does not stop another page's script from claiming the homepage's referrer, so
+// this test is hygiene for the admitted document, not proof of exclusivity.
 // ---------------------------------------------------------------------------
 test('the homepage loads no third-party executable script (asserted against public/index.html)', async () => {
   const raw = await readFile(new URL('index.html', `file:///${PUBLIC_ROOT.split('\\').join('/')}/`), 'utf8');
