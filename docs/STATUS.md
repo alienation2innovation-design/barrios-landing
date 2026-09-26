@@ -4,6 +4,75 @@ Newest entry first. This file records website-side state for the NEXUS assistant
 with the assistant core's detail, is `C:\Projects\barrios-nexus-assistant\docs\STATUS.md`.
 
 ---
+# ACCEPTED, BOUNDED BETA RISK: SAME-ORIGIN SCRIPTS CAN START A FRESH NEXUS REQUEST — NOT PUSHED, 2026-09-26
+
+Gary's decision for the initial public beta, and it **supersedes the attempted `Referer` security claim** in the
+entry below. Nothing behavioural changed in this pass: the gate is unchanged, the memory-only credential is
+unchanged, no `Referrer-Policy` was added, and no third-party script was swept off any page. What changed is
+documentation, one new test, and this entry.
+
+## What is accepted
+
+An executable script anywhere else on this origin can initiate a **fresh** NEXUS request and have it served. The
+homepage-document (`Referer`) gate does not stop it: `RequestInit.referrer` sets the header and the Fetch
+standard honours a same-origin value verbatim, so `fetch('/api/nexus/chat', { referrer: '/' })` from any page of
+this site is admitted in one line. That is measured, not argued — three independent real-browser reproductions
+now, the most recent on 2026-09-26 from `/privacy-directive.html`, where a plain same-origin `fetch` sent its own
+document URL and was refused while the same call with `referrer: '/'` and with `referrer: '/index.html'` was
+admitted. The same run confirmed the one neighbouring claim that does hold: a `headers: { referer: ... }` spoof is
+silently dropped, because `Referer` is a forbidden header name.
+
+This is an **availability and cost** risk. It is not an open security defect, and `Referer` is not a security
+boundary anywhere in this repository.
+
+## Why it is bounded
+
+Two independent limits, and neither depends on the gate:
+
+- **The conversation credential is memory-only.** It lives in a single closure variable in `public/index.html`
+  (`const readConv = () => conversation`) with no Web Storage, cookie, `window.name`, IndexedDB, Cache API, DOM
+  or global persistence — confirmed in a live browser and pinned by `tests/csp.test.mjs`. So a script on another
+  same-origin page cannot **resume, read or revoke an existing visitor's conversation**. It has no way to obtain
+  that visitor's credential, and the core refuses a reset that does not arrive with a conversation token that
+  still passes its own MAC, ownership and expiry checks. What such a script can do is start a *new* conversation
+  of its own, which is a different and much smaller thing than hijacking one.
+- **The provider ceiling bounds the spend.** The core enforces per-session and per-IP rate limiting and a hard
+  100-per-UTC-day provider ceiling. The worst outcome is that the day's budget is consumed and legitimate
+  visitors see the assistant as unavailable — a denial of the beta, not a breach of it.
+
+## What would actually close it
+
+Either of these, and nothing header-shaped in between, because same-origin pages are the same security principal
+and no browser API attests a document's URL to the server unforgeably:
+
+1. **Remove the third-party scripts from the rest of the origin.** Concretely: 15 pages in `public/` load
+   `https://code.iconify.design/iconify-icon/1.0.7/iconify-icon.min.js`, and there is **not one `integrity=`
+   attribute in any `public/*.html`**. A compromise of that CDN is script execution on this origin, and from there
+   the gate is one line away. `founder.html` makes the residual concrete beyond the script tag: its
+   `<iconify-icon>` elements make the Iconify runtime **live-fetch icon data from `api.iconify.design` at page
+   load**, which is why `next.config.js` has to allow that host in `connect-src` for the legacy tier. The
+   homepage itself is clean — it loads no third-party executable script, and a test asserts that.
+2. **Move the assistant to its own origin.** Then "same-origin" stops including twenty-five historical pages, and
+   the browser's origin check becomes the boundary the `Referer` check was never able to be.
+
+Sweeping those scripts is explicitly **out of scope for this pass** and is the named future fix.
+
+## The gate stays, and it was re-tested against real traffic
+
+Controller ruling R44 keeps the gate as defence in depth — it refuses a naive or accidental same-origin caller at
+zero cost, before the single upstream fetch. Gary's further condition was that it may remain only if it does not
+refuse legitimate homepage traffic. **Measured, and it does not.** A real Chromium drove the real
+`public/index.html` through its real composer on a local harness that recorded every inbound header: documents
+`/`, `/index.html`, the slash-less root, `/?utm_source=google&utm_medium=cpc&gclid=abc123`,
+`/index.html?x=1#nexus-panel`, `/#nexus` followed by an in-page anchor click, a homepage restored by
+back-navigation, a second turn in the same document, and the keepalive `/api/nexus/reset` fetch behind "New
+conversation". Nine dispatches, **nine accepted, zero refused.** Two details worth recording because they were
+assumptions before: the browser **strips the fragment** from `Referer` (a document at `/index.html?x=1#nexus-panel`
+sent `/index.html?x=1`), and `keepalive: true` does not change referrer computation. Those nine measured strings
+are now a table and a test in `tests/nexus-document-gate.test.mjs`, so the accept set is pinned against observed
+browser behaviour rather than against an author's model of it — which is precisely what was wrong last time.
+
+---
 # THE HOMEPAGE-DOCUMENT (REFERER) GATE IS DEFENCE IN DEPTH, NOT A BOUNDARY — NOT PUSHED, 2026-09-25
 
 `16b7659` added a document gate to `/api/nexus/chat` and `/api/nexus/reset`: after the Origin check the route
