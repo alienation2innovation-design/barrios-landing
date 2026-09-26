@@ -1,9 +1,23 @@
 // Content-Security-Policy (finding 10 / M5).
 //
 // Before this, the repository had no Content-Security-Policy at all, while the
-// NEXUS conversation credential lived - and still lives, because the widget has
-// to read it - in sessionStorage. The policy is the compensating control that
-// keeps a third-party script off the page in the first place.
+// NEXUS conversation credential lived in sessionStorage. CORRECTED 2026-09-25:
+// it does not any more. The credential is MEMORY-ONLY, held in the widget's own
+// closure (`const readConv = () => conversation` in public/index.html), which an
+// independent reviewer confirmed in a live browser - nothing in sessionStorage,
+// localStorage, cookies, window.name, IndexedDB, the Cache API, the DOM or any
+// global. The test at "the conversation credential is put nowhere but this
+// document's closure memory (item 1)" below is what pins that.
+//
+// The policy is still the compensating control, and the reason is now stated
+// correctly: what it buys is keeping a third-party script off the page in the
+// first place, because a script that DOES execute in the widget's document can
+// still reach a closure variable indirectly - by patching `fetch` and reading the
+// header the widget sends, or by driving the widget's own UI. Memory-only closed
+// the cross-page reach (there is no stored key for a script on another page to
+// find after a navigation); it did not make an in-document injection harmless.
+// So these tests pin script-injection narrowing on this origin, not the
+// protection of a stored token.
 //
 // These tests assert the policy as next.config.js actually declares it: they
 // require the config and call headers(), rather than matching strings against
@@ -60,8 +74,13 @@ test('the homepage policy is restrictive: no wildcards, and the dangerous sinks 
   assert.deepEqual(sources(directives, 'frame-src'), ["'none'"]);
   assert.deepEqual(sources(directives, 'form-action'), ["'self'"]);
 
-  // The heart of it for M5: the sessionStorage token cannot be posted off-origin
-  // by any script that does run, because the NEXUS proxy is same-origin.
+  // The heart of it for M5: the conversation token cannot be posted off-origin by
+  // any script that does run, because the NEXUS proxy is same-origin. (The token
+  // is memory-only, not in sessionStorage as this comment used to say; a script
+  // executing in the same document can still obtain it - see the file header -
+  // which is exactly why the channel it would leave by is worth shutting. This
+  // directive governs programmatic requests only: a top-level navigation can
+  // still carry a value out, as next.config.js records.)
   assert.deepEqual(sources(directives, 'connect-src'), ["'self'"], 'the chat proxy is same-origin; nothing else is reachable');
 
   // No wildcard anywhere, in any directive. A single `*` or `https:` would undo
@@ -302,11 +321,20 @@ test("the conversation credential is put nowhere but this document's closure mem
 // I1: the policy must cover EVERY page on this origin, and each page must be
 // sent exactly ONE Content-Security-Policy header.
 //
-// The token lives in sessionStorage, which is scoped to the origin and the tab,
-// not to a page. /privacy-directive.html is linked from inside the assistant
-// panel and sessionStorage survives a same-tab navigation, so an injection on
-// any page of this origin can read a live conversation credential. An
-// enumerated list of ten paths therefore was not coverage.
+// The original reason was that the token lived in sessionStorage, which is scoped
+// to the origin and the tab rather than to a page: /privacy-directive.html is
+// linked from inside the assistant panel, sessionStorage survived a same-tab
+// navigation, and so an injection on any page of this origin could read a live
+// conversation credential. CORRECTED 2026-09-25: that specific reach is GONE,
+// because the credential is memory-only and does not survive the navigation.
+//
+// The coverage requirement is unchanged, on reasons that did not change: every
+// page on this origin can reach /api/nexus/* as the visitor, the panel links out
+// to pages in the static tier, and several pages on this origin still load
+// unpinned third-party scripts - so an injection anywhere here is the realistic
+// supply-chain path onto the origin, and an injection on the page hosting the
+// widget still reaches a live conversation. An enumerated list of ten paths was
+// never coverage.
 //
 // Two headers are as dangerous as none: a browser enforces two
 // Content-Security-Policy headers as their INTERSECTION, so a second rule that
@@ -443,8 +471,12 @@ test('the four paths the review named get the directives they are supposed to ge
   assert.deepEqual(sources(home.directives, 'script-src'), ["'self'", "'unsafe-inline'"]);
   assert.deepEqual(sources(home.directives, 'connect-src'), ["'self'"]);
 
-  // '/privacy-directive.html' - the page the panel links to, in the same tab,
-  // with the live token still in sessionStorage. This is the finding.
+  // '/privacy-directive.html' - the page the panel links to, in the same tab.
+  // CORRECTED 2026-09-25: the original finding was that the visitor arrived there
+  // with a live token still in sessionStorage. They do not - the credential is
+  // memory-only and does not survive the navigation. The policy still belongs on
+  // this page: it is reachable from inside the panel, it can call /api/nexus/* as
+  // the visitor, and an injection here is a foothold on this origin.
   const privacy = await policyForPath('/privacy-directive.html');
   assert.deepEqual(sources(privacy.directives, 'default-src'), ["'self'"]);
   assert.deepEqual(sources(privacy.directives, 'base-uri'), ["'self'"]);
@@ -637,10 +669,14 @@ test('the served response carries exactly one Content-Security-Policy header lin
 //
 // CSP is not the answer to this one, and that is the whole point. Allowlisting
 // code.iconify.design in script-src permits a MUTABLE remote script to run on a
-// page that can read the NEXUS conversation credential out of sessionStorage -
-// the credential is scoped to the origin and the tab, the panel links to these
-// pages in the same tab, and the token survives the navigation. An allowlist
-// entry is a promise about a host; removing the script is a fact about the page.
+// page the panel links to in the same tab. CORRECTED 2026-09-25: that script can
+// no longer read a NEXUS conversation credential out of sessionStorage, because
+// the credential is memory-only and does not survive the navigation. What it can
+// still do is execute as the visitor on this origin - call /api/nexus/* as them,
+// rewrite the page they are reading, and follow them back to the widget's own
+// document, where a closure variable is reachable by patching `fetch`. An
+// allowlist entry is a promise about a host; removing the script is a fact about
+// the page, which is why removing it was the fix and still is.
 //
 // Scope note: other pages on this origin still load off-origin scripts, which is
 // why STATIC_PAGE_CSP and LEGACY_PAGE_CSP still allow those hosts. Only the two
