@@ -244,6 +244,11 @@ test('no Referer at all -> 403 bad_origin, and no upstream call', async () => {
   assert.equal(fetchCalls.length, 0);
 });
 
+// As on the chat route: the `/`, `/index.html` and query-string spellings are
+// values a real browser was measured to send — including this route's own
+// keepalive "New conversation" fetch, measured from a document at /index.html on
+// 2026-09-26. The `#panel` row is not one: the fragment is always stripped from
+// Referer. It is kept as decision-function coverage only.
 test('the homepage is accepted at both / and /index.html (ruling R43), query and hash included', async () => {
   enableEnv();
   stubFetch(() => coreOk());

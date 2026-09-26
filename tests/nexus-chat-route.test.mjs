@@ -253,6 +253,12 @@ test('no Referer at all -> 403 bad_origin, and no upstream call', async () => {
   assert.equal(fetchCalls.length, 0);
 });
 
+// The `/` , `/index.html` and query-string spellings below are values a real
+// browser was measured to send (2026-09-26, real Chromium driving the real
+// widget; the full measured set lives in tests/nexus-document-gate.test.mjs).
+// The `#panel` row is not: a browser always strips the fragment from Referer. It
+// is kept as decision-function coverage — the gate must decide on the parsed
+// pathname, not the raw string — and no legitimate visitor depends on it.
 test('the homepage is accepted at both / and /index.html (ruling R43), query and hash included', async () => {
   enableEnv();
   stubFetch(() => new Response('{"code":"sentinel","message":"reached upstream"}', { status: 200, headers: { 'content-type': 'application/json' } }));

@@ -34,9 +34,26 @@
 // string its author typed. See the LIMITATION note on `isHomepageDocument` in
 // app/api/nexus/chat/route.ts: under controller ruling R44 the gate is kept as
 // defence in depth against a naive or accidental same-origin caller, and it is
-// NOT a security boundary. The test that would catch the bypass is a real-browser
-// one (load a non-homepage page, call fetch with `referrer: '/'`, assert 403 and
-// zero upstream hits); it is not in this offline suite.
+// NOT a security boundary.
+//
+// Reproduced a THIRD time on 2026-09-26, in real Chromium against the real
+// public/index.html served from a local harness that recorded every inbound
+// header, from /privacy-directive.html. Four cases, and the two halves of the
+// finding are both in them:
+//   - a plain same-origin `fetch` sent `Referer: <origin>/privacy-directive.html`
+//     — the gate REFUSES it, so the gate is not vacuous;
+//   - `fetch(url, { referrer: '/' })` sent `Referer: <origin>/` and
+//     `{ referrer: '/index.html' }` sent `<origin>/index.html` — the gate ADMITS
+//     both, from a page that is not the homepage. The bypass is real and is one
+//     line of script;
+//   - `headers: { referer: '/' }` was silently DROPPED and the document's own URL
+//     was sent instead, which is the forbidden-header-name clause above holding,
+//     now measured rather than reasoned.
+// That run is a scratch harness, not a committed test, and it stays that way:
+// this offline suite still cannot catch the bypass, because a handler-level
+// fixture supplies the header string itself. What the suite CAN pin — and now
+// does, in the measured-referrer test below — is the other direction: that the
+// values a real browser actually sends from the homepage are all admitted.
 //
 // The real acceptance criterion is not the status code. It is that a refused
 // request costs NOTHING: every rejection below is asserted to have made ZERO
@@ -215,11 +232,20 @@ const ACCEPT = [
   ['the homepage as /index.html (ruling R43)', `${SITE}/index.html`],
   // A query string or hash must not change the decision: `search` and `hash` are
   // not part of `pathname`, so this needs no stripping code to get right.
+  //
+  // The query rows are values a browser really does send — measured 2026-09-26,
+  // a visitor on `/?utm_source=google&utm_medium=cpc&gclid=abc123` sent that URL
+  // complete. The HASH rows are not: the referrer serialiser strips the fragment,
+  // so a document at `/index.html?x=1#nexus-panel` was measured to send
+  // `Referer: <origin>/index.html?x=1` and a document at `/#nexus` to send
+  // `<origin>/`. They are kept anyway, as decision-function coverage rather than
+  // browser fidelity — if a future edit ever decided on the raw header string,
+  // these rows are what would fail — but no legitimate visitor depends on them.
   ['the homepage with a query string', `${SITE}/?utm=x`],
-  ['the homepage with a hash', `${SITE}/#panel`],
+  ['the homepage with a hash (not a value a browser sends; see above)', `${SITE}/#panel`],
   ['the homepage with both', `${SITE}/?utm=x&b=2#panel`],
   ['/index.html with a query string', `${SITE}/index.html?x=1`],
-  ['/index.html with a hash', `${SITE}/index.html#panel`],
+  ['/index.html with a hash (not a value a browser sends; see above)', `${SITE}/index.html#panel`],
   ['/index.html with both', `${SITE}/index.html?x=1#panel`],
   // The default port is not a different origin, and the URL parser drops it.
   ['the homepage on the explicit default port', 'https://barriosa2i.com:443/'],
@@ -310,6 +336,62 @@ test('the exact accept set: only a homepage Referer VALUE is admitted, on both r
       assert.equal(res.status, 200, `${route.name}: ${label} must be accepted (Referer: ${referer})`);
       assert.equal(fetchCalls.length, 1, `${route.name}: ${label} must reach upstream exactly once`);
       assert.equal(fetchCalls[0].url, `${CORE}/api/nexus/${route.name}`);
+    }
+  }
+});
+
+// ---------------------------------------------------------------------------
+// LEGITIMATE HOMEPAGE TRAFFIC, AS A BROWSER ACTUALLY SENDS IT.
+//
+// Controller's condition for keeping this gate: it may remain only if it does
+// not refuse legitimate homepage traffic. The ACCEPT table above is the author's
+// model of that traffic, and an author's model is exactly what was wrong the last
+// time this area was reasoned about instead of measured. So these rows are not a
+// model. Each is a `Referer` header string that a real Chromium was OBSERVED to
+// send by the widget's own `fetch` — the real public/index.html, driven through
+// its real composer, served from a local harness on a kernel-assigned port that
+// recorded every inbound header. Measured 2026-09-26; nine dispatches, zero
+// refused.
+//
+// `search` is carried verbatim; the FRAGMENT is always stripped by the referrer
+// serialiser, which is why no row here has one even though two documents did.
+// The origin is substituted for this suite's SITE: what was measured is the
+// pathname-and-search shape, and the origin equality is a separate rule that the
+// foreign-origin rows above own.
+const MEASURED_BROWSER_REFERERS = [
+  // Document `/` — the ordinary visitor.
+  ['document / (chat turn)', '/'],
+  // Document `http://host` with no trailing slash: the browser normalises it.
+  ['document with no trailing slash, normalised to / by the browser', '/'],
+  // Document `/index.html` — the production alias, ruling R43.
+  ['document /index.html (chat turn)', '/index.html'],
+  // The same document's "New conversation" click, which is a keepalive fetch to
+  // /api/nexus/reset. keepalive does not change referrer computation.
+  ['document /index.html (keepalive reset)', '/index.html'],
+  // A paid-traffic landing URL, query string intact.
+  ['document /?utm_source=google&utm_medium=cpc&gclid=abc123', '/?utm_source=google&utm_medium=cpc&gclid=abc123'],
+  // Document `/index.html?x=1#nexus-panel` — note the fragment is GONE.
+  ['document /index.html?x=1#nexus-panel, fragment stripped by the browser', '/index.html?x=1'],
+  // Document `/#nexus`, then an in-page anchor click: fragment stripped entirely.
+  ['document /#nexus after an in-page anchor click, fragment stripped', '/'],
+  // Back-navigation from /privacy-directive.html restoring the homepage, then a
+  // turn: the restored document URL is what is sent.
+  ['document / restored by back-navigation from /privacy-directive.html', '/'],
+  // A second turn in the same document, which also carries the conversation header.
+  ['document / second turn in the same document', '/'],
+];
+
+test('every Referer a real browser was MEASURED to send from the homepage is accepted, on both routes', async () => {
+  assert.equal(MEASURED_BROWSER_REFERERS.length, 9, 'all nine measured dispatches are represented');
+  for (const route of ROUTES) {
+    for (const [label, pathAndSearch] of MEASURED_BROWSER_REFERERS) {
+      enableEnv();
+      fetchCalls = [];
+      spyFetch();
+      const referer = SITE + pathAndSearch;
+      const res = await route.POST(makeRequest(route, { referer }));
+      assert.equal(res.status, 200, `${route.name}: MEASURED legitimate traffic must not be refused — ${label} (Referer: ${referer})`);
+      assert.equal(fetchCalls.length, 1, `${route.name}: ${label} must reach upstream exactly once`);
     }
   }
 });
