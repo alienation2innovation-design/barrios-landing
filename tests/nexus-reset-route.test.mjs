@@ -85,15 +85,25 @@ function enableEnv(overrides = {}) {
   Object.assign(process.env, overrides);
 }
 
+// The homepage Referer a real browser sends. The route's document gate requires
+// it (see tests/nexus-document-gate.test.mjs, which owns that rule and its
+// bypass matrix, and which asserts this route's gate is character-for-character
+// the chat route's). Every fixture here is a request from the homepage, so the
+// default carries it. Pass `referer: null` to omit the header entirely, or any
+// string to replace it.
+const HOMEPAGE_REFERER = `${SITE}/`;
+
 function makeRequest({
   headers = {},
   body = '{"v":1}',
   origin = SITE,
   sameOriginHint = false,
-  token = TOKEN
+  token = TOKEN,
+  referer = HOMEPAGE_REFERER
 } = {}) {
   const h = new Headers({ 'content-type': 'application/json', ...headers });
   if (origin !== null) h.set('origin', origin);
+  if (referer !== null) h.set('referer', referer);
   if (sameOriginHint) h.set('sec-fetch-site', 'same-origin');
   if (token !== null && !('x-nexus-conversation' in headers)) h.set(CONVERSATION, token);
   return new Request(`${SITE}/api/nexus/reset`, { method: 'POST', headers: h, body });
@@ -205,6 +215,47 @@ test('no Origin but sec-fetch-site: same-origin is accepted, like chat', async (
 });
 
 // ---------------------------------------------------------------------------
+// 3b. the homepage document gate — the chat proxy's, reproduced here
+//
+// A reset spends no provider turn, but this route is chat's twin and every
+// ingress property is reproduced deliberately; a gate on only one of the two
+// would be a gate a future reader mistakes for the rule. The full matrix, the
+// bypass attempts and the character-for-character drift guard between the two
+// routes live in tests/nexus-document-gate.test.mjs.
+// ---------------------------------------------------------------------------
+test('a non-homepage same-origin Referer -> 403 bad_origin, and no upstream call', async () => {
+  enableEnv();
+  // A succeeding stub, so a leak through the gate shows up as a recorded call
+  // and a 200 rather than as an incidental error.
+  stubFetch(() => coreOk());
+  for (const page of ['/terms-of-service.html', '/founder.html', '/command-center.html', '/some/other/page']) {
+    const res = await POST(makeRequest({ referer: SITE + page }));
+    const body = await expectJsonError(res, 403, 'bad_origin');
+    assert.equal(body.message, 'ingress authentication required');
+    assert.equal(fetchCalls.length, 0, `${page} must not reach the core`);
+  }
+});
+
+test('no Referer at all -> 403 bad_origin, and no upstream call', async () => {
+  enableEnv();
+  stubFetch(() => coreOk());
+  const res = await POST(makeRequest({ referer: null }));
+  await expectJsonError(res, 403, 'bad_origin');
+  assert.equal(fetchCalls.length, 0);
+});
+
+test('the homepage is accepted at both / and /index.html (ruling R43), query and hash included', async () => {
+  enableEnv();
+  stubFetch(() => coreOk());
+  for (const referer of [`${SITE}/`, `${SITE}/index.html`, `${SITE}/?utm=x`, `${SITE}/#panel`, `${SITE}/index.html?x=1`]) {
+    fetchCalls = [];
+    const res = await POST(makeRequest({ referer }));
+    assert.equal(res.status, 200, `${referer} must be accepted`);
+    assert.equal(fetchCalls.length, 1);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 4. content type and 5. the small body cap
 // ---------------------------------------------------------------------------
 test('a non-JSON content-type -> 400 invalid_input before the body is read', async () => {
@@ -229,7 +280,7 @@ test('the body cap is 512 bytes, enforced on the declared length and on the real
   const streamed = await POST(
     new Request(`${SITE}/api/nexus/reset`, {
       method: 'POST',
-      headers: new Headers({ 'content-type': 'application/json', origin: SITE, [CONVERSATION]: TOKEN }),
+      headers: new Headers({ 'content-type': 'application/json', origin: SITE, referer: HOMEPAGE_REFERER, [CONVERSATION]: TOKEN }),
       body: new ReadableStream({
         start(controller) {
           controller.enqueue(oversize);
@@ -490,7 +541,7 @@ test('an unexpected throw inside the handler still gets the fail-closed contract
   // path the handler did not plan for.
   const broken = new Request(`${SITE}/api/nexus/reset`, {
     method: 'POST',
-    headers: new Headers({ 'content-type': 'application/json', origin: SITE, [CONVERSATION]: TOKEN }),
+    headers: new Headers({ 'content-type': 'application/json', origin: SITE, referer: HOMEPAGE_REFERER, [CONVERSATION]: TOKEN }),
     body: new ReadableStream({
       start(controller) {
         controller.error(new Error('boom'));

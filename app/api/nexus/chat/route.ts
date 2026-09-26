@@ -3,7 +3,10 @@
 //
 // The browser never talks to the NEXUS core directly. This route is the only
 // public entry point: it authenticates the caller as "this website's own
-// front-end" (origin checks), caps the payload, strips everything from the
+// homepage" (an Origin check, then a browser-set Referer check that narrows it
+// from any same-origin page to the one page that hosts the assistant, so no
+// other page's script can spend the daily provider budget), caps the payload,
+// strips everything from the
 // request except the bytes the core needs, attaches the shared proxy secret
 // the core requires (x-nexus-proxy-auth), and relays the core's SSE stream
 // back to the browser through a byte-transparent pump that guarantees the UI
@@ -24,7 +27,8 @@
 //     core ignores them.
 //
 // Clerk's middleware.ts already lists /api/nexus/(.*) as public, so this
-// route receives unauthenticated traffic; origin gating is our only auth.
+// route receives unauthenticated traffic; the origin + document gates are our
+// only auth.
 // =============================================================================
 
 import { pumpSse } from '../../../../lib/nexus/sse-pump';
@@ -80,6 +84,15 @@ const providerUnavailable = (): Response =>
   jsonError(503, 'provider_unavailable', 'the assistant is temporarily unavailable');
 
 /**
+ * The single ingress-authentication refusal. Both the Origin gate and the
+ * document gate below return THIS, so the two checks cannot drift apart into
+ * two distinguishable refusals: same 403, same `bad_origin` code, same message,
+ * same no-store, same absence of CORS headers, and the same bounded log line
+ * (the log records only route/status/ms, so it cannot say which gate refused).
+ */
+const badOrigin = (): Response => jsonError(403, 'bad_origin', 'ingress authentication required');
+
+/**
  * Validate the core URL strictly. We only ever talk to the core over TLS, and
  * we refuse any URL that smuggles credentials or a query/fragment because the
  * proxy composes `origin + '/api/nexus/chat'` and must not inherit surprises.
@@ -116,6 +129,78 @@ function isSameOrigin(request: Request): boolean {
     return origin === site;
   }
   return request.headers.get('sec-fetch-site') === 'same-origin';
+}
+
+/**
+ * The public homepage, and its one production alias.
+ *
+ * Measured against production before this gate was written: the homepage is
+ * served at BOTH `/` and `/index.html` — each returns 200 with the panel
+ * present, under `X-Matched-Path: /` and `X-Matched-Path: /index.html`
+ * respectively. A literal `pathname === '/'` comparison would therefore refuse
+ * the assistant for every real visitor whose document URL is `/index.html`.
+ * Normalising that ONE alias admits exactly one document and nothing else; it
+ * is not a loosening of the rule.
+ */
+const HOMEPAGE_PATHNAME = '/';
+const HOMEPAGE_PATHNAME_ALIAS = '/index.html';
+
+/**
+ * Document gate. The Origin check above proves the call came from THIS SITE;
+ * it cannot tell which of the site's pages made it, so any script on any
+ * same-origin page (the historical pages that still load unpinned off-origin
+ * scripts, above all) passes it and can spend the assistant's daily provider
+ * budget as the visitor. This gate closes that: the only page allowed to spend
+ * budget is the one page that hosts the assistant.
+ *
+ * `Referer` is the signal because it is a forbidden header name: the browser
+ * sets it from the requesting document's URL and page script cannot set,
+ * change or remove it through `fetch`/`XHR`. A custom header the page sets
+ * itself would be no control at all, since a same-origin attacker script can
+ * set any custom header it likes. No `Referrer-Policy` is declared anywhere in
+ * this project, so under the browser default (`strict-origin-when-cross-origin`)
+ * a same-origin request carries the document's full URL, which is what makes
+ * the pathname readable here.
+ *
+ * Missing, empty, unparseable, credential-bearing, foreign-origin, or any
+ * pathname but the homepage: refused.
+ */
+function isHomepageDocument(request: Request): boolean {
+  const referer = request.headers.get('referer');
+  // Absent, or present-but-empty (a stripped `Referer:` with no value).
+  if (!referer) return false;
+
+  let documentUrl: URL;
+  try {
+    // Absolute parse only, deliberately: no base is supplied, so a relative or
+    // otherwise malformed value throws here rather than being resolved against
+    // anything this route chose for it.
+    documentUrl = new URL(referer);
+  } catch {
+    return false;
+  }
+
+  // Credentials never appear in a browser-generated Referer (the referrer
+  // serialiser strips them), so a value carrying them is not a browser speaking
+  // and is refused before `origin` — which ignores userinfo — is consulted.
+  if (documentUrl.username || documentUrl.password) return false;
+
+  // The SAME origin the gate above approves — read off this request, not from a
+  // second list that could drift from it. Scheme, host and port all included.
+  if (documentUrl.origin !== new URL(request.url).origin) return false;
+
+  // Decide on the PARSED pathname, never on the raw header string:
+  //   - `search` and `hash` are not part of `pathname`, so `/?utm=x` and
+  //     `/#panel` decide exactly as `/` does, with no stripping code here.
+  //   - The URL parser has already resolved `.` / `..` segments and collapsed
+  //     duplicated slashes, so a traversal string is judged by where it
+  //     actually points — which is also the URL the browser would have put in
+  //     the header, because it serialises the document's parsed URL too.
+  //   - Percent-encoding is NOT decoded, here or by the parser. `/%69ndex.html`
+  //     stays `/%69ndex.html` and is refused: only the two exact spellings
+  //     below are accepted, case-sensitively.
+  const pathname = documentUrl.pathname;
+  return pathname === HOMEPAGE_PATHNAME || pathname === HOMEPAGE_PATHNAME_ALIAS;
 }
 
 /**
@@ -231,9 +316,18 @@ async function handle(request: Request): Promise<Response> {
     return providerUnavailable();
   }
 
-  // 3. Origin. The only authentication this public route has.
+  // 3. Origin. Proves the caller is this site's own front-end.
   if (!isSameOrigin(request)) {
-    return jsonError(403, 'bad_origin', 'ingress authentication required');
+    return badOrigin();
+  }
+
+  // 3b. Document. Proves it is the ONE page that hosts the assistant, not any
+  //     other same-origin page whose scripts could otherwise spend the daily
+  //     provider budget. Both gates refuse identically, and both refuse here —
+  //     long before step 8, the single upstream fetch — so a refused request
+  //     never costs a provider dispatch.
+  if (!isHomepageDocument(request)) {
+    return badOrigin();
   }
 
   // 4. Content type. The core only speaks JSON; reject anything else before

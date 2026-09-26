@@ -102,9 +102,23 @@ function enableEnv(overrides = {}) {
   Object.assign(process.env, overrides);
 }
 
-function makeRequest({ headers = {}, body = '{"message":"hi"}', origin = SITE, sameOriginHint = false } = {}) {
+// The homepage Referer a real browser sends. The route's document gate requires
+// it (see tests/nexus-document-gate.test.mjs, which owns that rule and its
+// bypass matrix); every fixture here is a request from the homepage, so the
+// default carries it and the tests below keep testing what they are named for.
+// Pass `referer: null` to omit it entirely, or any string to replace it.
+const HOMEPAGE_REFERER = `${SITE}/`;
+
+function makeRequest({
+  headers = {},
+  body = '{"message":"hi"}',
+  origin = SITE,
+  sameOriginHint = false,
+  referer = HOMEPAGE_REFERER,
+} = {}) {
   const h = new Headers({ 'content-type': 'application/json', ...headers });
   if (origin !== null) h.set('origin', origin);
+  if (referer !== null) h.set('referer', referer);
   if (sameOriginHint) h.set('sec-fetch-site', 'same-origin');
   return new Request(`${SITE}/api/nexus/chat`, { method: 'POST', headers: h, body });
 }
@@ -209,6 +223,48 @@ test('Origin absent + sec-fetch-site: cross-site -> 403 bad_origin', async () =>
 });
 
 // ---------------------------------------------------------------------------
+// 3b. document — the homepage Referer gate
+//
+// The Origin gate above proves the caller is this SITE; it cannot say which of
+// the site's pages called. Scripts on the historical pages could therefore spend
+// the daily provider budget. The full accept/reject matrix, the bypass attempts
+// and the both-routes drift guard live in tests/nexus-document-gate.test.mjs;
+// these rows keep the property visible in this file too, so a change here cannot
+// look locally harmless.
+// ---------------------------------------------------------------------------
+test('a non-homepage same-origin Referer -> 403 bad_origin, and no upstream call', async () => {
+  enableEnv();
+  // A succeeding stub, so a leak through the gate shows up as a recorded call
+  // and a 200 rather than as an incidental error.
+  stubFetch(() => new Response('{"code":"sentinel","message":"reached upstream"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  for (const page of ['/terms-of-service.html', '/founder.html', '/command-center.html', '/some/other/page']) {
+    const res = await POST(makeRequest({ referer: SITE + page }));
+    const body = await expectJsonError(res, 403, 'bad_origin');
+    assert.equal(body.message, 'ingress authentication required');
+    assert.equal(fetchCalls.length, 0, `${page} must not reach the provider`);
+  }
+});
+
+test('no Referer at all -> 403 bad_origin, and no upstream call', async () => {
+  enableEnv();
+  stubFetch(() => new Response('{"code":"sentinel","message":"reached upstream"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  const res = await POST(makeRequest({ referer: null }));
+  await expectJsonError(res, 403, 'bad_origin');
+  assert.equal(fetchCalls.length, 0);
+});
+
+test('the homepage is accepted at both / and /index.html (ruling R43), query and hash included', async () => {
+  enableEnv();
+  stubFetch(() => new Response('{"code":"sentinel","message":"reached upstream"}', { status: 200, headers: { 'content-type': 'application/json' } }));
+  for (const referer of [`${SITE}/`, `${SITE}/index.html`, `${SITE}/?utm=x`, `${SITE}/#panel`, `${SITE}/index.html?x=1`]) {
+    fetchCalls = [];
+    const res = await POST(makeRequest({ referer }));
+    assert.equal(res.status, 200, `${referer} must be accepted`);
+    assert.equal(fetchCalls.length, 1);
+  }
+});
+
+// ---------------------------------------------------------------------------
 // 4. content-type
 // ---------------------------------------------------------------------------
 test('non-JSON content-type -> 400 invalid_input', async () => {
@@ -227,7 +283,7 @@ test('content-length 9000 -> 413 payload_too_large before reading', async () => 
   // never consulted because the header check comes first.
   const req = new Request(`${SITE}/api/nexus/chat`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: SITE, 'content-length': '9000' },
+    headers: { 'content-type': 'application/json', origin: SITE, referer: HOMEPAGE_REFERER, 'content-length': '9000' },
     body: new ReadableStream({
       pull() {
         throw new Error('body must not be read when content-length exceeds the cap');
@@ -246,7 +302,7 @@ test('actual body > 8192 bytes with no content-length -> 413 payload_too_large',
   const big = '{"message":"' + 'x'.repeat(9000) + '"}';
   const req = new Request(`${SITE}/api/nexus/chat`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: SITE },
+    headers: { 'content-type': 'application/json', origin: SITE, referer: HOMEPAGE_REFERER },
     body: new ReadableStream({
       start(c) {
         c.enqueue(enc.encode(big));
@@ -267,7 +323,7 @@ test('body streamed in small chunks past the cap -> 413 without draining the who
   const chunk = enc.encode('x'.repeat(4096));
   const req = new Request(`${SITE}/api/nexus/chat`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', origin: SITE },
+    headers: { 'content-type': 'application/json', origin: SITE, referer: HOMEPAGE_REFERER },
     body: new ReadableStream({
       pull(c) {
         // 5 chunks of 4096 bytes (20480 total) if fully drained; the cap
