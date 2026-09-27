@@ -1434,3 +1434,187 @@ test('the unavailable "New conversation" control reads as inactive without losin
   assert.doesNotMatch(html, /\.nexus__prompt--/, 'no new modifier class');
   assert.equal((html.match(/\.nexus__prompt:disabled/g) ?? []).length, 3, 'exactly the two rules above, and nothing else keyed on the state');
 });
+
+// ---------------------------------------------------------------------------
+// Blocker 5 (website half): the visitor is always told something they can act
+// on, and is never offered an action that is guaranteed to fail identically.
+//
+// These are BEHAVIOURAL, not string matches. They lift the shipped
+// httpFailure() out of the served page and execute it against scripted
+// responses with its helpers stubbed, so what is asserted is the visible output
+// a visitor would actually get. A reimplementation of the logic inside the test
+// would drift from the page; this cannot.
+//
+// One thing worth stating, because it shapes what "no retry" may mean here: the
+// submit handler CLEARS the input before sending, so after a refusal the
+// visitor's text survives only in the transcript. A refusal that tells someone
+// to rephrase while giving them no way to recover what they typed is its own
+// dead end. So the rule pinned below is not "never offer a pill" - it is that
+// the affordance must not be a RETRY of bytes that cannot succeed. Where
+// resending identically is hopeless the page offers an edit instead, labelled
+// as one.
+// ---------------------------------------------------------------------------
+
+/** Build the shipped httpFailure with its free variables replaced by recorders. */
+function shippedHttpFailure() {
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.ok(script, 'the NEXUS widget script must exist');
+  const code = stripComments(script);
+  const textSrc = code.match(/const TEXT=\{[\s\S]*?\};/)?.[0];
+  assert.ok(textSrc, 'the TEXT table must exist');
+  const start = code.indexOf('const httpFailure=');
+  const end = code.indexOf('async function ask(');
+  assert.ok(start >= 0 && end > start, 'httpFailure must be found, ahead of ask()');
+  const source = code.slice(start, end);
+
+  const TEXT = new Function('return (' + textSrc.replace(/^const TEXT=/, '').replace(/;\s*$/, '') + ')')();
+  const calls = [];
+  const factory = new Function(
+    'TEXT',
+    'status',
+    'limited',
+    'offlineNotice',
+    'unavailableNotice',
+    'refillPill',
+    source + ' return httpFailure;'
+  );
+  const httpFailure = factory(
+    TEXT,
+    (text, retry) => calls.push({ kind: 'status', text, retry: Boolean(retry) }),
+    (seconds) => calls.push({ kind: 'limited', seconds }),
+    () => calls.push({ kind: 'offline' }),
+    () => calls.push({ kind: 'unavailable' }),
+    (label) => calls.push({ kind: 'pill', label })
+  );
+  const response = (status, errorCode, headers = {}) => ({
+    status,
+    headers: { get: (name) => headers[name.toLowerCase()] ?? null },
+    json: async () => (errorCode ? { code: errorCode } : {})
+  });
+  return { httpFailure, calls, TEXT, response, source };
+}
+
+/** Any affordance whose label invites resending the same bytes unchanged. */
+const RETRY_LABEL = /^(?:retry|try again|resend|send again)$/i;
+
+test('a message the visitor just sent is refused with an explanation, not the generic failure plus a retry that must fail again (blocker 5)', async () => {
+  const { httpFailure, calls, TEXT, response } = shippedHttpFailure();
+
+  // The repeat guard is a pre-SSE JSON 400 carrying code 'guard_blocked'
+  // (the core's guards.ts: "identical message repeated too quickly", inside a
+  // ~10 second window). It used to fall through every branch to the generic
+  // line "The assistant could not finish that reply. You can try again." WITH a
+  // pill labelled Retry that refilled the identical message - so the visitor
+  // got a loop that always failed the same way and was never told why.
+  const hold = await httpFailure(response(400, 'guard_blocked'));
+  assert.notEqual(hold, 'hold', 'the turn finishes rather than being held open');
+
+  const said = calls.find((c) => c.kind === 'status');
+  assert.ok(said, 'something is said');
+  assert.ok(!calls.some((c) => c.kind === 'offline'), 'and it is not an offline notice');
+  assert.ok(!calls.some((c) => c.kind === 'limited'), 'nor dressed up as a rate limit with a countdown');
+  assert.notEqual(said.text, TEXT.error, 'it is NOT the generic failure line');
+
+  // Pinned by meaning: the line must name what happened and offer a way out.
+  assert.match(
+    said.text,
+    /\b(?:same|identical|already|just sent)\b/i,
+    'the visitor is told it was the same message they just sent'
+  );
+  assert.match(
+    said.text,
+    /\b(?:moment|wait|rephrase|reword|differently|different way|another way|change)\b/i,
+    'and is given something to do about it'
+  );
+
+  // No action that is guaranteed to fail identically: nothing here may invite
+  // resending the same bytes. Recovering the text to EDIT it is fine, and is
+  // what makes "say it a different way" actionable at all.
+  assert.equal(said.retry, false, 'status() must not add its Retry pill');
+  for (const pill of calls.filter((c) => c.kind === 'pill')) {
+    assert.doesNotMatch(pill.label, RETRY_LABEL, 'no pill may invite an identical resend: ' + pill.label);
+  }
+  const pill = calls.find((c) => c.kind === 'pill');
+  assert.ok(pill, 'the typed message is still recoverable, because the input was cleared on submit');
+  assert.match(pill.label, /\bedit\b/i, 'and the affordance says so: ' + pill.label);
+});
+
+test('daily budget exhaustion is not reported as the whole assistant being offline, and no branch waits on a code the core never sends (blocker 5)', async () => {
+  const { httpFailure, calls, response, source } = shippedHttpFailure();
+
+  // WHAT ACTUALLY HAPPENS on exhaustion: the provider gate refuses with
+  // 'daily_provider_limit', guardFailure maps it to dailyProviderLimit, and the
+  // pipeline's provider catch emits code 'provider_unavailable' with "the
+  // assistant is temporarily unavailable". Exhaustion is therefore
+  // indistinguishable from an outage ON THE WIRE, so the one honest line has to
+  // cover both without claiming the assistant is down.
+  const out = await httpFailure(response(503, 'provider_unavailable'));
+  assert.ok(!calls.some((c) => c.kind === 'offline'), 'exhaustion must not be reported as "offline right now"');
+  assert.ok(calls.some((c) => c.kind === 'unavailable'), 'it gets the temporary-unavailability notice instead');
+  assert.notEqual(out, 'hold');
+
+  // 'disabled' is a different fact and keeps the offline notice: the assistant
+  // really is switched off, and there is nothing to come back for in a minute.
+  calls.length = 0;
+  await httpFailure(response(503, 'disabled'));
+  assert.deepEqual(calls, [{ kind: 'offline' }], 'a disabled build is still reported as offline');
+
+  // A bare 503 with no code the client recognises is still offline, not silence.
+  calls.length = 0;
+  await httpFailure(response(503, ''));
+  assert.equal(calls.length, 1, 'a 503 with no code still says something');
+
+  // No dead branch. 'budget_exhausted' is declared in the core's taxonomy and
+  // CONSTRUCTED NOWHERE, so a client branch on it was unreachable code that
+  // looked like coverage and hid this defect. It must not return without the
+  // core actually sending it.
+  assert.doesNotMatch(html, /budget_exhausted/, 'the widget must not branch on a code the core never constructs');
+  assert.doesNotMatch(source, /budget_exhausted/);
+});
+
+test('every pre-stream refusal the core can raise says something specific, and offers a resend only when one could succeed (blocker 5)', async () => {
+  const { httpFailure, calls, TEXT, response } = shippedHttpFailure();
+
+  // One row per code in the core's STATUS_FOR table that can be raised BEFORE
+  // the stream opens. `resendable` is whether an affordance may invite sending
+  // the identical bytes again: only where that could actually succeed.
+  const rows = [
+    ['turn_in_progress', 409, false],
+    ['bad_origin', 403, false],
+    ['guard_blocked', 400, false],
+    ['invalid_input', 400, false],
+    ['payload_too_large', 413, false],
+    ['deadline', 504, true]
+  ];
+
+  for (const [errorCode, status, resendable] of rows) {
+    calls.length = 0;
+    await httpFailure(response(status, errorCode));
+    const said = calls.find((c) => c.kind === 'status');
+    assert.ok(said, errorCode + ': something specific is said');
+    assert.notEqual(said.text, TEXT.error, errorCode + ': must not fall through to the generic line');
+    if (!resendable) {
+      assert.equal(said.retry, false, errorCode + ': status() must not add a Retry pill');
+      for (const pill of calls.filter((c) => c.kind === 'pill')) {
+        assert.doesNotMatch(pill.label, RETRY_LABEL, errorCode + ': no pill may invite an identical resend');
+      }
+    } else {
+      assert.ok(
+        said.retry || calls.some((c) => c.kind === 'pill'),
+        errorCode + ': a resend is worth offering here'
+      );
+    }
+  }
+
+  // rate_limited keeps its countdown and its hold; that retry DOES eventually work.
+  calls.length = 0;
+  const held = await httpFailure(response(429, 'rate_limited', { 'retry-after': '30' }));
+  assert.equal(held, 'hold');
+  assert.deepEqual(calls, [{ kind: 'limited', seconds: 30 }]);
+
+  // The generic line still exists for a refusal shape nobody anticipated. It is
+  // the floor, not the normal answer.
+  calls.length = 0;
+  await httpFailure(response(418, 'something_new'));
+  assert.deepEqual(calls, [{ kind: 'status', text: TEXT.error, retry: true }]);
+});

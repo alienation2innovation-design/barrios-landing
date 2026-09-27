@@ -2652,7 +2652,7 @@
       (()=>{
         const root=document.getElementById('nexus');if(!root)return;
         const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body'),fresh=root.querySelector('[data-nexus-new]');
-        const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.'};
+        const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.',repeated:'That is the same message you just sent. Give it a moment, or say it a different way.',unreadable:'That message could not be read. Change it and send it again.',toolong:'That message is too long to send. Shorten it and send it again.',slow:'That reply ran out of time before it finished. You can try again.',unavailable:'The assistant could not answer that one. It may be busy, or at its limit for today. Try again a little later, or contact Gary.'};
         let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,resetEpoch=0;
         /* THE CONVERSATION CREDENTIAL LIVES ONLY HERE: one variable inside this
            IIFE's closure, for the lifetime of this document.
@@ -2723,10 +2723,29 @@
         /* Every visitor, assistant and status string is a text node. Nothing dynamic is ever parsed as HTML. */
         const clearTranscript=()=>{while(local.firstChild)local.removeChild(local.firstChild)};
         const line=(label,text)=>{const el=document.createElement('div');el.className='nexus__reply';const b=document.createElement('strong');b.textContent=label;el.appendChild(b);el.appendChild(document.createElement('br'));const t=document.createTextNode(text);el.appendChild(t);local.appendChild(el);body.scrollTop=body.scrollHeight;return {el,t}};
-        const retryPill=()=>{const b=document.createElement('button');b.type='button';b.className='nexus__prompt';b.textContent='Retry';b.addEventListener('click',()=>{b.remove();input.value=lastMessage;input.focus()});local.appendChild(b);body.scrollTop=body.scrollHeight};
+        /* One pill, two honest labels. The submit handler clears the input, so
+           after any refusal the visitor's text survives only in the transcript
+           and this is the sole way to get it back. 'Retry' is only truthful
+           where sending the same bytes again could actually succeed; where it
+           cannot - the repeat guard, an unreadable message, one that is too long
+           - the same affordance is labelled 'Edit message', so nobody is invited
+           into a loop that fails identically every time. No new class, token or
+           colour: it is the existing nexus__prompt. */
+        const refillPill=label=>{const b=document.createElement('button');b.type='button';b.className='nexus__prompt';b.textContent=label;b.addEventListener('click',()=>{b.remove();input.value=lastMessage;input.focus()});local.appendChild(b);body.scrollTop=body.scrollHeight};
+        const retryPill=()=>refillPill('Retry');
         const status=(text,retry)=>{line('Status',text);if(retry)retryPill()};
         /* Fully static, hardcoded fallback: href and text are never built from a variable or response data. */
-        const offlineNotice=()=>{line('Status','The assistant is offline right now.');const a=document.createElement('a');a.href='/contact.html';a.style.textDecoration='underline';a.textContent='Contact Gary';local.appendChild(a);body.scrollTop=body.scrollHeight};
+        /* Two different facts, two different lines, one shared shape.
+           'offline' is for a build that is switched off (code 'disabled', or a
+           503 this client cannot name): there is nothing to come back for in a
+           minute. 'unavailable' is for code 'provider_unavailable', which is
+           what the core emits BOTH for a provider outage and for the daily
+           dispatch cap being spent - the two are indistinguishable on the wire,
+           so the line has to be true of either without claiming the whole
+           assistant is down. Both keep the contact route. */
+        const contactNotice=text=>{line('Status',text);const a=document.createElement('a');a.href='/contact.html';a.style.textDecoration='underline';a.textContent='Contact Gary';local.appendChild(a);body.scrollTop=body.scrollHeight};
+        const offlineNotice=()=>contactNotice('The assistant is offline right now.');
+        const unavailableNotice=()=>contactNotice(TEXT.unavailable);
         const busy=on=>{input.disabled=on;send.disabled=on};
         /* THE FIRST-TURN RESET RACE. While a turn is awaiting its response head
            there is no credential this document can authenticate a revocation with.
@@ -2826,7 +2845,21 @@
           if(res.status===409){status(TEXT.busy,false);return}
           if(res.status===429){limited(Number(res.headers.get('retry-after'))||60);return 'hold'}
           if(res.status===403){status(TEXT.origin,false);return}
-          if(res.status===503||code==='disabled'||code==='provider_unavailable'){offlineNotice();return}
+          /* The repeat guard. A 400 'guard_blocked' means the identical message
+             arrived again inside the core's repeat window. This used to fall all
+             the way to TEXT.error and a Retry pill that refilled the same bytes,
+             so the visitor got a loop that failed the same way every time and
+             was never told why. Say what happened, and offer the edit rather
+             than the resend. */
+          if(res.status===400&&code==='guard_blocked'){status(TEXT.repeated,false);refillPill('Edit message');return}
+          if(code==='invalid_input'){status(TEXT.unreadable,false);refillPill('Edit message');return}
+          if(res.status===413||code==='payload_too_large'){status(TEXT.toolong,false);refillPill('Edit message');return}
+          if(res.status===504||code==='deadline'){status(TEXT.slow,true);return}
+          /* Checked on the CODE before the status, because provider_unavailable
+             is itself a 503: a spent daily cap and a provider outage arrive here
+             identically, and neither is the assistant being switched off. */
+          if(code==='provider_unavailable'){unavailableNotice();return}
+          if(res.status===503||code==='disabled'){offlineNotice();return}
           status(TEXT.error,true)};
         async function ask(message){
           lastMessage=message;controller=new AbortController();busy(true);awaitHead(true);
@@ -2856,8 +2889,23 @@
             if(f.event==='delta'&&typeof f.data.text==='string'){if(!gotText){reply.t.data='';gotText=true}reply.t.data+=f.data.text;body.scrollTop=body.scrollHeight;return}
             if(f.event==='done'){terminal=true;return}
             if(f.event==='error'||f.event==='malformed'){terminal=true;dropPending();const code=f.data.code||'';
-              if(code==='rate_limited'||code==='budget_exhausted'){hold=true;limited(Number(f.data.retry_after_s)||60);return}
-              if(code==='provider_unavailable'||code==='disabled'){offlineNotice();return}
+              if(code==='rate_limited'){hold=true;limited(Number(f.data.retry_after_s)||60);return}
+              /* A second code was handled alongside rate_limited here: the one
+                 the core's taxonomy declares for a spent daily budget and
+                 CONSTRUCTS NOWHERE. The branch was therefore unreachable, while
+                 real exhaustion of the daily dispatch cap arrives as
+                 'provider_unavailable' below and was being shown as an outage.
+                 Dead code that looks like coverage is how that stayed invisible,
+                 so it is gone rather than kept as documentation; the test and the
+                 commit message name it. */
+              if(code==='provider_unavailable'){unavailableNotice();return}
+              if(code==='disabled'){offlineNotice();return}
+              /* The output gate withholds a generated answer with this code
+                 AFTER sending its own fallback prose as deltas. That prose IS
+                 the answer, so adding "could not finish that reply" on top of a
+                 reply that arrived on purpose is simply untrue. Only say it when
+                 nothing was shown. */
+              if(code==='guard_blocked'&&gotText)return;
               status(TEXT.error,true)}};
           try{while(!terminal){const chunk=await reader.read();if(chunk.done)break;buffer+=decoder.decode(chunk.value,{stream:true});let cut;while((cut=buffer.indexOf('\n\n'))>=0){handle(buffer.slice(0,cut));buffer=buffer.slice(cut+2);if(terminal)break}}}
           catch(err){if(controller.signal.aborted){dropPending();status(TEXT.cancelled,false);terminal=true}}
