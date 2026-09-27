@@ -5,18 +5,21 @@
 // response from the NEXUS core to the browser. Two things can go wrong in the
 // middle of that relay:
 //
-//   1. The upstream connection to the core drops (network blip, core crash,
-//      fetch timeout). If we simply closed the client stream, the browser's
-//      EventSource/fetch reader would see a clean end-of-stream with no
-//      `event: done` and the UI would sit on a spinner forever.
+//   1. The relay ends without the core having delivered a terminal frame. That
+//      covers an upstream that FAILS (network blip, core crash, fetch timeout)
+//      and, just as importantly, an upstream that ENDS CLEANLY without
+//      finishing its reply (a clean TCP close, a core that exits after a
+//      partial answer, an intermediary that closes the body). Both look the
+//      same to the browser: a clean end-of-stream with no `event: done`, and a
+//      UI that sits on a spinner forever.
 //   2. The client walks away (tab closed, request aborted). We must cancel the
 //      upstream so the core stops generating, and we must not try to write a
 //      frame into a stream nobody is reading.
 //
 // This module solves both without ever touching the bytes that pass through:
 // it only OBSERVES completed frames to learn whether a terminal frame
-// (`event: done` or `event: error`) has already been delivered. On upstream
-// failure, if no terminal was seen and the client is still attached, exactly
+// (`event: done` or `event: error`) has already been delivered. However the
+// relay ends, if no terminal was seen and the client is still attached, exactly
 // one synthetic ERROR_FRAME is appended so the UI can settle. It never appends
 // a second terminal, and it never rewrites or drops upstream bytes.
 //
@@ -65,7 +68,10 @@ export function isTerminalFrame(frame: string): boolean {
  * chunks does not corrupt the scanner's view (the raw bytes are forwarded
  * untouched regardless; the decoder is only for observation).
  */
-function createScanner(onTerminal: () => void): { feed: (chunk: Uint8Array) => void } {
+function createScanner(onTerminal: () => void): {
+  feed: (chunk: Uint8Array) => void;
+  hasPartialFrame: () => boolean;
+} {
   // Streaming mode is selected per decode() call ({ stream: true } below);
   // the constructor only takes fatal/ignoreBOM.
   const decoder = new TextDecoder('utf-8');
@@ -95,13 +101,27 @@ function createScanner(onTerminal: () => void): { feed: (chunk: Uint8Array) => v
         tail = tail.slice(-MAX_TAIL_CHARS);
       }
     },
+
+    /**
+     * True when the bytes forwarded so far do NOT end on a frame boundary, i.e.
+     * the upstream stopped in the middle of writing a frame.
+     *
+     * The caller needs this before it may append its synthetic terminal.
+     * Concatenating a frame straight onto an unterminated one produces a single
+     * fused frame whose first line is the PARTIAL frame's - so the terminal is
+     * not a terminal any more, to this scanner or to the browser, and the UI
+     * waits exactly as it would have with nothing appended.
+     */
+    hasPartialFrame(): boolean {
+      return tail.length > 0;
+    },
   };
 }
 
 /**
  * Relay `upstream` to a new ReadableStream byte-for-byte, appending exactly one
- * ERROR_FRAME only if the upstream fails before any terminal frame was
- * delivered and the client has not cancelled.
+ * ERROR_FRAME if the relay ends - by failure OR by a clean close - without any
+ * terminal frame having been delivered, and the client has not cancelled.
  *
  * Guarantees:
  *   - bytes are forwarded unchanged (the scanner only observes)
@@ -139,17 +159,39 @@ export function pumpSse(upstream: ReadableStream<Uint8Array>, opts?: PumpOptions
           controller.enqueue(value);
         }
       } catch {
-        // Upstream failed mid-relay. Only settle the UI with a synthetic
-        // terminal if the upstream did not already send one and the client is
-        // still listening. Otherwise the failure is silent by design.
+        // Upstream failed mid-relay. Nothing to decide here: the terminal
+        // guarantee below settles the UI, and it does not care whether the relay
+        // ended by throwing or by a clean close, because both leave the visitor
+        // waiting on a stream that never said it had finished.
+      } finally {
+        // THE TERMINAL GUARANTEE, and the ONLY place a frame is synthesised.
+        //
+        // This used to live in the `catch` above, which made the guarantee
+        // untrue for the commonest benign ending: a `read()` that resolves
+        // `{done:true}` without throwing. A clean upstream TCP close, a core
+        // that exits after a partial reply, or an intermediary that closes the
+        // body all take the `if (done) break` path, never the catch, and the
+        // browser then saw a clean end-of-stream with no `event: done` - the
+        // exact spinner this module exists to prevent.
+        //
+        // Appending here covers every exit from the loop, and the two
+        // conditions are unchanged: never a second terminal when upstream
+        // already delivered one, and never a write into a stream the client has
+        // abandoned. `cancel()` resolves a pending read with `{done:true}`, so
+        // the cancel path arrives here too and is excluded by `clientCancelled`.
         if (!sawTerminal && !clientCancelled) {
           try {
-            controller.enqueue(encoder.encode(ERROR_FRAME));
+            // If the upstream stopped mid-frame, the synthetic terminal has to
+            // start on a frame boundary of its own. Appended bare, it would fuse
+            // onto the unterminated frame and stop being a terminal at all.
+            // Upstream bytes are still never rewritten or dropped - the
+            // separator is only ever ADDED, like the frame it introduces.
+            const prefix = scanner.hasPartialFrame() ? FRAME_SEPARATOR : '';
+            controller.enqueue(encoder.encode(prefix + ERROR_FRAME));
           } catch {
             // Controller already closed/errored; nothing further to do.
           }
         }
-      } finally {
         try {
           reader.releaseLock();
         } catch {

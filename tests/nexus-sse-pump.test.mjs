@@ -282,7 +282,21 @@ test('6d. a long run of bytes with no frame separator never grows the scanner ta
   let terminalCalls = 0;
   const pumped = pumpSse(stream, { onTerminal: () => terminalCalls++ });
   const r = await drain(pumped);
-  assert.equal(r.text, garbage1 + garbage2, 'raw bytes are forwarded unchanged regardless of the observation-only tail cap');
+  // Every raw byte is still forwarded verbatim and in order. What follows them
+  // is the terminal guarantee (test 9): this upstream delivered no terminal of
+  // its own and ended mid-frame, so the synthetic one is appended after its own
+  // frame separator. Asserting the prefix rather than equality keeps the
+  // byte-transparency claim exact - nothing upstream sent was rewritten,
+  // reordered or dropped - while admitting the frame that is only ever ADDED.
+  assert.ok(
+    r.text.startsWith(garbage1 + garbage2),
+    'raw bytes are forwarded unchanged regardless of the observation-only tail cap'
+  );
+  assert.equal(
+    r.text.slice((garbage1 + garbage2).length),
+    '\n\n' + ERROR_FRAME,
+    'and the only thing after them is one separated synthetic terminal'
+  );
   assert.equal(terminalCalls, 0);
   assert.equal(r.threw, null);
   assert.equal(r.doneCount, 2);
@@ -304,6 +318,68 @@ test('7. close exactly once: clean end, throw-after-data, throw-after-terminal e
     // drain() counts the first done plus one confirming re-read; both must be done.
     assert.equal(r.doneCount, 2);
   }
+});
+
+// ---------------------------------------------------------------------------
+// 9. THE TERMINAL GUARANTEE, pinned by meaning (blocker 5, defect 1)
+//
+// The module header promises the UI always receives a terminal frame. It used to
+// append its synthetic one only from the `catch` branch, so a `read()` that
+// resolved `{done:true}` WITHOUT throwing - a clean upstream TCP close, a core
+// that exits after writing a partial reply, a proxy hop that closes the body -
+// broke the relay loop and appended nothing. The client then saw a clean
+// end-of-stream with no `event: done`, which is exactly the spinner the header
+// says cannot happen. The widget rescued the visitor separately; the pump's own
+// guarantee was not structurally true.
+//
+// This test is written as the INVARIANT rather than as one reproduction, so it
+// holds for any upstream ending: whenever the client is still attached and
+// upstream delivered no terminal of its own, the pumped output must end in
+// exactly one terminal frame - however the upstream ended.
+// ---------------------------------------------------------------------------
+test('9. a relay that ends without a terminal frame always gets one, however the upstream ended', async () => {
+  const endings = [
+    ['clean close, nothing at all', makeUpstream([])],
+    ['clean close after a meta frame', makeUpstream([META])],
+    ['clean close after meta + delta', makeUpstream([META, DELTA])],
+    ['clean close mid-frame (no separator yet)', makeUpstream([META, 'event: delta\ndata: {"text":"tr'])],
+    ['clean close after a non-terminal that merely looks close', makeUpstream([META, 'event: donex\ndata: {}\n\n'])],
+    ['throw after data', makeUpstream([META], { throwAfter: 1 })],
+    ['throw with no data', makeUpstream([], { throwAfter: 0 })],
+  ];
+
+  for (const [name, { stream }] of endings) {
+    const r = await drain(pumpSse(stream));
+    assert.equal(r.threw, null, `${name}: the client stream must never throw`);
+    assert.equal(countTerminals(r.text), 1, `${name}: the client must receive exactly one terminal frame`);
+    assert.ok(r.text.endsWith(ERROR_FRAME), `${name}: and it must be the synthetic one, last`);
+  }
+});
+
+test('9b. the guarantee never adds a second terminal, and never speaks after the client leaves', async () => {
+  // Upstream sent its own terminal: nothing is added, on a clean close as well
+  // as on a throw.
+  for (const [name, { stream }] of [
+    ['done then clean close', makeUpstream([META, DONE])],
+    ['error then clean close', makeUpstream([META, ERR])],
+    ['done then throw', makeUpstream([META, DONE], { throwAfter: 2 })],
+  ]) {
+    const r = await drain(pumpSse(stream));
+    assert.equal(countTerminals(r.text), 1, `${name}: upstream's own terminal is the only one`);
+    assert.ok(!r.text.includes(ERROR_FRAME), `${name}: nothing synthetic is appended`);
+  }
+
+  // Client cancelled: the upstream is cancelled and no frame is written into a
+  // stream nobody is reading, even though no terminal was ever seen.
+  const { stream, state } = makeUpstream([META], { hang: true });
+  const pumped = pumpSse(stream);
+  const reader = pumped.getReader();
+  const first = await reader.read();
+  assert.equal(dec.decode(first.value), META);
+  await reader.cancel('client went away');
+  assert.equal(state.cancelled, true, 'the upstream is cancelled');
+  const after = await reader.read();
+  assert.equal(after.done, true, 'and the client stream is finished, not carrying a late frame');
 });
 
 // ---------------------------------------------------------------------------
