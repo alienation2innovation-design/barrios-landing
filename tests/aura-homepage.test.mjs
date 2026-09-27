@@ -468,40 +468,89 @@ test('"New conversation" clears the transcript and forgets the token synchronous
   assert.match(newConversationBody, /sendReset\(old,resetEpoch,0\)\};\s*$/, 'firing the reset is the final statement of the handler');
 });
 
-test('the NEXUS widget carries only the concise chat notice and links to the Privacy page', () => {
+test('the NEXUS widget states truthfully that contact details are taken only with permission, and links to the Privacy page', () => {
   const disclosure = markup.match(/<p\b[^>]*class="nexus__disclosure"[^>]*>([\s\S]*?)<\/p>/i)?.[1] ?? '';
   assert.ok(disclosure, 'the nexus__disclosure paragraph must exist');
   const text = disclosure.replace(/<[^>]+>/g, '').replace(/\s+/g, ' ').trim();
 
-  // Item 4. Two earlier versions of this line were both wrong. The first
-  // promised that contact details are requested with consent, which no build
-  // with the lead backend off can honour. The second - "This chat does not
-  // collect contact details" - was true about contact details but read as a
-  // claim about the chat as a whole, while every word a visitor types is in
-  // fact sent to a third-party model to answer them.
+  // THREE earlier versions of this line were wrong, each in a different
+  // direction, and the history is the reason this test now pins MEANING and not
+  // only a string:
   //
-  // So the line now says exactly the two things that are true and actionable:
-  // NEXUS does not ask for or save contact details, and the visitor should not
-  // type personal information here. It deliberately does NOT claim that what
-  // they type is unprocessed, and the Privacy link carries the provider detail
-  // the panel may not name.
+  //   1. "Contact details are requested only with your consent" - retired when
+  //      the lead backend was off, because nothing then asked for them at all.
+  //   2. "This chat does not collect contact details" - true about contact
+  //      details, but read as a claim about the chat as a whole.
+  //   3. "NEXUS does not ask for or save contact details. Please do not type
+  //      personal information here." - the line this change removes. It is
+  //      FALSE against the shipped runtime: after the visitor agrees, NEXUS
+  //      asks for and stores a name, a business name, an email address, an
+  //      optional phone number, a summary of the project and a preferred time
+  //      for Gary to reach out (`src/core/acquisition/state.ts`,
+  //      `src/core/leads/capture.ts` in the NEXUS core; approved capability,
+  //      launch spec section 2). A panel that denies collecting them while the
+  //      runtime collects them is the release blocker.
+  //
+  // A fourth wording was floated and is also false - "Barrios A2I does not save
+  // anything you type in the chat" - because every turn IS held on our own
+  // server, masked, for the life of the conversation.
+  //
+  // So the line states the one fact the visitor needs before typing (details
+  // are taken only with permission, and only to ask for a consultation), asks
+  // them to keep anything ELSE sensitive out, and leaves the provider and the
+  // retention terms to the Privacy link, which the panel may not name.
   assert.equal(
     text,
-    'AI-powered chat. NEXUS does not ask for or save contact details. Please do not type personal information here. Privacy'
+    'AI-powered chat. NEXUS asks for and saves contact details only with your permission, for a consultation request. Please keep anything else sensitive out of the chat. Privacy'
   );
-  assert.match(text, /does not ask for or save contact details/, 'the capability limit is stated');
-  assert.match(text, /do not type personal information/i, 'and the visitor is warned');
+  assert.match(text, /only with your permission/i, 'permission is the condition, stated');
+  assert.match(text, /for a consultation request/i, 'and the purpose is named');
+
+  // --- PINNED BY MEANING -------------------------------------------------
+  // Neither pin is a copy of the sentence it forbids: each is asserted against
+  // the historical false wordings as fixtures below, so a pin that had stopped
+  // catching them would fail here rather than pass vacuously.
+  const DENIES_CONTACT_CAPTURE =
+    /\b(?:does not|doesn't|do not|never|will not|won't|no)\b[^.]{0,80}\b(?:ask|asks|asked|asking|request|requests|requested|requesting|collect|collects|collected|collecting|save|saves|saved|saving|store|stores|stored|storing|keep|keeps|keeping|retain|retains|retained|retaining)\b[^.]{0,80}\b(?:contact|personal|details|information|info)\b/i;
+  const DENIES_SAVING_ANYTHING =
+    /\b(?:does not|doesn't|do not|never|will not|won't)\b[^.]{0,40}\b(?:save|saves|store|stores|keep|keeps|retain|retains|record|records)\b[^.]{0,40}\b(?:anything|nothing|what you type|your messages|any of)\b/i;
+
+  // The pins are live: they catch every wording this line has falsely carried.
+  assert.match(
+    'AI-powered chat. NEXUS does not ask for or save contact details.',
+    DENIES_CONTACT_CAPTURE,
+    'the pin catches the sentence this change removes'
+  );
+  assert.match('This chat does not collect contact details', DENIES_CONTACT_CAPTURE, 'and wording 2');
+  assert.match("NEXUS doesn't keep your contact information", DENIES_CONTACT_CAPTURE, 'and a contraction of it');
+  assert.match(
+    'Barrios A2I does not save anything you type in the chat.',
+    DENIES_SAVING_ANYTHING,
+    'and the blanket no-save over-correction'
+  );
+  assert.match('We never store what you type.', DENIES_SAVING_ANYTHING, 'and a paraphrase of it');
+
+  // And the shipped disclosure carries neither meaning.
+  assert.doesNotMatch(
+    text,
+    DENIES_CONTACT_CAPTURE,
+    'the disclosure must never again deny asking for, saving or keeping contact details'
+  );
+  assert.doesNotMatch(
+    text,
+    DENIES_SAVING_ANYTHING,
+    'nor claim that nothing the visitor types is saved'
+  );
+  // The same two denials must be absent from the whole served page, so the
+  // claim cannot reappear in a heading, a prompt or the widget script.
+  assert.doesNotMatch(stripExecutableContent(html), DENIES_CONTACT_CAPTURE, 'nowhere in the served markup');
   assert.doesNotMatch(
     html,
     /Contact details are requested only with your consent/i,
     'the retired consent promise must be gone from the served page'
   );
-  assert.doesNotMatch(
-    html,
-    /This chat does not collect contact details/i,
-    'the superseded wording, which read as a claim about all typed text, must be gone'
-  );
-  // The warning must not be undercut by a claim that nothing is processed.
+  // The line must not swing back the other way either: it may not imply that
+  // what the visitor types is unprocessed or unread.
   assert.doesNotMatch(
     text,
     /(?:never|not|no)\s+(?:\w+\s+){0,3}(?:processed|read|analysed|analyzed|stored anywhere)/i,
@@ -511,6 +560,122 @@ test('the NEXUS widget carries only the concise chat notice and links to the Pri
   assert.match(disclosure, /<a\b[^>]*href="\/privacy-directive\.html"[^>]*>Privacy<\/a>/i);
   assert.doesNotMatch(disclosure, /anthropic|microsoft|openai|claude|vercel|n8n|zapier|make\.com|hosting|api/i);
   assert.doesNotMatch(disclosure, /does not book|schedule|send email|issue quotes|30 days/i);
+});
+
+// ---------------------------------------------------------------------------
+// Blocker 8 (website half): no public surface may claim that NEXUS books.
+//
+// WHAT THE BETA ACTUALLY DOES. After the visitor agrees, NEXUS asks for a
+// preferred day or time of day for Gary to reach out and stores that STRING
+// ("Is there a day or time of day that suits you best for Gary to reach out?",
+// `capture_meeting_time`). It does not read a calendar, does not check
+// availability, does not create or hold a calendar event and never mints a
+// meeting link: the core's own `selectLeadBackend` records that the lead
+// backend "never advertises `booking`: scheduling stays off regardless of which
+// environment named it", and the launch spec forbids activating the scheduling
+// source that exists in the repository.
+//
+// WHAT THIS TEST THEREFORE PINS, and what it deliberately does NOT. It fails if
+// any served byte ties NEXUS, the assistant or this chat to booking,
+// scheduling, availability, a calendar event or a meeting link. It does NOT ban
+// that vocabulary from the page, because the marketing copy legitimately
+// describes the automations Barrios A2I BUILDS FOR A CLIENT'S BUSINESS
+// ("Appointment booking & reminders", "Qualified prospects book the right
+// appointment"), in the same register as its siblings "Instant email and SMS
+// responses" and "CRM records stay current" - none of which is a NEXUS
+// capability either. Banning the words outright would fail on copy that is not
+// a claim about this assistant, so the pin is on the ASSOCIATION. Every regex
+// below is asserted against both kinds of sentence, so it cannot pass vacuously
+// and cannot be quietly widened into a copy ban.
+const BOOKING_CLAIM =
+  'book|books|booked|booking|bookings|schedule|schedules|scheduled|scheduling|reschedule|availability|available times|open slots|calendar event|calendar invite|calendar invitation|meeting link|join link|join url|zoom link|video link';
+const ASSISTANT_SUBJECT = 'NEXUS|the assistant|this chat|the chat|our chat|the widget';
+/** "NEXUS ... books" - the assistant named first. */
+const ASSISTANT_BOOKS = new RegExp(
+  `\\b(?:${ASSISTANT_SUBJECT})\\b[^.!?<>]{0,100}?\\b(?:${BOOKING_CLAIM})\\b`,
+  'i'
+);
+/** "book ... with NEXUS" - the booking named first. */
+const BOOKED_VIA_ASSISTANT = new RegExp(
+  `\\b(?:${BOOKING_CLAIM})\\b[^.!?<>]{0,100}?\\b(?:with NEXUS|by NEXUS|via NEXUS|through NEXUS|with the assistant)\\b`,
+  'i'
+);
+/** Forms that are a live-calendar claim on their own, wherever they appear. */
+const CALENDAR_CAPABILITY =
+  /Book with NEXUS|Book Now|data-nexus-book\b|data-nexus-schedule\b|BOOKING NOT LIVE|SCHEDULING PREVIEW|check(?:s|ing)? (?:Gary'?s )?(?:calendar|availability)|calendar invite|meeting link|join url|zoom link/i;
+
+const bookingClaim = (text) =>
+  ASSISTANT_BOOKS.test(text) || BOOKED_VIA_ASSISTANT.test(text) || CALENDAR_CAPABILITY.test(text);
+
+test('no public surface claims that NEXUS books, schedules, checks availability, creates a calendar event or issues a meeting link (blocker 8)', async () => {
+  // The pins are live. Each of these is the kind of sentence the beta cannot
+  // honour, and each must be caught.
+  for (const claim of [
+    'Book with NEXUS',
+    'NEXUS will book the right time for you.',
+    'NEXUS can schedule a call with Gary.',
+    'The assistant checks Gary’s availability and books a slot.',
+    'Book a meeting with NEXUS',
+    'Ask NEXUS and it sends you a calendar invite.',
+    'NEXUS creates a calendar event once you confirm.',
+    'This chat will schedule your consultation.',
+    'NEXUS shares a meeting link after you confirm.',
+    'NEXUS checks availability and confirms the slot.'
+  ]) {
+    assert.ok(bookingClaim(claim), `the pin must catch a false booking claim: ${claim}`);
+  }
+
+  // And they are not a copy ban: the services catalogue, which describes what we
+  // build for a client's business, must keep passing. If a future change makes
+  // one of these fail, the pin was widened past what blocker 8 is about.
+  for (const allowed of [
+    'Appointment booking & reminders',
+    'Help the right people book the right time, then send clear reminders and follow-up.',
+    'Qualified prospects book the right appointment',
+    'Campaign content, approvals & scheduling',
+    'CRM, calendar, and team stay aligned',
+    'We map the handoffs between your leads, messages, calendar, CRM, team, and follow-up.',
+    'Explore your automation with NEXUS.',
+    'Current availability Open to serious projects, technical roles, and useful collaborations.'
+  ]) {
+    assert.ok(!bookingClaim(allowed), `services copy must not be treated as a NEXUS claim: ${allowed}`);
+  }
+
+  // The served homepage, scripts included - the marketing copy is written by an
+  // inline script, so stripping scripts here would test almost none of it.
+  assert.doesNotMatch(html, ASSISTANT_BOOKS, 'nothing on the homepage says the assistant books or schedules');
+  assert.doesNotMatch(html, BOOKED_VIA_ASSISTANT, 'and nothing offers a booking made through it');
+  assert.doesNotMatch(html, CALENDAR_CAPABILITY, 'and no live-calendar capability is claimed');
+
+  // Inside the panel the vocabulary is absent altogether: there is no register
+  // there in which "book" could be about a client's business.
+  const panel = markup.match(/<section\b[^>]*class="nexus__panel"[^>]*>[\s\S]*?<\/section>/i)?.[0] ?? '';
+  assert.ok(panel, 'the NEXUS panel must exist');
+  assert.doesNotMatch(
+    panel.replace(/<[^>]+>/g, ' '),
+    /\b(?:book|booking|schedule|scheduling|appointment|calendar|availability|meeting|invite|zoom)\b/i,
+    'the panel itself carries no booking vocabulary at all'
+  );
+
+  // Every element that opens the panel: visible label and accessible name.
+  const openers = [...markup.matchAll(/<button\b[^>]*data-nexus-open[^>]*>[\s\S]*?<\/button>/gi)].map((m) => m[0]);
+  assert.ok(openers.length >= 4, `every opener must be checked, found ${openers.length}`);
+  for (const opener of openers) {
+    const label = `${getAttribute(opener, 'aria-label') ?? ''} ${opener.replace(/<[^>]+>/g, ' ')}`;
+    assert.doesNotMatch(
+      label,
+      /\b(?:book|booking|schedule|scheduling|appointment|calendar|availability)\b/i,
+      `an opener must not promise a booking: ${label.replace(/\s+/g, ' ').trim().slice(0, 120)}`
+    );
+  }
+
+  // The Privacy page, which the disclosure links to, must not claim it either.
+  const privacyResponse = await fetch(new URL('/privacy-directive.html', homepageUrl));
+  assert.equal(privacyResponse.status, 200);
+  const privacy = await privacyResponse.text();
+  assert.doesNotMatch(privacy, ASSISTANT_BOOKS, 'the Privacy page must not say the assistant books');
+  assert.doesNotMatch(privacy, BOOKED_VIA_ASSISTANT);
+  assert.doesNotMatch(privacy, CALENDAR_CAPABILITY);
 });
 
 test('the Privacy page keeps the provider disclosure and states the OneDrive/email terms as conditional on lead capture, not as fact (item 4)', async () => {
