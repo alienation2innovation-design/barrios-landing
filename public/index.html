@@ -2652,8 +2652,22 @@
       (()=>{
         const root=document.getElementById('nexus');if(!root)return;
         const panel=document.getElementById('nexus-panel'),launcher=root.querySelector('.nexus__launch'),opens=[...document.querySelectorAll('[data-nexus-open]')],close=root.querySelector('[data-nexus-close]'),input=root.querySelector('.nexus__input'),form=root.querySelector('.nexus__form'),send=root.querySelector('.nexus__send'),local=root.querySelector('.nexus__local'),body=root.querySelector('.nexus__body'),fresh=root.querySelector('[data-nexus-new]');
-        const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.',repeated:'That is the same message you just sent. Give it a moment, or say it a different way.',unreadable:'That message could not be read. Change it and send it again.',toolong:'That message is too long to send. Shorten it and send it again.',slow:'That reply ran out of time before it finished. You can try again.',unavailable:'The assistant could not answer that one. It may be busy, or at its limit for today. Try again a little later, or contact Gary.'};
+        const TEXT={sending:'Sending…',error:'The assistant could not finish that reply. You can try again.',busy:'A reply is still in progress. Wait for it to finish.',eof:'The connection dropped before the reply completed.',origin:'This page could not reach the assistant. Reload and try again.',cancelled:'Reply cancelled.',limited:n=>'Too many messages for now. Try again in '+n+' seconds.',repeated:'That is the same message you just sent. Give it a moment, or say it a different way.',unreadable:'That message could not be read. Change it and send it again.',toolong:'That message is too long to send. Shorten it and send it again.',slow:'That reply ran out of time before it finished. You can try again.',unavailable:'The assistant could not answer that one. It may be busy, or at its limit for today. Try again a little later, or contact Gary.',statusLost:'I can\'t show progress for that request here any more. Please check your email for updates from Gary.'};
         let returnTo=launcher,controller=null,lastMessage='',holdTimer=null,pendingReset=false,resetEpoch=0;
+        /* R44 AMENDMENT (status channel, NEXUS docs/implementation/status-channel.md §9):
+           Chat authentication remains memory-only; only a short-lived, status-only, non-authoritative capability may survive reload in one tab.
+
+           That capability is the one sessionStorage key `nexus.op`, holding exactly
+           {cap, op, exp, lastVersion} - see the status poller at the end of this script.
+           It can never:
+           - authenticate a chat turn, a reset, verification, an owner decision or any scheduling command;
+           - select, consent, approve or deny;
+           - read transcript, brief, email, appointment id, conversation id or Gary-only data;
+           - mint, rotate or extend any credential;
+           - outlive `exp`, or keep working after the session changes, the network changes, New
+             conversation, supersession, a restore, or the conversation's own deadlines;
+           - cause a business or durable write.
+           Everything said in the next comment about the conversation credential stays true of it. */
         /* THE CONVERSATION CREDENTIAL LIVES ONLY HERE: one variable inside this
            IIFE's closure, for the lifetime of this document.
 
@@ -2778,13 +2792,13 @@
         let awaitingHead=false;
         const syncReset=()=>{if(!fresh)return;fresh.disabled=awaitingHead;if(awaitingHead)fresh.setAttribute('aria-disabled','true');else fresh.removeAttribute('aria-disabled')};
         const awaitHead=pending=>{awaitingHead=pending;syncReset()};
-        const finish=()=>{controller=null;busy(false);awaitHead(false);if(pendingReset){pendingReset=false;clearTranscript()}if(root.classList.contains('is-open'))input.focus({preventScroll:true})};
+        const finish=()=>{controller=null;busy(false);awaitHead(false);if(pendingReset){pendingReset=false;clearTranscript()}if(root.classList.contains('is-open'))input.focus({preventScroll:true});resumeStatus()};
         /* A hold (rate limit / budget) never reaches finish(), so a pendingReset
            scheduled for the turn now on hold must be cancelled here instead - the
            transcript was already cleared synchronously by newConversation(), and
            leaving the flag set would let it wipe a later, unrelated turn's answer
            the moment some future finish() finally runs (M2). */
-        const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;pendingReset=false;status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
+        const limited=seconds=>{const n=Math.max(1,Math.min(3600,seconds|0));controller=null;pendingReset=false;resumeStatus();status(TEXT.limited(n),false);holdTimer=setTimeout(()=>{holdTimer=null;busy(false);retryPill()},n*1000)};
         /* Immediate server-side revocation, POSTed to this site's own
            /api/nexus/reset proxy, which forwards it to the core. The core deletes
            and tombstones that conversation with NO provider call and NO model
@@ -2835,6 +2849,7 @@
           resetEpoch++;
           forgetConv();lastMessage='';
           if(holdTimer){clearTimeout(holdTimer);holdTimer=null}
+          dropStatus();
           clearTranscript();
           if(controller){pendingReset=true;cancel()}else{pendingReset=false;busy(false)}
           input.focus({preventScroll:true});
@@ -2862,7 +2877,7 @@
           if(res.status===503||code==='disabled'){offlineNotice();return}
           status(TEXT.error,true)};
         async function ask(message){
-          lastMessage=message;controller=new AbortController();busy(true);awaitHead(true);
+          lastMessage=message;controller=new AbortController();busy(true);awaitHead(true);pauseStatus();
           line('You',message);
           const reply=line('NEXUS',TEXT.sending);let gotText=false,terminal=false,res;
           const dropPending=()=>{if(!gotText)reply.el.remove()};
@@ -2873,7 +2888,7 @@
              carry, delay, consume or lose a reset. A first turn in a fresh tab
              sends no conversation header and the core mints a new conversation. */
           const conv=readConv();
-          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify({v:1,message:message,page:'/'}),signal:controller.signal})}
+          try{res=await fetch('/api/nexus/chat',{method:'POST',credentials:'same-origin',headers:{'content-type':'application/json',accept:'text/event-stream',...(conv?{'x-nexus-conversation':conv}:{})},body:JSON.stringify(Object.assign({v:1,message:message,page:'/'},seenStatus())),signal:controller.signal})}
           catch(err){dropPending();status(controller.signal.aborted?TEXT.cancelled:TEXT.error,!controller.signal.aborted);finish();return}
           /* Every answer carries the conversation credential, continued or freshly
              minted, including refusals, and it is single use now: keep the latest so
@@ -2887,7 +2902,7 @@
           const reader=res.body.getReader(),decoder=new TextDecoder();let buffer='',hold=false;
           const handle=frame=>{const f=parse(frame);if(!f||terminal)return;
             if(f.event==='delta'&&typeof f.data.text==='string'){if(!gotText){reply.t.data='';gotText=true}reply.t.data+=f.data.text;body.scrollTop=body.scrollHeight;return}
-            if(f.event==='done'){terminal=true;return}
+            if(f.event==='done'){terminal=true;acceptStatus(f.data);return}
             if(f.event==='error'||f.event==='malformed'){terminal=true;dropPending();const code=f.data.code||'';
               if(code==='rate_limited'){hold=true;limited(Number(f.data.retry_after_s)||60);return}
               /* A second code was handled alongside rate_limited here: the one
@@ -2912,6 +2927,93 @@
           if(!terminal){dropPending();status(TEXT.eof,true)}
           if(!hold)finish()}
         form.addEventListener('submit',e=>{e.preventDefault();if(controller)return;const value=input.value.trim();if(!value)return;input.value='';ask(value)});
+        /* STATUS POLLER (NEXUS docs/implementation/status-channel.md §4.1 and §6).
+
+           A chat turn that starts a scheduling operation ends with a closed
+           `done.data.status = {cap, op, exp}` and `done.data.poll`. From then on this
+           page asks /api/nexus/status for progress on its own, so each new step
+           appears without the visitor sending another message.
+
+           The capability is status-only and read-only (see the R44 amendment at the
+           top of this script). It travels ONLY in the x-nexus-status header: never in
+           a URL, the DOM, the console, an error or analytics. The one thing kept in
+           per-tab storage is the handle {cap, op, exp, lastVersion} under `nexus.op`,
+           so a reload in this tab can still show progress; no progress text, no
+           transcript and no chat credential is ever stored.
+
+           done.data.status.version (the version the chat reply itself showed), when
+           valid, seeds lastVersion (and seen_status_version) so the first poll does
+           not repeat that phase. poll.after_ms above 60 s is rejected, and every
+           issuance restarts the 10-minute budget.
+           Rendering is the ordinary line('NEXUS', text) text node, once per server
+           `version`. Backoff 1,1,2,2,3,5,8 s then 10 s (20 s once held), never sooner
+           than the server's poll.after_ms or a 429's retry-after. Nothing polls while a
+           chat turn is in flight; finish() resumes from the start of the schedule.
+
+           Stop and delete the handle: a final display (after rendering it), state
+           none, exp, 10 minutes of polling in this document, a 400/403/413, three
+           consecutive network or 5xx failures, supersession by a new op, and New
+           conversation (synchronously, in the click handler). Stop and keep it:
+           poll:null (slot choices wait for the visitor's answer in chat) and
+           pagehide (a reload recovers it).
+
+           After a reload the handle is RECOVERED: it polls at once with body
+           {"v":1,"m":"r"}, renders its first answer even if that version was seen
+           before (the reload erased the transcript), never feeds
+           seen_status_version (the new document is a new chat). A recovered pick
+           arrives `final` with a fixed line and no choices, so it is shown once and
+           the handle deleted; nothing in the new document could answer the times. */
+        const STATUS_KEY='nexus.op',STATUS_STEPS=[1,1,2,2,3,5,8],STATUS_TAIL_S=10,STATUS_HELD_S=20,STATUS_BUDGET_MS=600000,STATUS_MAX_FAILS=3,STATUS_MAX_AFTER_MS=60000,STATUS_STATES=['none','pending','update','final'];
+        const CAP_RE=/^st2\.[A-Za-z0-9._-]+$/,OP_RE=/^[A-Za-z0-9_-]{43}$/,VER_RE=/^[A-Za-z0-9_-]{43}$/;
+        let track=null,trackGen=0,trackTimer=null,trackFetch=null,trackStep=0,trackFails=0,trackHeld=false,trackHidden=false,trackSince=0,trackRun=false,trackAfter=0,seenVersion='';
+        const tabStore=()=>{try{return window.sessionStorage||null}catch(err){return null}};
+        const saveTrack=()=>{const s=tabStore();if(!s||!track)return;try{s.setItem(STATUS_KEY,JSON.stringify({cap:track.cap,op:track.op,exp:track.exp,lastVersion:track.lastVersion}))}catch(err){}};
+        const eraseTrack=()=>{const s=tabStore();if(!s)return;try{s.removeItem(STATUS_KEY)}catch(err){}};
+        const validCap=(cap,op,exp)=>typeof cap==='string'&&cap.length<=190&&CAP_RE.test(cap)&&typeof op==='string'&&OP_RE.test(op)&&Number.isSafeInteger(exp)&&exp>Date.now();
+        const loadTrack=()=>{const s=tabStore();if(!s)return null;let v=null;try{const raw=s.getItem(STATUS_KEY);if(raw===null)return null;v=JSON.parse(raw)}catch(err){v=null}
+          const ok=!!v&&typeof v==='object'&&!Array.isArray(v)&&Object.keys(v).sort().join()==='cap,exp,lastVersion,op'&&validCap(v.cap,v.op,v.exp)&&(v.lastVersion===null||typeof v.lastVersion==='string'&&VER_RE.test(v.lastVersion));
+          if(!ok){eraseTrack();return null}return v};
+        const haltTrack=()=>{trackGen++;if(trackTimer){clearTimeout(trackTimer);trackTimer=null}if(trackFetch){const f=trackFetch;trackFetch=null;f.abort()}};
+        const endTrack=text=>{haltTrack();trackRun=false;track=null;eraseTrack();if(text)line('NEXUS',text)};
+        const dropStatus=()=>{endTrack('');seenVersion=''};
+        const pauseStatus=()=>haltTrack();
+        const nextDelay=(afterMs,retryS)=>{const base=trackStep<STATUS_STEPS.length?STATUS_STEPS[trackStep]:STATUS_TAIL_S;trackStep++;return Math.max(base*1000,trackHeld?STATUS_HELD_S*1000:0,afterMs||0,(retryS||0)*1000)};
+        const armTrack=delay=>{if(!track||!trackRun||trackHidden||controller||trackTimer||trackFetch)return;const gen=trackGen;trackTimer=setTimeout(()=>{trackTimer=null;if(gen===trackGen)pollStatus(gen)},delay)};
+        const resumeStatus=()=>{if(!track||!trackRun||trackTimer||trackFetch)return;trackStep=0;armTrack(nextDelay(trackAfter,0))};
+        const validReply=d=>!!d&&typeof d==='object'&&d.v===1&&STATUS_STATES.includes(d.state)&&(d.state==='none'||typeof d.op==='string'&&typeof d.version==='string'&&VER_RE.test(d.version)&&!!d.display&&typeof d.display==='object'&&typeof d.display.phase==='string'&&typeof d.display.text==='string'&&d.display.text.length>0&&d.display.text.length<=2000&&(d.poll===null||!!d.poll&&typeof d.poll==='object'&&Number.isSafeInteger(d.poll.after_ms)&&d.poll.after_ms>=0&&d.poll.after_ms<=STATUS_MAX_AFTER_MS));
+        const applyReply=d=>{const h=track;
+          if(d.state==='none'||d.op!==h.op){endTrack(TEXT.statusLost);return}
+          if(h.mode==='r'&&d.display.phase==='slot_choices'&&d.state!=='final'){endTrack(TEXT.statusLost);return}
+          if(d.version!==h.lastVersion||(h.mode==='r'&&!h.shown)){line('NEXUS',d.display.text);h.lastVersion=d.version;h.shown=true;if(h.mode!=='r')seenVersion=d.version;saveTrack()}
+          if(d.state==='final'){endTrack('');return}
+          trackHeld=d.display.phase==='held_awaiting_gary';
+          if(!d.poll){haltTrack();trackRun=false;return}
+          trackAfter=d.poll.after_ms;armTrack(nextDelay(trackAfter,0))};
+        const pollStatus=async gen=>{
+          if(!track||gen!==trackGen||controller)return;
+          const h=track,now=Date.now();
+          if(now>=h.exp||(trackSince&&now-trackSince>=STATUS_BUDGET_MS)){endTrack(TEXT.statusLost);return}
+          if(!trackSince)trackSince=now;
+          const ac=new AbortController();trackFetch=ac;let res=null,data=null;
+          try{res=await fetch('/api/nexus/status',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'content-type':'application/json','x-nexus-status':h.cap},body:h.mode==='r'?'{"v":1,"m":"r"}':'{"v":1}',signal:ac.signal});if(res.status===200)data=await res.json()}catch(err){res=null;data=null}
+          if(gen!==trackGen||track!==h)return;
+          trackFetch=null;
+          if(res&&res.status===429){armTrack(nextDelay(0,Math.max(1,Math.min(3600,Number(res.headers.get('retry-after'))||60))));return}
+          if(res&&(res.status===400||res.status===403||res.status===413)){endTrack(TEXT.statusLost);return}
+          if(!res||res.status!==200||!validReply(data)){trackFails++;if(trackFails>=STATUS_MAX_FAILS){endTrack(TEXT.statusLost);return}armTrack(nextDelay(0,0));return}
+          trackFails=0;applyReply(data)};
+        const acceptStatus=d=>{if(!d||typeof d!=='object')return;const s=d.status,p=d.poll;
+          if(!s||typeof s!=='object'||!p||typeof p!=='object'||!Number.isSafeInteger(p.after_ms)||p.after_ms<0||p.after_ms>STATUS_MAX_AFTER_MS||!validCap(s.cap,s.op,s.exp))return;
+          const shownVersion=typeof s.version==='string'&&VER_RE.test(s.version)?s.version:null;
+          if(track&&track.op===s.op&&track.mode!=='r'){track.cap=s.cap;track.exp=s.exp;if(shownVersion)track.lastVersion=shownVersion}
+          else{haltTrack();track={cap:s.cap,op:s.op,exp:s.exp,lastVersion:shownVersion,mode:'l',shown:false};trackHeld=false}
+          if(shownVersion)seenVersion=shownVersion;
+          trackSince=0;trackRun=true;trackFails=0;trackAfter=p.after_ms;saveTrack()};
+        const seenStatus=()=>seenVersion&&VER_RE.test(seenVersion)?{seen_status_version:seenVersion}:{};
+        window.addEventListener('pagehide',()=>{trackHidden=true;haltTrack()});
+        window.addEventListener('pageshow',()=>{if(!trackHidden)return;trackHidden=false;resumeStatus()});
+        const kept=loadTrack();
+        if(kept){track={cap:kept.cap,op:kept.op,exp:kept.exp,lastVersion:kept.lastVersion,mode:'r',shown:false};trackRun=true;const gen=trackGen;trackTimer=setTimeout(()=>{trackTimer=null;if(gen===trackGen)pollStatus(gen)},0)}
       })();
     </script>
 

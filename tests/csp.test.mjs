@@ -306,7 +306,23 @@ test("the conversation credential is put nowhere but this document's closure mem
   // and the tab, not to a page, so it survived a same-tab navigation and left a
   // live credential readable by every script on whatever page the visitor landed
   // on next. Nothing is stored now, so there is no key for any of them to read.
-  assert.doesNotMatch(script, /sessionStorage/, 'the credential is not in per-tab web storage either');
+  // UPDATED DELIBERATELY AGAIN (status channel, R44 amendment - NEXUS
+  // docs/implementation/status-channel.md section 9). The credential is still in
+  // no web storage. One sessionStorage site now exists, for the short-lived,
+  // status-only handle `nexus.op`; it is pinned here to exactly one accessor and
+  // one key, and tests/nexus-status-widget.test.mjs proves what it holds.
+  const code = script.replace(/\/\*[\s\S]*?\*\//g, '');
+  assert.equal((code.match(/sessionStorage/g) ?? []).length, 1, 'exactly one sessionStorage reference in code');
+  assert.match(
+    code,
+    /const tabStore=\(\)=>\{try\{return window\.sessionStorage\|\|null\}catch\(err\)\{return null\}\};/,
+    'and it is the status-handle accessor'
+  );
+  assert.match(code, /const STATUS_KEY='nexus\.op'/, 'whose one key is nexus.op');
+  for (const [, arg] of code.matchAll(/\.(?:setItem|getItem|removeItem)\(([^,)]*)/g)) {
+    assert.equal(arg, 'STATUS_KEY', 'every storage call names the status key');
+  }
+  assert.doesNotMatch(script, /nexus\.conversation/, 'the credential has no storage key');
   assert.doesNotMatch(
     script,
     /localStorage|document\.cookie|window\.name|BroadcastChannel|SharedWorker|indexedDB/,

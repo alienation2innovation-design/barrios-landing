@@ -55,6 +55,34 @@ function normalizeCode(scriptText) {
   return stripComments(scriptText).replace(/\s+/g, ' ');
 }
 
+// ADDED DELIBERATELY (status channel, R44 amendment - NEXUS
+// docs/implementation/status-channel.md section 9): "Chat authentication remains
+// memory-only; only a short-lived, status-only, non-authoritative capability may
+// survive reload in one tab." That sanctions exactly ONE storage access site in
+// the widget: the tab-scoped status handle `nexus.op`. This pins that site to the
+// one accessor, every storage call to the one key and the one write to the four
+// handle fields, then returns the code WITHOUT the accessor, so every older
+// "no storage anywhere" assertion still runs unchanged over everything else. The
+// conversation credential itself is still never stored.
+function withoutStatusHandleAccess(code) {
+  const accessor = "const tabStore=()=>{try{return window.sessionStorage||null}catch(err){return null}};";
+  assert.equal(code.split(accessor).length - 1, 1, 'exactly one sanctioned storage accessor');
+  assert.equal((code.match(/sessionStorage/g) ?? []).length, 1, 'and no other sessionStorage reference in code');
+  assert.match(code, /const STATUS_KEY='nexus\.op'/, 'the one key is nexus.op');
+  const calls = [...code.matchAll(/\.(?:setItem|getItem|removeItem|clear|key)\(([^,)]*)/g)];
+  assert.ok(calls.length >= 3, 'the handle is read, written and removed');
+  for (const [, arg] of calls) {
+    assert.equal(arg, 'STATUS_KEY', 'every storage call names the status key and nothing else');
+  }
+  const writes = [...code.matchAll(/\.setItem\(STATUS_KEY,(.*?)\)\}catch/g)].map((m) => m[1]);
+  assert.deepEqual(
+    writes,
+    ['JSON.stringify({cap:track.cap,op:track.op,exp:track.exp,lastVersion:track.lastVersion})'],
+    'the only write is the four handle fields'
+  );
+  return code.replace(accessor, '');
+}
+
 before(async () => {
   await site.ready();
   homepageUrl = site.url;
@@ -307,7 +335,11 @@ test('the widget scopes its conversation credential to this document and never e
   // previous NEXUS credential after the visitor navigated. The credential is
   // now a single variable in this document's closure and nothing else.
   assert.match(normalizeCode(script), /let conversation='';/, 'the credential is one closure variable');
-  assert.doesNotMatch(script, /sessionStorage/, 'it is no longer in per-tab web storage either');
+  // UPDATED DELIBERATELY AGAIN (status channel, R44 amendment): the credential is
+  // still in no web storage, but one sessionStorage site now exists for the
+  // status-only handle. withoutStatusHandleAccess() pins it to exactly that.
+  withoutStatusHandleAccess(normalizeCode(script));
+  assert.doesNotMatch(script, /nexus\.conversation|CONV_KEY/, 'the credential has no storage key');
   assert.doesNotMatch(
     script,
     /localStorage|document\.cookie|window\.name|BroadcastChannel|SharedWorker/,
@@ -1183,7 +1215,10 @@ test('two tabs stay isolated, and a reload or navigation leaves no reusable clie
 
 test('no storage key can hold the credential: the shipped widget contains no storage access at all (item 1)', () => {
   const script = widgetScript();
-  const code = normalizeCode(script);
+  // UPDATED DELIBERATELY (status channel, R44 amendment): the one sanctioned
+  // status-handle accessor is verified and removed first; every surface below
+  // is still forbidden everywhere else in the widget.
+  const code = withoutStatusHandleAccess(normalizeCode(script));
 
   // A surface named in a block comment is documentation; a surface named in code
   // is an access site - the same distinction tests/static-harness.test.mjs draws
