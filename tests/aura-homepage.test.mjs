@@ -325,6 +325,53 @@ test('the panel offers a keyboard-reachable "New conversation" control that is n
   assert.equal((markup.match(/data-nexus-new/g) ?? []).length, 1, 'exactly one reset control');
 });
 
+test('the NEXUS panel offers a direct, pre-addressed email path without copying chat data', () => {
+  const panel = nexusPanelMarkup();
+  const promptsPosition = panel.indexOf('class="nexus__prompts"');
+  const contactPosition = panel.indexOf('class="nexus__direct"');
+  const disclosurePosition = panel.indexOf('class="nexus__disclosure"');
+
+  assert.ok(promptsPosition >= 0 && promptsPosition < contactPosition, 'direct email follows the conversation starters');
+  assert.ok(contactPosition < disclosurePosition, 'direct email stays in the primary panel flow, before the disclosure');
+  assert.match(panel, /Prefer email\?/i);
+  assert.match(panel, /Email Gary directly/i);
+  assert.match(panel, />\s*alienation2innovation@gmail\.com\s*</i, 'the destination is visible before a visitor clicks');
+
+  const link = panel.match(/<a\b[^>]*class="nexus__direct-link"[^>]*>/i)?.[0] ?? '';
+  assert.ok(link, 'the direct-email action must be a native link');
+  assert.equal(getAttribute(link, 'target'), null, 'mailto must use the visitor\'s normal email-app behavior');
+  const href = (getAttribute(link, 'href') ?? '').replaceAll('&amp;', '&');
+  const mail = new URL(href);
+  assert.equal(mail.protocol, 'mailto:');
+  assert.equal(mail.pathname, 'alienation2innovation@gmail.com');
+  assert.equal(mail.searchParams.get('subject'), 'Automation project inquiry');
+  assert.equal(
+    mail.searchParams.get('body'),
+    "Hi Gary,\r\n\r\nMy business is:\r\n\r\nI’d like to automate:\r\n\r\nThe best way to reach me is:",
+    'the draft is useful but contains no chat transcript, contact details or other visitor data'
+  );
+
+  const copy = panel.match(/<button\b[^>]*data-nexus-copy-email[^>]*>[\s\S]*?<\/button>/i)?.[0] ?? '';
+  assert.ok(copy, 'a copy-address fallback must exist');
+  assert.equal(getAttribute(copy, 'type'), 'button');
+  assert.equal(getAttribute(copy, 'aria-label'), "Copy Gary's email address");
+  assert.equal(getAttribute(copy, 'tabindex'), null, 'the copy fallback remains keyboard reachable');
+
+  const toggle = panel.match(/<button\b[^>]*data-nexus-direct-toggle[^>]*>[\s\S]*?<\/button>/i)?.[0] ?? '';
+  assert.ok(toggle, 'the email channel must be collapsible to return space to the conversation');
+  assert.equal(getAttribute(toggle, 'type'), 'button');
+  assert.equal(getAttribute(toggle, 'aria-expanded'), 'true');
+  assert.equal(getAttribute(toggle, 'aria-controls'), 'nexus-direct-details');
+  assert.equal(getAttribute(toggle, 'aria-label'), 'Minimize direct email options');
+  assert.match(panel, /id="nexus-direct-details"/, 'the toggle controls the email details it names');
+
+  const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
+  assert.match(script, /alienation2innovation@gmail\.com/, 'copy uses the fixed public business address');
+  assert.doesNotMatch(script, /copyEmail[\s\S]{0,300}(?:input\.value|local\.textContent|conversation)/i, 'copy never includes chat state');
+  assert.match(script, /classList\.toggle\('is-compact'\)/, 'the control collapses the channel without removing the email link');
+  assert.match(script, /setAttribute\('aria-expanded',String\(!compact\)\)/, 'the visible collapse state stays exposed to assistive technology');
+});
+
 test('the widget scopes its conversation credential to this document and never exposes it (item 1)', () => {
   const script = html.match(/<script>\s*\(\(\)=>\{\s*const root=document\.getElementById\('nexus'\)[\s\S]*?<\/script>/i)?.[0] ?? '';
   assert.ok(script, 'the NEXUS widget script must exist');
