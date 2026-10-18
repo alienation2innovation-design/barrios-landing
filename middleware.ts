@@ -1,4 +1,5 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
+import { NEXUS_PUBLIC_LINK_ROUTES } from './lib/nexus/public-link-routes';
 
 // Define public routes that don't require authentication
 const isPublicRoute = createRouteMatcher([
@@ -8,6 +9,7 @@ const isPublicRoute = createRouteMatcher([
   '/forgot-password(.*)',
   '/api/webhooks/(.*)',
   '/api/nexus/(.*)',
+  ...NEXUS_PUBLIC_LINK_ROUTES,
   '/api/checkout/(.*)',
   '/api/checkout/nexus',
   '/api/checkout/nexus/(.*)',
